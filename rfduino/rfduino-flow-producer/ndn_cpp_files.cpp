@@ -12,5 +12,5 @@
 #include NDN_CPP_ROOT(pp/src/lite/util/crypto-lite.cpp)
 #include NDN_CPP_ROOT(pp/src/lite/encoding/tlv-0_1_1-wire-format-lite.cpp)
 
-//#include NDN_CPP_ROOT(pp/contrib/cryptosuite/sha256.cpp)
+#include NDN_CPP_ROOT(pp/contrib/cryptosuite/sha256.cpp)
 
