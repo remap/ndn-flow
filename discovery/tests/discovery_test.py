@@ -42,7 +42,7 @@ class DiscoveryTest(object):
         return
 
     def onReceivedSyncData(self, itemName):
-        print "received itemName: " + itemName
+        print "Received itemName: " + itemName
         interest = Interest(Name(itemName))
         interest.setInterestLifetimeMilliseconds(4000)
         self._face.expressInterest(interest, self.onData, self.onTimeout)
@@ -53,7 +53,40 @@ class DiscoveryTest(object):
         self._discovery.addObject(interest.getName().toUri())
         # Start heartbeat, TODO: heartbeat mechanism
         print "Added device: " + interest.getName().toUri()
+
+        dummyInterest = Interest(Name("/local/timeout"))
+        dummyInterest.setInterestLifetimeMilliseconds(4000)
+        self._face.expressInterest(dummyInterest, self.onDummyData, lambda a : self.onDummyTimeout(a, interest))
         return
+
+    def onDummyData(self, interest, data):
+        print "Unexpected dummy data: " + data.getName().toUri()
+        return
+
+    def onDummyTimeout(self, interest, heartbeatInterest):
+        self.expressHeartbeatInterest(heartbeatInterest)
+        return
+
+    def expressHeartbeatInterest(self, heartbeatInterest):
+        newInterest = Interest(heartbeatInterest.getName())
+        newInterest.setInterestLifetimeMilliseconds(4000)
+        print "Express interest: " + newInterest.getName().toUri()
+        self._face.expressInterest(newInterest, self.onHeartbeatData, self.onHeartbeatTimeout)
+
+    def onHeartbeatData(self, interest, data):
+        self._discovery.resetTimeoutCnt(interest.getName().toUri())
+        dummyInterest = Interest(Name("/local/timeout"))
+        dummyInterest.setInterestLifetimeMilliseconds(4000)
+        self._face.expressInterest(dummyInterest, self.onDummyData, lambda a : self.onDummyTimeout(a, interest))
+
+    def onHeartbeatTimeout(self, interest):
+        if self._discovery.incrementTimeoutCnt(interest.getName().toUri()):
+            print "Remove: " + interest.getName().toUri() + " because of consecutive timeout cnt exceeded"
+        else:
+            newInterest = Interest(interest.getName())
+            print "Express interest: " + newInterest.getName().toUri()
+            newInterest.setInterestLifetimeMilliseconds(4000)
+            self._face.expressInterest(newInterest, self.onHeartbeatData, self.onHeartbeatTimeout)
 
     def onTimeout(self, interest):
         print "Item interest times out: " + interest.getName().toUri()
@@ -63,11 +96,9 @@ class DiscoveryTest(object):
         print "Prefix registration failed: " + prefix.toUri()
         return
 
-
 def usage():
     print("Usage")
     return
-
 
 def main():
     face = Face()
