@@ -25,6 +25,7 @@
 #include <ndn-cpp/lite/data-lite.hpp>
 #include <ndn-cpp/lite/interest-lite.hpp>
 #include <ndn-cpp/lite/encoding/tlv-0_1_1-wire-format-lite.hpp>
+#include <ndn-cpp/lite/util/crypto-lite.hpp>
 
 using namespace ndn;
 
@@ -37,6 +38,19 @@ using namespace ndn;
 #define RED_LED_PIN   2
 #define GREEN_LED_PIN 3
 #define BLUE_LED_PIN  4
+
+uint8_t HMAC_KEY[64];
+uint8_t HMAC_KEY_DIGEST[ndn_SHA256_DIGEST_SIZE];
+
+static void
+printHex(const uint8_t* data, size_t dataLength)
+{
+  for (size_t i = 0; i < dataLength; ++i) {
+    char buf[5];
+    sprintf(buf, " %02x", (int)data[i]);
+    Serial.print(buf);
+  }
+}
 
 void
 setup()
@@ -79,7 +93,26 @@ setup()
   Serial.println("RFduino BLE Advertising interval is 500ms");
   Serial.println("RFduino BLE DeviceName: RFduino");
   Serial.println("RFduino BLE Tx Power Level: -20dBm");
+
+  // Generate two bytes of random seed.
+  // Turn on the random number generator, clear the ready flag and wait for a value.
+  NRF_RNG->TASKS_START = 1;
+  NRF_RNG->EVENTS_VALRDY = 0;
+  while (NRF_RNG->EVENTS_VALRDY == 0);
+  int seed = NRF_RNG->VALUE;
+  NRF_RNG->EVENTS_VALRDY = 0;
+  while (NRF_RNG->EVENTS_VALRDY == 0);
+  seed *= NRF_RNG->VALUE;
+  randomSeed(seed);
+  // Turn on the random number generator since it doesn't work when BLE is enabled.
+  NRF_RNG->TASKS_STOP = 1;
   
+  // Generate the HMAC_KEY.
+  for (size_t i = 0; i < sizeof(HMAC_KEY); ++i)
+    HMAC_KEY[i] = random(0, 256);
+  // Set HMAC_KEY_DIGEST to sha256(HMAC_KEY).
+  CryptoLite::digestSha256(HMAC_KEY, sizeof(HMAC_KEY), HMAC_KEY_DIGEST);
+
   // start the BLE stack
   RFduinoBLE.begin();
   Serial.println("RFduino BLE stack started");
@@ -116,16 +149,6 @@ RFduinoBLE_onDisconnect()
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(GREEN_LED_PIN, LOW);
   digitalWrite(BLUE_LED_PIN, LOW);
-}
-
-static void
-printHex(const uint8_t* data, size_t dataLength)
-{
-  for (size_t i = 0; i < dataLength; ++i) {
-    char buf[5];
-    sprintf(buf, " %02x", (int)data[i]);
-    Serial.print(buf);
-  }
 }
 
 static void
