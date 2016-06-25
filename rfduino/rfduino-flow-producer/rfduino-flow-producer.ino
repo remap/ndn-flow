@@ -39,15 +39,15 @@ using namespace ndn;
 #define GREEN_LED_PIN 3
 #define BLUE_LED_PIN  4
 
-uint8_t HMAC_KEY[64];
-uint8_t HMAC_KEY_DIGEST[ndn_SHA256_DIGEST_SIZE];
+uint8_t HmacKey[64];
+uint8_t HmacKeyDigest[ndn_SHA256_DIGEST_SIZE];
 
 static void
-printHex(const uint8_t* data, size_t dataLength)
+printHex(const uint8_t* buffer, size_t bufferLength)
 {
-  for (size_t i = 0; i < dataLength; ++i) {
+  for (size_t i = 0; i < bufferLength; ++i) {
     char buf[5];
-    sprintf(buf, " %02x", (int)data[i]);
+    sprintf(buf, " %02x", (int)buffer[i]);
     Serial.print(buf);
   }
 }
@@ -107,11 +107,11 @@ setup()
   // Turn on the random number generator since it doesn't work when BLE is enabled.
   NRF_RNG->TASKS_STOP = 1;
   
-  // Generate the HMAC_KEY.
-  for (size_t i = 0; i < sizeof(HMAC_KEY); ++i)
-    HMAC_KEY[i] = random(0, 256);
-  // Set HMAC_KEY_DIGEST to sha256(HMAC_KEY).
-  CryptoLite::digestSha256(HMAC_KEY, sizeof(HMAC_KEY), HMAC_KEY_DIGEST);
+  // Generate the HmacKey.
+  for (size_t i = 0; i < sizeof(HmacKey); ++i)
+    HmacKey[i] = random(0, 256);
+  // Set HmacKeyDigest to sha256(HmacKey).
+  CryptoLite::digestSha256(HmacKey, sizeof(HmacKey), HmacKeyDigest);
 
   // start the BLE stack
   RFduinoBLE.begin();
@@ -171,6 +171,8 @@ static void
 onReceivedElement(const uint8_t *element, size_t elementLength);
 static void
 processInterest(const InterestLite& interest);
+static void
+fragmentAndSend(const uint8_t* buffer, size_t bufferLength);
 
 // TODO: Determine the correct max size of a received packet.
 uint8_t receiveBuffer[100];
@@ -178,20 +180,20 @@ size_t receiveBufferLength = 0;
 int expectedFragmentIndex = 0;
 
 void
-RFduinoBLE_onReceive(char *data, int dataLength)
+RFduinoBLE_onReceive(char *buffer, int bufferLength)
 {
   Serial.print("Debug: Received data over BLE:");
-  printHex((const uint8_t*)data, dataLength);
+  printHex((const uint8_t*)buffer, bufferLength);
   Serial.println("");
   
   // Defragment into the receiveBuffer.
   const size_t iFragmentIndex = 0;
   const size_t iFragmentCount = 1;
   const size_t iFragment = 2;
-  if (dataLength < iFragment + 1)
+  if (bufferLength < iFragment + 1)
     // We don't even have one fragment byte.
     return;
-  int fragmentIndex = data[iFragmentIndex];
+  int fragmentIndex = buffer[iFragmentIndex];
   if (fragmentIndex == 0)
     // Starting a new fragmented packet.
     receiveBufferLength = 0;
@@ -204,16 +206,16 @@ RFduinoBLE_onReceive(char *data, int dataLength)
     }
   }
 
-  size_t nFragmentBytes = dataLength - iFragment;
+  size_t nFragmentBytes = bufferLength - iFragment;
   if (receiveBufferLength + nFragmentBytes > sizeof(receiveBuffer)) {
     Serial.println("Error: Exceeded sizeof(receiveBuffer)");
     return;
   }
-  memcpy(receiveBuffer + receiveBufferLength, data + iFragment, nFragmentBytes);
+  memcpy(receiveBuffer + receiveBufferLength, buffer + iFragment, nFragmentBytes);
   receiveBufferLength += nFragmentBytes;
   
   expectedFragmentIndex = fragmentIndex + 1;
-  if (expectedFragmentIndex >= data[iFragmentCount]) {
+  if (expectedFragmentIndex >= buffer[iFragmentCount]) {
     // Finished. With the fragmentation protocol, we don't need an ElementReader, so
     // call onReceivedElement right away.
     expectedFragmentIndex = 0;
@@ -251,5 +253,73 @@ processInterest(const InterestLite& interest)
   Serial.print("Debug: Received interest ");
   simplePrintNameUri(interest.getName());
   Serial.println("");
+}
+
+/**
+ * Sign the data with HmacKey (updating the data object) and send.
+ * @return 0 for success or an ndn_Error code.
+ */
+static ndn_Error
+signAndSendData(DataLite& data)
+{
+  // Set up the signature with the hmacKeyDigest key locator digest.
+  data.getSignature().setType(ndn_SignatureType_HmacWithSha256Signature);
+  data.getSignature().getKeyLocator().setType(ndn_KeyLocatorType_KEY_LOCATOR_DIGEST);
+  data.getSignature().getKeyLocator().setKeyData(BlobLite(HmacKeyDigest, sizeof(HmacKeyDigest)));
+  
+  // Encode once to get the signed portion.
+  // TODO: Choose the correct max encoding buffer size.
+  uint8_t encoding[120];
+  DynamicUInt8ArrayLite output(encoding, sizeof(encoding), 0);
+  ndn_Error error;
+  size_t signedPortionBeginOffset, signedPortionEndOffset;
+  size_t encodingLength;
+  if ((error = Tlv0_1_1WireFormatLite::encodeData
+       (data, &signedPortionBeginOffset, &signedPortionEndOffset, output, &encodingLength)))
+    return error;
+
+  // Get the signature for the signed portion.
+  uint8_t signatureValue[ndn_SHA256_DIGEST_SIZE];
+  CryptoLite::computeHmacWithSha256
+    (HmacKey, sizeof(HmacKey), encoding + signedPortionBeginOffset,
+     signedPortionEndOffset - signedPortionBeginOffset, signatureValue);
+  data.getSignature().setSignature(BlobLite(signatureValue, ndn_SHA256_DIGEST_SIZE));
+  
+  // Encode again to include the signature.
+  if ((error = Tlv0_1_1WireFormatLite::encodeData
+       (data, &signedPortionBeginOffset, &signedPortionEndOffset, output, &encodingLength)))
+    return error;
+
+  fragmentAndSend(encoding, encodingLength);
+  return NDN_ERROR_success;
+}
+
+/**
+ * Fragment the buffer and send over BLE.
+ */
+static void
+fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
+{
+  const size_t iFragmentIndex = 0;
+  const size_t iFragmentCount = 1;
+  const size_t iFragment = 2;
+  const size_t maxFragmentBytes = 18;
+  size_t fragmentCount = (bufferLength - 1) / maxFragmentBytes + 1;
+  
+  uint8_t packet[2 + maxFragmentBytes];
+  packet[iFragmentIndex] = 0;
+  packet[iFragmentCount] = (uint8_t)fragmentCount;
+  for (size_t i = 0; i < bufferLength; i += maxFragmentBytes) {
+      // Copy the fragment bytes into the packet.
+      size_t nFragmentBytes = maxFragmentBytes;
+      if (i + nFragmentBytes > bufferLength)
+          nFragmentBytes = bufferLength - i;
+      memcpy(packet + iFragment, buffer + i, nFragmentBytes);
+
+      // TODO: send(packet, iFragment + nFragmentBytes);
+      
+      // Increment the fragment index in the packet.
+      ++packet[iFragmentIndex];
+  }
 }
 
