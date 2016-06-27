@@ -11,5 +11,5 @@ These instructions assume that you have a working installation of OpenPTrack usi
 ## Test Demo
 You may attached `MoveFromTrack.cs` to an object in unity.  It will cause the object’s position to mirror the first track detected after running the project.  (Make sure OpenPTrack and NFD are running.)
 
-[1]:	../READMEN.md
+[1]:	../README.md
 [2]:	http://wiki.unity3d.com/index.php/SimpleJSON
