@@ -28,4 +28,5 @@
 *.out
 *.app
 
+*.pyo
 *.pyc

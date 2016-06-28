@@ -79,6 +79,7 @@ class Discovery(object):
             # Wait a random period before replying; rationale being that "we are always doing ChronoSync recovery...this is the recovery timer but randomized"
             # Consider this statement: we are always doing ChronoSync recovery
             # TODO: this has the problem of potentially answering with wrong data, there will be more interest exchanges needed for the lifetime duration of one wrong answer
+            # Consider appending "answerer" as the last component of data name?
             dummyInterest = Interest(Name("/local/timeout1"))
             dummyInterest.setInterestLifetimeMilliseconds(random.randint(self._minResponseWaitPeriod, self._maxResponseWaitPeriod))
             self._face.expressInterest(dummyInterest, self.onDummyData, lambda a : self.replySyncInterest(a, digest))

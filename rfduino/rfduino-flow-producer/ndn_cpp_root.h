@@ -10,5 +10,5 @@
 // accept NDN_CPP_SRC(/src/c/name.c) with a starting slash.
 // We have to use an absolute path because the Arduino compiler won't
 // include a relative file.
-#define NDN_CPP_ROOT(x) STR2(CONCAT(/please/fix/NDN_CPP_ROOT/in/ndn_cpp_root.h/ndn-c, x))
+#define NDN_CPP_ROOT(x) STR2(CONCAT(/Users/zhehaowang/projects/ndn/ndn-clones/ndn-c, x))
 
