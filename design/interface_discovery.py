@@ -19,10 +19,13 @@ class Discovery(object):
         Discovery keeps a dictionary of <object name uri, status>, where status contains current timeout count. An object is removed when discovery's incrementTimeoutCnt is called and the count exceeds a given threshold.
         Discovery also keeps an ordered list of discovered object names, and an ordered list of hosted object names. The latter should be a subset of the former.
 
-        :param Face face: The face discovery uses to issue interest and receive data
-        :param KeyChain keyChain: The keyChain discovery uses to sign sync data, and verify received sync data
+        How to use: 
+        Create an instance of this class and provide callbacks
+
+        :param Face face: The face to issue interest and receive data
+        :param KeyChain keyChain: The keyChain to sign sync data, and verify received sync data
         :param Name certificateName: The certificate name to look up in the keyChain for signing sync data
-        :param onReceivedSyncData: This calls onReceivedSyncData(data) once a verified sync response is received
+        :param onReceivedSyncData: This calls onReceivedSyncData(data) once a sync response is received and verified
         :type onReceivedSyncData: function object
 
         :return: None
@@ -68,6 +71,7 @@ class Discovery(object):
         # TODO: consider leaving a "removed" token when removing so that others can know the removal from the next heartbeat message?
         return
 
+    # TODO: this and heartbeat management should not be exposed to most client applications; another class on top to achieve this?
     def addObject(self, name):
         """
         Add a name to the list of objects currently discovered by this instance. 
