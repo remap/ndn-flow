@@ -30,8 +30,6 @@ class IoTNode(object):
         """
         return
 
-
-
     def start(self):
         """
         Initialize face, register prefix for this device (name infered from the the given ceritificateName)
@@ -51,6 +49,7 @@ class IoTNode(object):
     def produce(self, data):
         """
         Produce data by adding it to this node's memoryContentCache (could support more types of producers e.g. repo-ng, may have a Producer parameter in the constructor, depending on need)
+        (If the producer's a MemoryContentCache producer, its register prefix should be exposed via Producer interface? Similar for others, like repo-ng producer?)
 
         :parameter Data data: the data to be produced
         :return: None
