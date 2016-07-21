@@ -1,0 +1,211 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"DTD/xhtml1-strict.dtd">
+
+<html xmlns = "http://www.w3.org/1999/xhtml">
+<meta charset="UTF-8">
+
+<head>
+  <style>
+    body {
+      background-color: #222222;
+      color: #FFFFFF;
+    }
+  </style>
+  <!--
+    In-browser consumer that fetches data from repo, or content store of master NFD
+    Based on basic get example in NDN-JS
+  -->
+  <title>NDN Openloop Publisher visualizer via WebSocket</title>
+  
+  <script type="text/javascript" src="smoothie.js"></script>
+  <script type="text/javascript" src="ndn.js"></script>
+  
+  <script type="text/javascript">
+    // Configurations
+    var faceConn = "192.168.10.108";
+    var dataPrefix = "/home/test1/data";
+    var defaultInterestLifetime = 2000;
+    var drawOutput = true;
+    var arbitraryTimeOffset = 2000;
+    
+    // Init
+    var running = false;
+    var face = new Face({host: faceConn});
+    
+    var startTime = "";
+    var endTime = "";
+    
+    var lastTimestamp = "";
+    var firstData = true;
+    
+    // Smoothie drawing
+    if (drawOutput) {
+      var smoothie = new SmoothieChart({interpolation:"step", maxValue: 1.2, minValue: -0.2});
+      var lineX = new TimeSeries();
+      var timeOffset = 0;
+    }
+    
+    function onData(interest, data)
+    {
+      console.log("onData, name: " + data.getName().toUri());
+      lastTimestamp = data.getName().get(-1);
+      
+      if (endTime !== '') {
+        var endComponent = new Name.Component(Name.fromEscapedString(endTime));
+      }
+      if (running && (endTime === '' || lastTimestamp.toVersion() < endComponent.toVersion())) {
+        var exclude = new Exclude();
+        exclude.appendAny();
+        exclude.appendComponent(lastTimestamp);
+        
+        if (interest.getName().get(-1).toEscapedString() === data.getName().get(-1).toEscapedString()) {
+          interest.setName(interest.getName().getPrefix(-1));
+        }
+        
+        interest.setExclude(exclude);
+        interest.setInterestLifetimeMilliseconds(defaultInterestLifetime);
+        interest.setMustBeFresh(true);
+        face.expressInterest(interest, onData, onTimeout);
+      }
+      
+      if (drawOutput) {
+        // lastTimestamp.toVersion() * 1000
+        // new Date().getTime()
+        var toDraw = 0;
+        var dataObj = JSON.parse(data.getContent().buf());
+        if (dataObj.cpu_usage === undefined) {
+          toDraw = dataObj.pir_bool;
+        } else {
+          toDraw = dataObj.cpu_usage;
+        }
+        if (firstData === true) {
+          firstData = false;
+          var currentTime = new Date().getTime();
+          timeOffset = currentTime - lastTimestamp.toVersion() * 1000 - arbitraryTimeOffset;
+          lineX.append(currentTime - arbitraryTimeOffset, toDraw);
+        } else {
+          lineX.append(lastTimestamp.toVersion() * 1000 + timeOffset, toDraw);
+          console.log("Schedule to draw: " + toDraw);
+        }
+      } else {
+        document.getElementById('content').innerHTML += EncodingUtils.dataToHtml(data);
+      }
+    }
+    
+    function onTimeout(interest)
+    {
+      console.log("onTimeout called; re-express interest: " + interest.getName().toUri());
+      face.expressInterest(interest, onData, onTimeout);
+    }
+    
+    function run() {
+      if (!running) {
+        var interest = new Interest(new Name(dataPrefix));
+        interest.setInterestLifetimeMilliseconds(defaultInterestLifetime);
+        interest.setMustBeFresh(true);
+        
+        //%FDU%99%DBY
+        //%FDU%99%DC%23
+        //%FDU%99%DC.
+        if (document.getElementById('start-time').value !== '') {
+          startTime = document.getElementById('start-time').value;
+          
+          var component = new Name.fromEscapedString(startTime);
+          var exclude = new Exclude();
+          exclude.appendAny();
+          exclude.appendComponent(component);
+          
+          interest.setExclude(exclude);
+        }
+        if (document.getElementById('end-time').value !== '') {
+          endTime = document.getElementById('end-time').value;
+        }
+        if (document.getElementById('rightmost-check').checked) {
+          interest.setChildSelector(1);
+        }
+        if (document.getElementById('default-check').checked) {
+          interest.setChildSelector(0);
+        }
+        if (document.getElementById('component-check').checked) {
+          interest.getName().append(Name.fromEscapedString(document.getElementById('start-component').value));
+        }
+        
+        face.expressInterest(interest, onData, onTimeout);
+        console.log("Interest expressed: " + interest.getName().toUri());
+        document.getElementById('start-btn').innerText = "Stop fetch";
+        running = true;
+        
+        if (drawOutput) {
+          smoothie.streamTo(document.getElementById("mycanvas"), 0);
+          smoothie.addTimeSeries(lineX, {strokeStyle:'#00FF00'});
+          firstData = true;
+        }
+      } else {
+        document.getElementById('start-btn').innerText = "Start fetch";
+        running = false;
+      }
+    }
+    
+    function stop() {
+      if (running) {
+        running = false;
+      }
+    }
+    
+    function defaultClick() {
+      if (document.getElementById('default-check').checked) {
+        document.getElementById('rightmost-check').checked = false;
+        document.getElementById('component-check').checked = false;
+      }
+    }
+    
+    function rightmostClick() {
+      if (document.getElementById('rightmost-check').checked) {
+        document.getElementById('component-check').checked = false;
+        document.getElementById('default-check').checked = false;
+      }
+    }
+    
+    function componentClick() {
+      if (document.getElementById('component-check').checked) {
+        document.getElementById('rightmost-check').checked = false;
+        document.getElementById('default-check').checked = false;
+      }
+    }
+    
+    function componentKeyDown() {
+      if (document.getElementById('component-check').checked === false) {
+        document.getElementById('component-check').click();
+      }
+    }
+  </script>
+
+</head>
+<body onunload="stop()">
+  <h3>NDN Openloop Publisher visualizer via WebSocket</h3>
+  Start time:<br>
+  <input id="start-time" type="text"></input>
+  <br>
+  <br>
+  End time:<br>
+  <input id="end-time" type="text"></input>
+  <br>
+  <br>
+  
+  Start with right most:<br>
+  <input type="checkbox" id="rightmost-check" value="rightmost" onclick="rightmostClick()"></input> <br>
+  Start with certain component:<br>
+  <input type="checkbox" id="component-check" value="component" onclick="componentClick()"></input>
+  <input type="text" id="start-component" onkeydown="componentKeyDown()"></input> <br>
+  Default start (left most):<br>
+  <input type="checkbox" id="default-check" value="default" onclick="defaultClick()" checked></input> <br>
+  
+  <br>
+  <br>
+  <button id="start-btn" onclick="run()">Start fetch</button>
+
+  <p id="content">Content: <br/></p>
+  <canvas id="mycanvas" width="400" height="300"></canvas>
+</body>
+</html>
