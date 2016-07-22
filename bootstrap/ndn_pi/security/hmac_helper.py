@@ -18,8 +18,8 @@
 # A copy of the GNU General Public License is in the file COPYING.
 from pyndn.encoding import WireFormat
 from pyndn.util import Blob
-from sha256_hmac_signature import Sha256HmacSignature
-from pyndn import Data, KeyLocatorType, Interest, Name
+from pyndn import Data, KeyLocatorType, Interest, Name, HmacWithSha256Signature
+
 from hashlib import sha256
 from random import SystemRandom
 from time import time as timestamp
@@ -63,7 +63,7 @@ class HmacHelper(object):
         return signature
 
     def signData(self, data, keyName=None, wireFormat=None):
-        data.setSignature(Sha256HmacSignature())
+        data.setSignature(HmacWithSha256Signature())
         s = data.getSignature()
 
         s.getKeyLocator().setType(KeyLocatorType.KEYNAME)
@@ -101,7 +101,7 @@ class HmacHelper(object):
         if wireFormat is None:
             wireFormat = WireFormat.getDefaultWireFormat()
 
-        s = Sha256HmacSignature()
+        s = HmacWithSha256Signature()
         s.getKeyLocator().setType(KeyLocatorType.KEYNAME)
         s.getKeyLocator().setKeyName(keyName)
 

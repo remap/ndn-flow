@@ -24,7 +24,7 @@ from pyndn import Name, Face, Interest, Data
 from pyndn.security import KeyChain
 from pyndn.security.identity import IdentityManager
 from pyndn.security.policy import ConfigPolicyManager
-from pyndn.security.certificate import IdentityCertificate
+from pyndn.security.certificate import IdentityCertificate, PublicKey
 from pyndn.encoding import ProtobufTlv
 
 from base_node import BaseNode, Command
@@ -149,8 +149,9 @@ class IotNode(BaseNode):
              
         self.log.debug("Found key: " + defaultKey.toUri()+ " renaming as: " + newKeyName.toUri())
 
-        keyType = self._identityStorage.getKeyType(defaultKey)
         keyDer = self._identityStorage.getKey(defaultKey)
+        keyType = PublicKey(keyDer).getKeyType()
+        print keyType
 
         if makeKey:
             try:

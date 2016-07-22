@@ -364,7 +364,7 @@ class IotController(BaseNode):
             devicePin = input('PIN: ')
             deviceSuffix = input('Node name: ')
         except KeyboardInterrupt:
-               print('Pairing attempt aborted')
+            print('Pairing attempt aborted')
         else:
             if len(deviceSerial) and len(devicePin) and len(deviceSuffix):
                 self._addDeviceToNetwork(deviceSerial, Name(deviceSuffix), 
