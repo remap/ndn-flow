@@ -22,13 +22,14 @@ class CachedContentPublisher(IotNode):
         self.addCommand(Name('listPrefixes'), self.listDataPrefixes, ['repo'],
             False)
 
-    def setupComplete(self):
+    def setupComplete(self, deviceIdentity):
+        print "Setup complete: device identity name is: " + deviceIdentity.toUri()
         # The cache will clear old values every 100s
-        self._dataCache = MemoryContentCache(self.face, 100000)
-        self._dataPrefix = Name(self.prefix).append('data')
-        self.registerCachePrefix()
-        print "Serving data at {}".format(self._dataPrefix.toUri())
-        self.loop.call_soon(self.publishData)
+        # self._dataCache = MemoryContentCache(self.face, 100000)
+        # self._dataPrefix = Name(self.prefix).append('data')
+        # self.registerCachePrefix()
+        # print "Serving data at {}".format(self._dataPrefix.toUri())
+        # self.loop.call_soon(self.publishData)
 
     def listDataPrefixes(self, interest):
         d = Data(interest.getName())

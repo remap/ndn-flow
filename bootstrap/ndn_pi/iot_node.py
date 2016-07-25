@@ -280,7 +280,7 @@ class IotNode(BaseNode):
         if not self._setupComplete:
             self._setupComplete = True
             self.log.info('Setup complete')
-            self.loop.call_soon(self.setupComplete)
+            self.loop.call_soon(self.setupComplete, self._configureIdentity)
 
     def _onCapabilitiesTimeout(self, interest):
         #try again in 30s
@@ -446,7 +446,7 @@ class IotNode(BaseNode):
             self._commands.remove(toRemove)
 
 
-    def setupComplete(self):
+    def setupComplete(self, deviceIdentity):
         """
         Entry point for user-defined behavior. After this is called, the 
         certificates are in place and capabilities have been sent to the 
