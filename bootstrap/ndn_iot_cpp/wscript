@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+ 
+APPNAME = 'NDN_IOT_CPP'
+VERSION = '0.1'
+ 
+from waflib import Build, Logs, Utils, Task, TaskGen, Configure, Context
+
+def options(opt):
+    opt.load('compiler_c compiler_cxx')
+    opt.load('protoc', tooldir = ['waf-tools'])
+
+def configure(conf):
+    conf.load("compiler_c compiler_cxx")
+    conf.add_supported_cxxflags (cxxflags = ['-O3', 
+                                             '-std=c++11',
+                                             '-std=c++0x',
+                                             '-g'])
+
+    conf.check_cfg(package = 'sqlite3', args = ['--cflags', '--libs'], uselib_store = 'SQLITE3', mandatory = True)
+
+    conf.write_config_header('config.h')
+
+    conf.check(features = 'cxx cxxprogram', lib = ['ndn-cpp'], libpath = ['/usr/local/lib'], cflags = ['-Wall'], uselib_store = 'NDNCPP', mandatory = True)
+    conf.env.append_value('INCLUDES', ['/usr/local/include'])
+    
+    conf.load('protoc')
+
+def build (bld):
+    version(bld)
+    libndn_iot = dict(
+        target = "ndn_iot_cpp",
+        name = "ndn_iot_cpp",
+        
+        source = bld.path.ant_glob(['src/*.cpp']),
+        use = 'NDNCPP',
+        includes = '. src include',
+        export_includes = "src",
+        install_path = '${LIBDIR}',
+    )
+
+    bld(
+        features = ["pch", "cxx", "cxxshlib"],
+        VNUM = VERSION_BASE,
+        CNUM = VERSION_BASE,
+        **libndn_iot
+    )
+
+@Configure.conf
+def add_supported_cxxflags(self, cxxflags):
+    """
+    Check which cxxflags are supported by compiler and add them to env.CXXFLAGS variable
+    """
+    self.start_msg('Checking allowed flags for c++ compiler')
+
+    supportedFlags = []
+    for flag in cxxflags:
+        if self.check_cxx (cxxflags=[flag], mandatory=False):
+            supportedFlags += [flag]
+
+    self.end_msg (' '.join (supportedFlags))
+    self.env.CXXFLAGS += supportedFlags
+
+def version(ctx):
+    if getattr(Context.g_module, 'VERSION_BASE', None):
+        return
+
+    Context.g_module.VERSION_BASE = Context.g_module.VERSION
