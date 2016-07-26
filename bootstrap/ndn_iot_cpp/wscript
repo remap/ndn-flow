@@ -7,8 +7,8 @@ from waflib import Build, Logs, Utils, Task, TaskGen, Configure, Context
 
 def options(opt):
     opt.load('compiler_c compiler_cxx')
-    opt.load('protoc', tooldir = ['waf-tools'])
-
+    opt.load('boost protoc', tooldir = ['waf-tools'])
+    
 def configure(conf):
     conf.load("compiler_c compiler_cxx")
     conf.add_supported_cxxflags (cxxflags = ['-O3', 
@@ -25,6 +25,11 @@ def configure(conf):
     
     conf.load('protoc')
 
+    # dependency of threadsafe face, boost asio (libraries system and thread)
+    conf.load('boost')
+    conf.check_boost(lib='system thread')
+
+
 def build (bld):
     version(bld)
     libndn_iot = dict(
@@ -32,7 +37,7 @@ def build (bld):
         name = "ndn_iot_cpp",
         
         source = bld.path.ant_glob(['src/*.cpp']),
-        use = 'NDNCPP',
+        use = 'BOOST NDNCPP PROTOBUF',
         includes = '. src include',
         export_includes = "src",
         install_path = '${LIBDIR}',
