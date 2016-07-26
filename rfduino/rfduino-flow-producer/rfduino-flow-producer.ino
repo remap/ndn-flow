@@ -24,7 +24,7 @@
 #include <RFduinoBLE.h>
 #include <ndn-cpp/lite/data-lite.hpp>
 #include <ndn-cpp/lite/interest-lite.hpp>
-#include <ndn-cpp/lite/encoding/tlv-0_1_1-wire-format-lite.hpp>
+#include <ndn-cpp/lite/encoding/tlv-0_2-wire-format-lite.hpp>
 #include <ndn-cpp/lite/util/crypto-lite.hpp>
 
 using namespace ndn;
@@ -104,7 +104,7 @@ setup()
   while (NRF_RNG->EVENTS_VALRDY == 0);
   seed *= NRF_RNG->VALUE;
   randomSeed(seed);
-  // Turn on the random number generator since it doesn't work when BLE is enabled.
+  // Turn off the random number generator since it doesn't work when BLE is enabled.
   NRF_RNG->TASKS_STOP = 1;
   
   // Generate the HmacKey.
@@ -236,7 +236,7 @@ onReceivedElement(const uint8_t *element, size_t elementLength)
        excludeEntries, sizeof(excludeEntries) / sizeof(excludeEntries[0]), 0, 0);
     size_t signedPortionBeginOffset, signedPortionEndOffset;
     ndn_Error error;
-    if ((error = Tlv0_1_1WireFormatLite::decodeInterest
+    if ((error = Tlv0_2WireFormatLite::decodeInterest
          (interest, element, elementLength, &signedPortionBeginOffset, 
           &signedPortionEndOffset))) {
       Serial.println("Error decoding the received interest");
@@ -274,7 +274,7 @@ signAndSendData(DataLite& data)
   ndn_Error error;
   size_t signedPortionBeginOffset, signedPortionEndOffset;
   size_t encodingLength;
-  if ((error = Tlv0_1_1WireFormatLite::encodeData
+  if ((error = Tlv0_2WireFormatLite::encodeData
        (data, &signedPortionBeginOffset, &signedPortionEndOffset, output, &encodingLength)))
     return error;
 
@@ -286,7 +286,7 @@ signAndSendData(DataLite& data)
   data.getSignature().setSignature(BlobLite(signatureValue, ndn_SHA256_DIGEST_SIZE));
   
   // Encode again to include the signature.
-  if ((error = Tlv0_1_1WireFormatLite::encodeData
+  if ((error = Tlv0_2WireFormatLite::encodeData
        (data, &signedPortionBeginOffset, &signedPortionEndOffset, output, &encodingLength)))
     return error;
 
