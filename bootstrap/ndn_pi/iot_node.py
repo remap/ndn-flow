@@ -87,9 +87,9 @@ class IotNode(BaseNode):
     def _extractNameFromField(self, protobufField):
         return Name('/'.join(protobufField.components))
 
-    def _onConfigurationReceived(self, prefix, interest, transport, prefixId):
+    def _onConfigurationReceived(self, prefix, interest, face, interestFilterId, filter):
         # the interest we get here is signed by HMAC, let's verify it
-        self.tempPrefixId = prefixId # didn't get it from register because of the event loop
+        self.tempPrefixId = interestFilterId # didn't get it from register because of the event loop
         dataName = Name(interest.getName())
         replyData = Data(dataName)
         if (self._hmacHandler.verifyInterest(interest)):
@@ -97,7 +97,7 @@ class IotNode(BaseNode):
             configComponent = interest.getName().get(prefix.size())
             replyData.setContent('200')
             self._hmacHandler.signData(replyData, keyName=self.prefix)
-            transport.send(replyData.wireEncode().buf())
+            self.face.putData(replyData)
 
             environmentConfig = DeviceConfigurationMessage()
             ProtobufTlv.decode(environmentConfig, configComponent.getValue()) 
@@ -331,11 +331,11 @@ class IotNode(BaseNode):
         """
         self.log.info("Received invalid" + dataOrInterest.getName().toUri())
 
-    def _makeVerifiedCommandDispatch(self, function, transport):
+    def _makeVerifiedCommandDispatch(self, function):
         def onVerified(interest):
             self.log.info("Verified: " + interest.getName().toUri())
             responseData = function(interest)
-            self.sendData(responseData, transport)
+            self.sendData(responseData)
         return onVerified
 
     def unknownCommandResponse(self, interest):
@@ -351,7 +351,7 @@ class IotNode(BaseNode):
 
         return responseData
 
-    def _onCommandReceived(self, prefix, interest, transport, prefixId):
+    def _onCommandReceived(self, prefix, interest, face, interestFilterId, filter):
 
         # first off, we shouldn't be here if we have no configured environment
         # just let this interest time out
@@ -364,7 +364,7 @@ class IotNode(BaseNode):
         if certData is not None:
             self.log.info("Serving certificate request")
             # if we sign the certificate, we lose the controller's signature!
-            self.sendData(certData, transport, False)
+            self.sendData(certData, False)
             return
 
         # else we must look in our command list to see if this requires verification
@@ -380,11 +380,11 @@ class IotNode(BaseNode):
                 
                 if not command.isSigned:
                     responseData = dispatchFunc(interest)
-                    self.sendData(responseData, transport)
+                    self.sendData(responseData)
                 else:
                     try:
                         self._keyChain.verifyInterest(interest, 
-                                self._makeVerifiedCommandDispatch(dispatchFunc, transport),
+                                self._makeVerifiedCommandDispatch(dispatchFunc),
                                 self.verificationFailed)
                         return
                     except Exception as e:

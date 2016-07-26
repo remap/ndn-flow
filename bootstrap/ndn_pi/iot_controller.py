@@ -137,7 +137,7 @@ class IotController(BaseNode):
 # Certificate signing
 ######
 
-    def _handleCertificateRequest(self, interest, transport):
+    def _handleCertificateRequest(self, interest):
         """
         Extracts a public key name and key bits from a command interest name 
         component. Generates a certificate if the request is verifiable.
@@ -174,7 +174,7 @@ class IotController(BaseNode):
             response.setContent("Denied")
         if hmac is not None:
             hmac.signData(response)
-        self.sendData(response, transport, False)
+        self.sendData(response, False)
 
     def _createCertificateFromRequest(self, message):
         """
@@ -268,16 +268,15 @@ class IotController(BaseNode):
 # Interest handling
 ####
 
-    def _onCommandReceived(self, prefix, interest, transport, prefixId):
+    def _onCommandReceived(self, prefix, interest, face, interestFilterId, filter):
         """
         """
         interestName = interest.getName()
-
         #if it is a certificate name, serve the certificate
         foundCert = self._identityStorage.getCertificate(interestName)
         if foundCert is not None:
             self.log.debug("Serving certificate request")
-            transport.send(foundCert.wireEncode().buf())
+            self.face.putData(foundCert)
             return
 
         afterPrefix = interestName.get(prefix.size()).toEscapedString()
@@ -285,11 +284,11 @@ class IotController(BaseNode):
             #compose device list
             self.log.debug("Received device list request")
             response = self._prepareCapabilitiesList(interestName)
-            self.sendData(response, transport)
+            self.sendData(response)
         elif afterPrefix == "certificateRequest":
             #build and sign certificate
             self.log.debug("Received certificate request")
-            self._handleCertificateRequest(interest, transport)
+            self._handleCertificateRequest(interest)
 
         elif afterPrefix == "updateCapabilities":
             # needs to be signed!
@@ -297,15 +296,29 @@ class IotController(BaseNode):
             def onVerifiedCapabilities(interest):
                 response = Data(interest.getName())
                 response.setContent(str(time.time()))
-                self.sendData(response, transport)
+                self.sendData(response)
                 self._updateDeviceCapabilities(interest)
             self._keyChain.verifyInterest(interest, 
                     onVerifiedCapabilities, self.verificationFailed)
+        elif afterPrefix == "requests":
+            # application request to publish under some names received; need to be signed
+            def onVerifiedAppRequest(interest):
+                # TODO: for now, we automatically grant access to any signed interest
+                response = Data(interest.getName())
+                response.setContent(str(time.time()))
+                self.sendData(response)
+                self.log.info("Verified and granted application publish request")
+                # TODO: update trust schema and redistribute
+                return
+            self.log.debug("Received application request")
+            # TODO: update keyChain policyManager
+            self._keyChain.verifyInterest(interest, 
+                    onVerifiedAppRequest, self.verificationFailed)
         else:
             response = Data(interest.getName())
             response.setContent("500")
             response.getMetaInfo().setFreshnessPeriod(1000)
-            transport.send(response.wireEncode().buf())
+            self.sendData(response)
 
     def onStartup(self):
         # begin taking add requests

@@ -160,17 +160,15 @@ class BaseNode(object):
         """
         self._keyChain.sign(data, self.getDefaultCertificateName())
 
-    def sendData(self, data, transport, sign=True):
+    def sendData(self, data, sign=True):
         """
         Reply to an interest with a data packet, optionally signing it.
         :param pyndn.Data data: The response data packet
-        :param pyndn.Transport transport: The transport to send the data through. This is 
-            obtained from an incoming interest handler
         :param boolean sign: (optional, default=True) Whether the response must be signed. 
         """
         if sign:
             self.signData(data)
-        transport.send(data.wireEncode().buf())
+        self.face.putData(data)
 
 ###
 # 

@@ -31,6 +31,7 @@ class FlowPublisher(object):
         self._dataPrefix = None
         self._defaultCertificateName = None
         self._controllerName = None
+        self._applicationName = "flow"
 
         self._keyChain = keyChain
         self._loop = loop
@@ -82,6 +83,9 @@ class FlowPublisher(object):
             self._controllerName = self.getIdentityNameFromCertName(signerName)
             print "Controller name: " + self._controllerName.toUri()
 
+            if "application" in confObj:
+                self._applicationName = confObj["application"]
+
         if requestPermission:
             self.sendAppRequest()
         return
@@ -108,9 +112,10 @@ class FlowPublisher(object):
             message.command.idName.components.append(self._defaultIdentity.get(component).toEscapedString())
         for component in range(self._dataPrefix.size()):
             message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
+        message.command.appName = self._applicationName
         paramComponent = ProtobufTlv.encode(message)
 
-        requestInterest = Interest(Name(self._controllerName).append("requests").append(paramComponent))
+        requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
         # TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
         requestInterest.setInterestLifetimeMilliseconds(100000)
         self._keyChain.sign(requestInterest, self._defaultCertificateName)
