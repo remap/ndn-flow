@@ -19,30 +19,36 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
-#ifndef NDN_RSA_PUBLIC_KEY_LITE_HPP
-#define NDN_RSA_PUBLIC_KEY_LITE_HPP
+#ifndef NDN_RSAREF_RSA_PUBLIC_KEY_LITE_HPP
+#define NDN_RSAREF_RSA_PUBLIC_KEY_LITE_HPP
 
+#if 0 // TODO: Move header files to the proper location.
+#include "../util/blob-lite.hpp"
+#include "../../c/errors.h"
+#include "../../c/encrypt/algo/encrypt-params-types.h"
+#include "../../c/security/rsaref-rsa-public-key-types.h"
+#else
 #include <ndn-cpp/lite/util/blob-lite.hpp>
 #include <ndn-cpp/c/errors.h>
 #include <ndn-cpp/c/encrypt/algo/encrypt-params-types.h>
+#include "rsaref-rsa-public-key-types.h"
+#endif
 
 namespace ndn {
 
 /**
- * Imitate RsaPublicKeyLite to hold a pointer to an RSAREF public key for use in
+ * An RsarefRsaPublicKeyLite holds a pointer to an R_RSA_PUBLIC_KEY for use in 
  * crypto operations based on RSAREF.
+ * This imitates RsaPublicKeyLite.
  */
-class RsarefRsaPublicKeyLite {
+class RsarefRsaPublicKeyLite : private ndn_RsarefRsaPublicKey {
 public:
   /**
    * Create an RsarefRsaPublicKeyLite to use the given publicKey.
    * @param publicKey The RSAREF R_RSA_PUBLIC_KEY struct which is already
    * initialized.
    */
-  RsarefRsaPublicKeyLite(const R_RSA_PUBLIC_KEY& publicKey)
-  : publicKey_(&publicKey)
-  {
-  }
+  RsarefRsaPublicKeyLite(R_RSA_PUBLIC_KEY& publicKey);
     
   /**
    * Use this public key to encrypt plainData according to the algorithmType.
@@ -92,8 +98,17 @@ public:
        encryptedDataLength, randomStruct);
   }
 
-// debug private:
-  const R_RSA_PUBLIC_KEY* publicKey_;
+  /**
+   * Downcast the reference to the ndn_RsarefRsaPublicKey struct to an
+   * RsarefRsaPublicKeyLite.
+   * @param blob A reference to the ndn_RsarefRsaPublicKey struct.
+   * @return The same reference as RsarefRsaPublicKeyLite.
+   */
+  static RsarefRsaPublicKeyLite&
+  downCast(ndn_RsarefRsaPublicKey& blob) { return *(RsarefRsaPublicKeyLite*)&blob; }
+
+  static const RsarefRsaPublicKeyLite&
+  downCast(const ndn_RsarefRsaPublicKey& blob) { return *(RsarefRsaPublicKeyLite*)&blob; }
 };
 
 }

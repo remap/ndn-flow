@@ -19,30 +19,30 @@
  * A copy of the GNU Lesser General Public License is in the file COPYING.
  */
 
-#if 0 // TODO: Move header files to the proper location.
-#include "../../c/security/rsaref-rsa-public-key.h"
-#include <ndn-cpp/lite/security/rsaref-rsa-public-key-lite.hpp>
-#else
-#include "rsaref-rsa-public-key.h"
-#include "rsaref-rsa-public-key-lite.hpp"
+#ifndef NDN_RSAREF_RSA_PUBLIC_KEY_TYPES_H
+#define NDN_RSAREF_RSA_PUBLIC_KEY_TYPES_H
+
+#if 1 // TODO: Update the R_RSA_PUBLIC_KEY definition so we can forward-declare
+      // it and not include RSAREF headers.
+#include <rsaref/source/global.h>
+#include <rsaref/source/rsaref.h>
 #endif
 
-namespace ndn {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-RsarefRsaPublicKeyLite::RsarefRsaPublicKeyLite(R_RSA_PUBLIC_KEY& publicKey)
-{
-  ndn_RsarefRsaPublicKey_initialize(this, &publicKey);
-}
+/**
+ * A struct ndn_RsarefRsaPublicKey holds a pointer to an R_RSA_PUBLIC_KEY for
+ * use in  crypto operations based on RSAREF.
+ * This imitates struct ndn_RsaPublicKey.
+ */
+struct ndn_RsarefRsaPublicKey {
+  R_RSA_PUBLIC_KEY *publicKey;
+};
 
-ndn_Error
-RsarefRsaPublicKeyLite::encrypt
-  (const uint8_t* plainData, size_t plainDataLength,
-   ndn_EncryptAlgorithmType algorithmType, uint8_t* encryptedData,
-   size_t& encryptedDataLength, R_RANDOM_STRUCT& randomStruct) const
-{
-  return ndn_RsarefRsaPublicKey_encrypt
-    (this, plainData, plainDataLength, algorithmType, encryptedData,
-     &encryptedDataLength, &randomStruct);
+#ifdef __cplusplus
 }
+#endif
 
-}
+#endif
