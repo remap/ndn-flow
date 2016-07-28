@@ -26,11 +26,7 @@
 #include <ndn-cpp/lite/interest-lite.hpp>
 #include <ndn-cpp/lite/encoding/tlv-0_2-wire-format-lite.hpp>
 #include <ndn-cpp/lite/util/crypto-lite.hpp>
-#include <rsaref/source/global.h>
-#include <rsaref/source/rsaref.h>
-extern "C" {
-#include <rsaref/source/r_random.h>
-}
+#include "rsaref-crypto.h"
 #include "rsaref-rsa-public-key-lite.hpp"
 
 using namespace ndn;
@@ -138,27 +134,21 @@ void setup()
   Serial.println("RFduino BLE Tx Power Level: -20dBm");
 
   // Generate a random seed.
-  R_RandomInit(&RandomStruct);
   // Turn on the random number generator.
   NRF_RNG->TASKS_START = 1;
-  while(true) {
-    unsigned int bytesNeeded;
-    R_GetRandomBytesNeeded(&bytesNeeded, &RandomStruct);
-    if (bytesNeeded == 0)
-      break;
-
+  while (ndn_RsarefCrypto_getRandomBytesNeeded() > 0) {
     // Clear the ready flag and wait for a value.
     NRF_RNG->EVENTS_VALRDY = 0;
     while (NRF_RNG->EVENTS_VALRDY == 0);
     unsigned char seed = NRF_RNG->VALUE;
-    R_RandomUpdate(&RandomStruct, &seed, 1);
+    ndn_RsarefCrypto_randomUpdate(&seed, 1);
   }
 
   // Turn off the random number generator since it doesn't work when BLE is enabled.
   NRF_RNG->TASKS_STOP = 1;
   
   // Generate the HmacKey.
-  R_GenerateBytes(HmacKey, sizeof(HmacKey), &RandomStruct);
+  CryptoLite::generateRandomBytes(HmacKey, sizeof(HmacKey));
   // Set HmacKeyDigest to sha256(HmacKey).
   CryptoLite::digestSha256(HmacKey, sizeof(HmacKey), HmacKeyDigest);
 
@@ -170,14 +160,14 @@ void setup()
   ndn_Error error;
   error = publicKeyLite.encrypt
           (HmacKey, sizeof(HmacKey), ndn_EncryptAlgorithmType_RsaPkcs,
-           encryptedHmacKey, encryptedHmacKeyLength, RandomStruct);
+           encryptedHmacKey, encryptedHmacKeyLength);
   if (error) {
     // We don't expect this to happen.
     Serial.print("Error encrypting the HmacKey: ");
     Serial.println(error);
   }
   else {
-    Serial.print("encryptedHmacKey ");
+    Serial.print("encryptedHmacKey");
     printHex(encryptedHmacKey, encryptedHmacKeyLength); 
     Serial.println("");
   }

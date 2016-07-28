@@ -30,17 +30,18 @@
 #endif
 #include "rsaref-rsa-public-key.h"
 
+R_RANDOM_STRUCT *ndn_RsarefCrypto_getGlobalRandomStruct();
+
 ndn_Error
 ndn_RsarefRsaPublicKey_encrypt
   (const struct ndn_RsarefRsaPublicKey *self, const uint8_t *plainData,
    size_t plainDataLength, ndn_EncryptAlgorithmType algorithmType,
-   uint8_t *encryptedData, size_t *encryptedDataLength,
-   R_RANDOM_STRUCT *randomStruct)
+   uint8_t *encryptedData, size_t *encryptedDataLength)
 {
   unsigned int outputLength, bytesNeeded;
 
   // RSAPublicEncrypt doesn't check this, so do it here.
-  R_GetRandomBytesNeeded(&bytesNeeded, randomStruct);
+  R_GetRandomBytesNeeded(&bytesNeeded, ndn_RsarefCrypto_getGlobalRandomStruct());
   if (bytesNeeded > 0)
     return NDN_ERROR_Error_in_encrypt_operation;
 
@@ -49,9 +50,10 @@ ndn_RsarefRsaPublicKey_encrypt
 
   if (RSAPublicEncrypt
       ((unsigned char *)encryptedData, &outputLength, (unsigned char *)plainData,
-       plainDataLength, self->publicKey, randomStruct) != 0)
+       plainDataLength, self->publicKey, ndn_RsarefCrypto_getGlobalRandomStruct()) != 0)
     return NDN_ERROR_Error_in_encrypt_operation;
 
   *encryptedDataLength = outputLength;
   return NDN_ERROR_success;
 }
+

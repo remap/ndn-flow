@@ -59,18 +59,17 @@ public:
    * must provide a buffer large enough to receive the bytes.
    * @param encryptedDataLength Set encryptedDataLength to the number of bytes
    * placed in the encryptedData buffer.
-   * @param randomStruct An R_RANDOM_STRUCT which must already be initialized
-   * and seeded so that R_GetRandomBytesNeeded sets bytesNeeded to 0.
    * @return 0 for success, else NDN_ERROR_Unsupported_algorithm_type for
    * unsupported algorithmType padding scheme, or
    * NDN_ERROR_Error_in_encrypt_operation if can't complete the encrypt 
-   * operation, including if randomStruct is not seeded..
+   * operation, or NDN_ERROR_Error_in_generate_operation is the RSAREF
+   * global random struct is not seeded.
    */
   ndn_Error
   encrypt
     (const uint8_t* plainData, size_t plainDataLength,
      ndn_EncryptAlgorithmType algorithmType, uint8_t* encryptedData,
-     size_t& encryptedDataLength, R_RANDOM_STRUCT& randomStruct) const;
+     size_t& encryptedDataLength) const;
 
   /**
    * Use this public key to encrypt plainData according to the algorithmType.
@@ -80,22 +79,20 @@ public:
    * must provide a buffer large enough to receive the bytes.
    * @param encryptedDataLength Set encryptedDataLength to the number of bytes
    * placed in the encryptedData buffer.
-   * @param randomStruct An R_RANDOM_STRUCT which must already be initialized
-   * and seeded so that R_GetRandomBytesNeeded sets bytesNeeded to 0.
    * @return 0 for success, else NDN_ERROR_Unsupported_algorithm_type for
    * unsupported algorithmType padding scheme, or
-   * NDN_ERROR_Error_in_encrypt_operation if can't complete the encrypt
-   * operation, including if randomStruct is not seeded..
+   * NDN_ERROR_Error_in_encrypt_operation if can't complete the encrypt 
+   * operation, or NDN_ERROR_Error_in_generate_operation is the RSAREF
+   * global random struct is not seeded.
    */
   ndn_Error
   encrypt
     (const BlobLite& plainData, ndn_EncryptAlgorithmType algorithmType,
-     uint8_t* encryptedData, size_t& encryptedDataLength,
-     R_RANDOM_STRUCT& randomStruct) const
+     uint8_t* encryptedData, size_t& encryptedDataLength) const
   {
     return encrypt
       (plainData.buf(), plainData.size(), algorithmType, encryptedData,
-       encryptedDataLength, randomStruct);
+       encryptedDataLength);
   }
 
   /**

@@ -38,11 +38,11 @@ ndn_Error
 RsarefRsaPublicKeyLite::encrypt
   (const uint8_t* plainData, size_t plainDataLength,
    ndn_EncryptAlgorithmType algorithmType, uint8_t* encryptedData,
-   size_t& encryptedDataLength, R_RANDOM_STRUCT& randomStruct) const
+   size_t& encryptedDataLength) const
 {
   return ndn_RsarefRsaPublicKey_encrypt
     (this, plainData, plainDataLength, algorithmType, encryptedData,
-     &encryptedDataLength, &randomStruct);
+     &encryptedDataLength);
 }
 
 }
