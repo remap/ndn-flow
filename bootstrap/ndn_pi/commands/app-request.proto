@@ -1,0 +1,11 @@
+message AppRequestMessage {
+	message Name {
+		repeated bytes components = 8;
+	}
+	message AppRequest {
+		required Name idName = 220;
+        required Name dataPrefix = 221;
+        required string appName = 222;
+	}
+	required AppRequest command = 223;
+}
