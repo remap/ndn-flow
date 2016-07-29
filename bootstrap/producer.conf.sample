@@ -1,5 +1,5 @@
 {
-	"identity": "/home/name",
+	"identity": "default",
 	"signer": "default",
 	"prefix": "/home/flow/ps-publisher",
 	"application": "flow"
