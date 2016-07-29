@@ -1,0 +1,6 @@
+{
+	"identity": "/home/name",
+	"signer": "default",
+	"prefix": "/home/flow/ps-publisher",
+	"application": "flow"
+}
