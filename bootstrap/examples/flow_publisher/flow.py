@@ -11,6 +11,7 @@ from pyndn.security.identity import IdentityManager, FilePrivateKeyStorage, Basi
 from pyndn.security.policy import NoVerifyPolicyManager
 from pyndn.threadsafe_face import ThreadsafeFace
 from pyndn.encoding import ProtobufTlv
+from pyndn.util.boost_info_parser import BoostInfoParser
 
 from ndn_pi.commands import AppRequestMessage
 
@@ -37,58 +38,75 @@ class FlowPublisher(object):
         self._loop = loop
         self._face = face
 
-        self.processConfiguration(confFile)
-        
-        self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
-        print "Using default certificate name: " + self._defaultCertificateName.toUri()
+        if self.processConfiguration(confFile):
+            self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
+            print "Using default certificate name: " + self._defaultCertificateName.toUri()
+        else:
+            print "Setup failed"
 
-    def processConfiguration(self, confFile, requestPermission = True):
-        with open(confFile, "r") as f:
-            conf = f.read()
-            confObj = json.loads(conf)
-            
-            if "identity" in confObj:
-                if confObj["identity"] == "default":
-                    self._defaultIdentity = self._keyChain.getDefaultIdentity()
-                else:
-                    defaultIdName = Name(confObj["identity"])
-                    try:
-                        defaultKey = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(defaultIdName)
-                        self._defaultIdentity = defaultIdName
-                    except SecurityException:
-                        print "Identity " + defaultIdName.toUri() + " in configuration file " + confFile + " does not exist. Please configure the device with this identity first"
-            else:
+    def processConfiguration(self, confFile, requestPermission = True, onSetupComplete = None, onSetupFailed = None):
+        config = BoostInfoParser()
+        config.read(confFile)
+
+        # TODO: handle missing configuration, refactor dict representation
+        confObj = dict()
+        try:
+            confObj["identity"] = config["application/identity"][0].value
+            confObj["prefix"] = config["application/prefix"][0].value
+
+            confObj["signer"] = config["application/signer"][0].value
+            confObj["application"] = config["application/appName"][0].value
+        except KeyError as e:
+            msg = "Missing key in configuration: " + str(e)
+            print msg
+            return False
+
+        if "identity" in confObj:
+            if confObj["identity"] == "default":
                 self._defaultIdentity = self._keyChain.getDefaultIdentity()
-            # TODO: handling the case where no default identity is present
-            self._defaultCertificateName = self._keyChain.getIdentityManager().getDefaultCertificateNameForIdentity(self._defaultIdentity)
+            else:
+                defaultIdName = Name(confObj["identity"])
+                try:
+                    defaultKey = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(defaultIdName)
+                    self._defaultIdentity = defaultIdName
+                except SecurityException:
+                    msg = "Identity " + defaultIdName.toUri() + " in configuration file " + confFile + " does not exist. Please configure the device with this identity first"
+                    print msg
+                    if onSetupFailed:
+                        onSetupFailed(msg)
+                    return False
+        else:
+            self._defaultIdentity = self._keyChain.getDefaultIdentity()
+        # TODO: handling the case where no default identity is present
+        self._defaultCertificateName = self._keyChain.getIdentityManager().getDefaultCertificateNameForIdentity(self._defaultIdentity)
 
-            if "prefix" in confObj:
-                self._dataPrefix = Name(confObj["prefix"])
-            else:
-                print "Configuration file " + confFile + " is missing application data prefix"
-            
-            # TODO: handling signature with direct bits instead of keylocator keyname
-            signerName = self._keyChain.getCertificate(self._defaultCertificateName).getSignature().getKeyLocator().getKeyName()    
-            if "signer" in confObj:    
-                if confObj["signer"] == "default":
-                    print "Deriving from " + signerName.toUri() + " for controller name"
-                else:
-                    intendedSigner = confObj["signer"]
-                    if intendedSigner != signerName.toUri():
-                        print "Configuration file " + confFile + " signer names mismatch: expected " + intendedSigner + "; got " + signerName.toUri()
-                    else:
-                        signerName = Name(intendedSigner)
-            else:
+        if "prefix" in confObj:
+            self._dataPrefix = Name(confObj["prefix"])
+        else:
+            print "Configuration file " + confFile + " is missing application data prefix"
+        
+        # TODO: handling signature with direct bits instead of keylocator keyname
+        signerName = self._keyChain.getCertificate(self._defaultCertificateName).getSignature().getKeyLocator().getKeyName()    
+        if "signer" in confObj:    
+            if confObj["signer"] == "default":
                 print "Deriving from " + signerName.toUri() + " for controller name"
-            self._controllerName = self.getIdentityNameFromCertName(signerName)
-            print "Controller name: " + self._controllerName.toUri()
+            else:
+                intendedSigner = confObj["signer"]
+                if intendedSigner != signerName.toUri():
+                    print "Configuration file " + confFile + " signer names mismatch: expected " + intendedSigner + "; got " + signerName.toUri()
+                else:
+                    signerName = Name(intendedSigner)
+        else:
+            print "Deriving from " + signerName.toUri() + " for controller name"
+        self._controllerName = self.getIdentityNameFromCertName(signerName)
+        print "Controller name: " + self._controllerName.toUri()
 
-            if "application" in confObj:
-                self._applicationName = confObj["application"]
+        if "application" in confObj:
+            self._applicationName = confObj["application"]
 
         if requestPermission:
             self.sendAppRequest()
-        return
+        return True
 
     def getIdentityNameFromCertName(self, certName):
         i = certName.size() - 1
