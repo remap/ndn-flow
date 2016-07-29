@@ -27,15 +27,16 @@ except ImportError:
     import trollius as asyncio
 
 class FlowPublisher(object):
-    def __init__(self, face, keyChain, loop, confFile = "flow.conf"):
+    def __init__(self, face, confFile = "app.conf"):
         self._defaultIdentity = None
         self._dataPrefix = None
         self._defaultCertificateName = None
         self._controllerName = None
-        self._applicationName = "flow"
+        self._applicationName = ""
 
-        self._keyChain = keyChain
-        self._loop = loop
+        self._identityManager = IdentityManager(BasicIdentityStorage(), FilePrivateKeyStorage())
+        self._keyChain = KeyChain(self._identityManager)
+
         self._face = face
 
         if self.processConfiguration(confFile):
@@ -43,6 +44,9 @@ class FlowPublisher(object):
             print "Using default certificate name: " + self._defaultCertificateName.toUri()
         else:
             print "Setup failed"
+
+    def getKeyChain(self):
+        return self._keyChain
 
     def processConfiguration(self, confFile, requestPermission = True, onSetupComplete = None, onSetupFailed = None):
         config = BoostInfoParser()
@@ -101,8 +105,8 @@ class FlowPublisher(object):
         self._controllerName = self.getIdentityNameFromCertName(signerName)
         print "Controller name: " + self._controllerName.toUri()
 
-        if "application" in confObj:
-            self._applicationName = confObj["application"]
+        if "appName" in confObj:
+            self._applicationName = confObj["appName"]
 
         if requestPermission:
             self.sendAppRequest()
@@ -143,6 +147,7 @@ class FlowPublisher(object):
 
     def onAppRequestData(self, interest, data):
         print "Got application publishing request data"
+
         return
 
     def onAppRequestTimeout(self, interest):
@@ -153,7 +158,7 @@ class FlowPublisher(object):
         self._dataCache = MemoryContentCache(self._face, 100000)
         self.registerCachePrefix()
         print "Serving data at {}".format(self._dataPrefix.toUri())
-        self._loop.call_soon(self.publishData)
+        self._face.callLater(5000, self.publishData)
         return
 
     def registerCachePrefix(self):
@@ -187,20 +192,18 @@ class FlowPublisher(object):
         self._dataCache.add(dataOut)
 
         # repeat every 5 seconds
-        self._loop.call_later(5, self.publishData)
+        self._face.callLater(5000, self.publishData)
 
 if __name__ == '__main__':
     try:
         import psutil as ps
     except Exception as e:
         print str(e)
-    identityManager = IdentityManager(BasicIdentityStorage(), FilePrivateKeyStorage())
-    
+
     loop = asyncio.get_event_loop()
     face = ThreadsafeFace(loop)
-    keyChain = KeyChain()
 
-    n = FlowPublisher(face, keyChain, loop)
+    n = FlowPublisher(face)
     n.start()
 
     loop.run_forever()

@@ -1,6 +1,7 @@
+application 
 {
-	"identity": "default",
-	"signer": "default",
-	"prefix": "/home/flow/ps-publisher",
-	"application": "flow"
+  identity default
+  signer   default
+  prefix   "/home/flow/ps-publisher"
+  appName  "flow"
 }

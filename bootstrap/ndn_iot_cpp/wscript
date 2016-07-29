@@ -17,17 +17,17 @@ def configure(conf):
                                              '-g'])
 
     conf.check_cfg(package = 'sqlite3', args = ['--cflags', '--libs'], uselib_store = 'SQLITE3', mandatory = True)
-
-    conf.write_config_header('config.h')
-
+    # TODO: customizable lib paths
     conf.check(features = 'cxx cxxprogram', lib = ['ndn-cpp'], libpath = ['/usr/local/lib'], cflags = ['-Wall'], uselib_store = 'NDNCPP', mandatory = True)
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
     
     conf.load('protoc')
-
     # dependency of threadsafe face, boost asio (libraries system and thread)
     conf.load('boost')
     conf.check_boost(lib='system thread')
+
+    conf.write_config_header('config.h')
+
 
 
 def build (bld):
@@ -43,11 +43,33 @@ def build (bld):
         install_path = '${LIBDIR}',
     )
 
+    # Build the library
     bld(
-        features = ["pch", "cxx", "cxxshlib"],
+        features = ["cxx", "cxxshlib"],
         VNUM = VERSION_BASE,
         CNUM = VERSION_BASE,
         **libndn_iot
+    )
+
+    # Build the test    
+    # TODO: for now need to make install and export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
+    for i in bld.path.ant_glob(['examples/*.cpp']):
+        name = str(i)[:-len(".cpp")]
+        bld(
+            features = ["cxx", "cxxprogram"],
+            target = name,
+            source = [i],
+            use = 'ndn_iot_cpp',
+            includes = 'include',
+            install_path = None
+        )
+
+    # Copy the configuration file
+    bld( 
+        rule = "cp ${SRC} ${TGT}", 
+        source = "producer.conf.sample", 
+        target = "app.conf",
+        install_path = None
     )
 
 @Configure.conf
