@@ -1,6 +1,9 @@
 # Emacs temp files
 *~
 
+# Core dump
+core
+
 # Mac OSX
 .DS_*
 

@@ -32,18 +32,17 @@ def configure(conf):
 
 def build (bld):
     version(bld)
+    # Build the library
     libndn_iot = dict(
         target = "ndn_iot_cpp",
         name = "ndn_iot_cpp",
         
-        source = bld.path.ant_glob(['src/*.cpp']),
+        source = bld.path.ant_glob(['src/*.cpp', 'commands/*.cc']),
         use = 'BOOST NDNCPP PROTOBUF',
-        includes = '. src include',
+        includes = '. src include commands',
         export_includes = "src",
         install_path = '${LIBDIR}',
     )
-
-    # Build the library
     bld(
         features = ["cxx", "cxxshlib"],
         VNUM = VERSION_BASE,

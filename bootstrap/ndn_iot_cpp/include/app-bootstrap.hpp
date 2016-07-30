@@ -31,6 +31,16 @@ public:
 
   void
   sendAppRequest();
+
+  void
+  onAppRequestData(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::Data>& data);
+
+  void 
+  onAppRequestTimeout(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest);
+
+  void
+  onNetworkNack(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack);
+  
 private:
   ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
   ndn::ThreadsafeFace& face_;

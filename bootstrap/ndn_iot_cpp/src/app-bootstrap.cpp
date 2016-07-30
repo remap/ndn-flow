@@ -1,5 +1,9 @@
+#include <time.h>
+
 #include "app-bootstrap.hpp"
 #include "boost-info-parser.hpp"
+#include "app-request.pb.h"
+#include <ndn-cpp/encoding/protobuf-tlv.hpp>
 
 using namespace ndn;
 using namespace std;
@@ -102,24 +106,54 @@ AppBootstrap::processConfiguration
   
 void
 AppBootstrap::sendAppRequest() {
-  /*
-  message = AppRequestMessage()
+  AppRequestMessage message;
+  int i = 0;
 
-  for component in range(self._defaultIdentity.size()):
-      message.command.idName.components.append(self._defaultIdentity.get(component).toEscapedString())
-  for component in range(self._dataPrefix.size()):
-      message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
-  message.command.appName = self._applicationName
-  paramComponent = ProtobufTlv.encode(message)
+  for (i = 0; i < defaultIdentity_.size(); i++) {
+    message.mutable_command()->mutable_idname()->add_components(defaultIdentity_.get(i).toEscapedString());
+  }
+      
+  for (i = 0; i < dataPrefix_.size(); i++) {
+    message.mutable_command()->mutable_dataprefix()->add_components(dataPrefix_.get(i).toEscapedString());
+  }
+  
+  message.mutable_command()->set_appname(applicationName_);
+  time_t secondsSinceEpoch = time(0);
+  
+  Name requestInterestName(Name(controllerName_).append("requests").appendVersion((int)secondsSinceEpoch).append(Name::Component(ProtobufTlv::encode(message))));
+  Interest requestInterest(requestInterestName);
+  // TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
+  requestInterest.setInterestLifetimeMilliseconds(100000);
+  keyChain_->sign(requestInterest, defaultCertificateName_);
+  // keyChain.sign vs face.makeCommandInterest(requestInterest) ?
 
-  requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
-  # TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
-  requestInterest.setInterestLifetimeMilliseconds(100000)
-  self._keyChain.sign(requestInterest, self._defaultCertificateName)
-  self._face.expressInterest(requestInterest, self.onAppRequestData, self.onAppRequestTimeout)
-  print "Application publish request sent: " + requestInterest.getName().toUri()
-  */
+  face_.expressInterest
+    (requestInterest, bind(&AppBootstrap::onAppRequestData, this, _1, _2), 
+     bind(&AppBootstrap::onAppRequestTimeout, this, _1), bind(&AppBootstrap::onNetworkNack, this, _1, _2));
+  cout << "Application publish request sent: " + requestInterest.getName().toUri() << endl;
+  
   return ;
+}
+
+void
+AppBootstrap::onAppRequestData
+(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data)
+{
+
+}
+
+void 
+AppBootstrap::onAppRequestTimeout
+(const ptr_lib::shared_ptr<const Interest>& interest)
+{
+
+}
+
+void
+AppBootstrap::onNetworkNack
+(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<NetworkNack>& networkNack)
+{
+
 }
 
 Name
