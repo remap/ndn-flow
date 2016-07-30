@@ -95,7 +95,7 @@ AppBootstrap::processConfiguration
     return false;
   }
   if (requestPermission) {
-
+    sendAppRequest();
   } else {
     if (onSetupComplete) {
       onSetupComplete(defaultIdentity_, *keyChain_.get());
