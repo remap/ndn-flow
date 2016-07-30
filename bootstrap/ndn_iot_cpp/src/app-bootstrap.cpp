@@ -11,17 +11,16 @@ class AppBootstrap;
 
 AppBootstrap::AppBootstrap
   (ndn::ThreadsafeFace& face, std::string confFile)
- : face_(face) 
+ : face_(face)
 {
-  processConfiguration(confFile);
-  
   ptr_lib::shared_ptr<BasicIdentityStorage> identityStorage = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
   ptr_lib::shared_ptr<ConfigPolicyManager> policyManager = ptr_lib::shared_ptr<ConfigPolicyManager>(new ConfigPolicyManager());
   ptr_lib::shared_ptr<FilePrivateKeyStorage> filePrivateKeyStorage = ptr_lib::shared_ptr<FilePrivateKeyStorage>(new FilePrivateKeyStorage());
   ptr_lib::shared_ptr<IdentityManager> identityManager = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage, filePrivateKeyStorage));
-  keyChain_.reset(new KeyChain(identityManager));
+  keyChain_.reset(new KeyChain(identityManager, policyManager));
+
+  processConfiguration(confFile);
 }
-  
 
 AppBootstrap::~AppBootstrap()
 {

@@ -1,6 +1,6 @@
 application 
 {
-  identity default
+  identity "/home/doesnotexist"
   signer   default
   prefix   "/home/flow/ps-publisher"
   appName  "flow"
