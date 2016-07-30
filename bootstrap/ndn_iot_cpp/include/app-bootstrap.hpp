@@ -9,10 +9,10 @@ namespace ndn_iot {
 class AppBootstrap {
 
 typedef ndn::func_lib::function<void
-  (std::string)> OnSetupFailed;
+  (const std::string)> OnSetupFailed;
 
 typedef ndn::func_lib::function<void
-  (ndn::Name, ndn::KeyChain)> OnSetupComplete;
+  (const ndn::Name&, const ndn::KeyChain&)> OnSetupComplete;
 
 public:
   AppBootstrap
@@ -26,17 +26,19 @@ public:
      const OnSetupComplete& onSetupComplete = NULL, 
      const OnSetupFailed& onSetupFailed = NULL);
   
-  void 
-  sendApplicationRequest();
-
   ndn::Name
   getIdentityNameFromCertName(ndn::Name certName);
+
+  void
+  sendAppRequest();
 private:
   ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
   ndn::ThreadsafeFace& face_;
   ndn::Name defaultIdentity_;
   ndn::Name defaultCertificateName_;
   ndn::Name controllerName_;
+  ndn::Name dataPrefix_;
+
   std::string applicationName_;
 
   bool setupComplete;

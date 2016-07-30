@@ -74,13 +74,54 @@ AppBootstrap::processConfiguration
 
     if (config.getRoot()["application/appName"].size() > 0) {
       applicationName_ = config.getRoot()["application/appName"][0]->getValue();
+    } else {
+      throw std::runtime_error("Configuration is missing expected appName (application name).\n");
+    }
+
+    if (config.getRoot()["application/prefix"].size() > 0) {
+      dataPrefix_ = config.getRoot()["application/prefix"][0]->getValue();
+    } else {
+      throw std::runtime_error("Configuration is missing expected prefix (application prefix).\n");
     }
   } catch (const std::exception& e) {
-    cout << e.what();
+    cout << e.what() << endl;
+    if (onSetupFailed) {
+      onSetupFailed(e.what());
+    }
+    return false;
+  }
+  if (requestPermission) {
+
+  } else {
+    if (onSetupComplete) {
+      onSetupComplete(defaultIdentity_, *keyChain_.get());
+    }
   }
   return true;
 }
   
+void
+AppBootstrap::sendAppRequest() {
+  /*
+  message = AppRequestMessage()
+
+  for component in range(self._defaultIdentity.size()):
+      message.command.idName.components.append(self._defaultIdentity.get(component).toEscapedString())
+  for component in range(self._dataPrefix.size()):
+      message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
+  message.command.appName = self._applicationName
+  paramComponent = ProtobufTlv.encode(message)
+
+  requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
+  # TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
+  requestInterest.setInterestLifetimeMilliseconds(100000)
+  self._keyChain.sign(requestInterest, self._defaultCertificateName)
+  self._face.expressInterest(requestInterest, self.onAppRequestData, self.onAppRequestTimeout)
+  print "Application publish request sent: " + requestInterest.getName().toUri()
+  */
+  return ;
+}
+
 Name
 AppBootstrap::getIdentityNameFromCertName(Name certName)
 {
@@ -101,10 +142,5 @@ AppBootstrap::getIdentityNameFromCertName(Name certName)
   return certName.getPrefix(i);
 }
 
-void 
-AppBootstrap::sendApplicationRequest()
-{
-  return;
-}
 
 }
