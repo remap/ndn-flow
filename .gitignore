@@ -30,3 +30,5 @@
 
 *.pyo
 *.pyc
+
+.DS_Store
