@@ -30,11 +30,12 @@ from pyndn.encoding import ProtobufTlv
 from base_node import BaseNode, Command
 
 from ndn_pi.commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage
+from security.hmac_helper import HmacHelper
 
 from pyndn.util.boost_info_parser import BoostInfoParser
 from pyndn.security.security_exception import SecurityException
 
-default_prefix = Name('/localhop/configure')
+default_prefix = Name('/home/configure')
 
 try:
     import asyncio

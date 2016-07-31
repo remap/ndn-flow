@@ -56,7 +56,7 @@ class BaseNode(object):
         
         self._identityStorage = BasicIdentityStorage()
 
-        self._identityManager = IdentityManager(self._identityStorage, FilePrivateKeyStorage())
+        self._identityManager = IdentityManager(self._identityStorage)
         self._policyManager = IotPolicyManager(self._identityStorage)
 
         # hopefully there is some private/public key pair available

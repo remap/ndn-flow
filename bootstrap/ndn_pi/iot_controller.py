@@ -15,6 +15,7 @@ from pyndn.security.security_exception import SecurityException
 from base_node import BaseNode, Command
 
 from commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage
+from security.hmac_helper import HmacHelper
 
 from collections import defaultdict
 import json
