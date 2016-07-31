@@ -136,44 +136,21 @@ class IotNode(BaseNode):
         can sign us a certificate that can be used with other nodes in the network.
         """
 
-        #TODO: GENERATE A NEW PUBLIC/PRIVATE PAIR INSTEAD OF COPYING
-        makeKey = False
         try:
             defaultKey = self._identityStorage.getDefaultKeyNameForIdentity(keyIdentity)
-            newKeyName = defaultKey
         except SecurityException:
-            defaultIdentity = self._keyChain.getDefaultIdentity()
-            defaultKey = self._identityStorage.getDefaultKeyNameForIdentity(defaultIdentity)
-            newKeyName = self._identityStorage.getNewKeyName(keyIdentity, True)
-            makeKey = True
-             
-        self.log.debug("Found key: " + defaultKey.toUri()+ " renaming as: " + newKeyName.toUri())
-
-        keyDer = self._identityStorage.getKey(defaultKey)
-        keyType = PublicKey(keyDer).getKeyType()
-        print keyType
-
-        if makeKey:
-            try:
-                privateDer = self._identityManager.getPrivateKey(defaultKey)
-            except SecurityException:
-                # XXX: is recovery impossible?
-                pass
-            else:
-                try:
-                    self._identityStorage.addKey(newKeyName, keyType, keyDer)
-                    self._identityManager.addPublicKey(newKeyName, keyDer)
-                    self._identityManager.addPrivateKey(newKeyName, privateDer)
-                except SecurityException:
-                    # TODO: key shouldn't exist...
-                    pass
+            defaultKey = self._identityManager.generateRSAKeyPairAsDefault(keyIdentity)
+        
+        self.log.debug("Key name: " + defaultKey.toUri())
 
         message = CertificateRequestMessage()
-        message.command.keyType = keyType
-        message.command.keyBits = keyDer.toRawStr()
+        publicKey = self._identityManager.getPublicKey(defaultKey)
 
-        for component in range(newKeyName.size()):
-            message.command.keyName.components.append(newKeyName.get(component).toEscapedString())
+        message.command.keyType = publicKey.getKeyType()
+        message.command.keyBits = publicKey.getKeyDer().toRawStr()
+
+        for component in range(defaultKey.size()):
+            message.command.keyName.components.append(defaultKey.get(component).toEscapedString())
 
         paramComponent = ProtobufTlv.encode(message)
 
@@ -185,7 +162,6 @@ class IotNode(BaseNode):
         self.log.info("Sending certificate request to controller")
         self.log.debug("Certificate request: "+interest.getName().toUri())
         self.face.expressInterest(interest, self._onCertificateReceived, self._onCertificateTimeout)
-   
 
     def _onCertificateTimeout(self, interest):
         #give up?
@@ -218,11 +194,12 @@ class IotNode(BaseNode):
             def onRootCertificateDownload(interest, data):
                 try:
                     # zhehao: the root cert is downloaded and installed without verifying; should the root cert be preconfigured?
+                    # Insert root certificate so that we can verify newCert
                     self._policyManager._certificateCache.insertCertificate(data)
-                    self._identityStorage.addCertificate(data)
+                    self._identityManager.addCertificate(IdentityCertificate(data))
                 except SecurityException as e:
-                    #print(str(e))
-                    # already exists
+                    print(str(e))
+                    # already exists, or got certificate in wrong format
                     pass
                 self._keyChain.verifyData(newCert, self._finalizeCertificateDownload, self._certificateValidationFailed)
 

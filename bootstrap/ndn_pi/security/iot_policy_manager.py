@@ -24,7 +24,7 @@ from pyndn.security.policy import ConfigPolicyManager
 from pyndn import Name
 
 from pyndn.security.security_exception import SecurityException
-from pyndn.util.boost_info_parser import BoostInfoParser
+from pyndn.util.boost_info_parser import BoostInfoParser, BoostInfoTree
 
 from pyndn.security.policy.certificate_cache import CertificateCache
 
@@ -77,7 +77,7 @@ class IotPolicyManager(ConfigPolicyManager):
         Not called automatically in case they are all changing (typical for
         bootstrapping).
 
-        Resets the validation rules if we don't have a trust root or enivronment
+        Resets the validation rules if we don't have a trust root or environment
 
         """
         validatorTree = self._configTemplate["validator"][0].clone()
@@ -100,7 +100,7 @@ class IotPolicyManager(ConfigPolicyManager):
                 elif ruleId == 'Command Interests':
                     rule["filter/name"][0].value = deviceUri
                     rule["checker/key-locator/name"][0].value = environmentUri
-            
+
         #remove old validation rules from config
         # replace with new validator rules
         self.config._root.subtrees["validator"] = [validatorTree]
@@ -119,6 +119,7 @@ class IotPolicyManager(ConfigPolicyManager):
         : param pyndn.Name identityName: The new identity to trust as the controller.
         """
         self._trustRootIdentity = Name(identityName)
+
 
     def getTrustRootIdentity(self):
         """

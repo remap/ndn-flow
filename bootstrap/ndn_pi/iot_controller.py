@@ -199,7 +199,7 @@ class IotController(BaseNode):
             # assume this is due to already existing?
             pass
 
-        certificate = self._identityManager.generateCertificateForKey(keyName)
+        certificate = self._identityManager._generateCertificateForKey(keyName)
 
         self._keyChain.sign(certificate, self.getDefaultCertificateName())
         # store it for later use + verification
@@ -271,11 +271,17 @@ class IotController(BaseNode):
         """
         interestName = interest.getName()
         #if it is a certificate name, serve the certificate
-        foundCert = self._identityStorage.getCertificate(interestName)
-        if foundCert is not None:
-            self.log.debug("Serving certificate request")
-            self.face.putData(foundCert)
-            return
+        try:
+            if interestName.isPrefixOf(self._keyChain.getDefaultCertificateName()):
+                foundCert = self._identityManager.getCertificate(self._keyChain.getDefaultCertificateName())
+                self.log.debug("Serving certificate request")
+                self.face.putData(foundCert)
+                return
+        except SecurityException as e:
+            # We don't have this certificate, this is probably not a certificate request
+            # TODO: this does not differentiate from certificate request but certificate not exist; should update
+            print(str(e))
+            pass
 
         afterPrefix = interestName.get(prefix.size()).toEscapedString()
         if afterPrefix == "listDevices":
