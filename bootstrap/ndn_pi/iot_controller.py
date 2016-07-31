@@ -107,7 +107,7 @@ class IotController(BaseNode):
                 component = source.get(i)
                 dest.components.append(component.getValue().toRawStr())
 
-        interestName = Name('/localhop/configure').append(Name(deviceSerial))
+        interestName = Name('/home/configure').append(Name(deviceSerial))
         encodedParams = ProtobufTlv.encode(d)
         interestName.append(encodedParams)
         interest = Interest(interestName)
