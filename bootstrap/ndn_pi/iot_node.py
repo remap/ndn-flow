@@ -30,7 +30,6 @@ from pyndn.encoding import ProtobufTlv
 from base_node import BaseNode, Command
 
 from ndn_pi.commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage
-from ndn_pi.security import HmacHelper
 
 from pyndn.util.boost_info_parser import BoostInfoParser
 from pyndn.security.security_exception import SecurityException

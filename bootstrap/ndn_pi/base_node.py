@@ -31,7 +31,7 @@ from pyndn.security.security_exception import SecurityException
 
 from collections import namedtuple
 
-from ndn_pi.security import IotPolicyManager, IotIdentityStorage, IotPrivateKeyStorage, IotIdentityManager
+from security.iot_policy_manager import IotPolicyManager
 
 try:
     import asyncio
@@ -54,9 +54,9 @@ class BaseNode(object):
         self.faceTransport = transport
         self.faceConn = conn
         
-        self._identityStorage = IotIdentityStorage()
+        self._identityStorage = BasicIdentityStorage()
 
-        self._identityManager = IotIdentityManager(self._identityStorage)
+        self._identityManager = IdentityManager(self._identityStorage, FilePrivateKeyStorage())
         self._policyManager = IotPolicyManager(self._identityStorage)
 
         # hopefully there is some private/public key pair available
