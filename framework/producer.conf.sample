@@ -1,6 +1,6 @@
 application 
 {
-  identity "/home/testestestwq"
+  identity "/home/mygooddevice"
   signer   default
   prefix   "/home/flow/ps-publisher"
   appName  "flow"

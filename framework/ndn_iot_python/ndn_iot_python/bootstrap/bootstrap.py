@@ -60,7 +60,7 @@ class Bootstrap(object):
                     defaultKey = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(defaultIdName)
                     self._defaultIdentity = defaultIdName
                 except SecurityException:
-                    msg = "Identity " + defaultIdName.toUri() + " in configuration file " + confFile + " does not exist. Please configure the device with this identity first"
+                    msg = "Identity " + defaultIdName.toUri() + " in configuration does not exist. Please configure the device with this identity first"
                     print msg
                     if onSetupFailed:
                         onSetupFailed(msg)

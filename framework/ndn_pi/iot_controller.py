@@ -11,14 +11,16 @@ from pyndn.security import KeyChain
 from pyndn.security.certificate import IdentityCertificate, PublicKey, CertificateSubjectDescription
 from pyndn.encoding import ProtobufTlv
 from pyndn.security.security_exception import SecurityException
+from pyndn.util.boost_info_parser import BoostInfoParser, BoostInfoTree
 
 from base_node import BaseNode, Command
 
-from commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage
+from commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage, AppRequestMessage
 from security.hmac_helper import HmacHelper
 
 from collections import defaultdict
 import json
+from base64 import b64decode
 
 try:
     import asyncio
@@ -44,7 +46,7 @@ class IotController(BaseNode):
         - addDevice: add a device based on HMAC
     It is unlikely that you will need to subclass this.
     """
-    def __init__(self, nodeName, networkName):
+    def __init__(self, nodeName, networkName, applicationDirectory = ""):
         super(IotController, self).__init__()
         
         self.deviceSuffix = Name(nodeName)
@@ -71,6 +73,13 @@ class IotController(BaseNode):
         self._insertIntoCapabilities('updateCapabilities', 'capabilities', True)
 
         self._directory.update(self._baseDirectory)
+
+        # Set up application directory
+        if applicationDirectory == "":
+            applicationDirectory = os.path.expanduser('~/.ndn/iot/applications')
+        self._applicationDirectory = applicationDirectory
+        self._applications = dict()
+        self.loadApplications()
 
     def _insertIntoCapabilities(self, commandName, keyword, isSigned):
         newUri = Name(self.prefix).append(Name(commandName)).toUri()
@@ -252,7 +261,7 @@ class IotController(BaseNode):
                         listing = {'signed':capability.needsSignature,
                                 'name':commandUri}
                         tempDirectory[keyword].append(listing)
-        self._directory= tempDirectory
+        self._directory = tempDirectory
 
     def _prepareCapabilitiesList(self, interestName):
         """
@@ -316,14 +325,20 @@ class IotController(BaseNode):
             def onVerifiedAppRequest(interest):
                 # TODO: for now, we automatically grant access to any signed interest
                 print("verified! send response!")
+                message = AppRequestMessage()
+                ProtobufTlv.decode(message, interest.getName().get(prefix.size() + 2).getValue())
+                keyName = Name("/".join(message.command.idName.components))
+                dataPrefix = Name("/".join(message.command.dataPrefix.components))
+                appName = message.command.appName
+                self.updateTrustSchema(appName, keyName, dataPrefix)
+
                 response = Data(interest.getName())
                 response.setContent(str(time.time()))
                 self.sendData(response)
                 self.log.info("Verified and granted application publish request")
-                # TODO: update trust schema and redistribute
+                
                 return
             self.log.debug("Received application request")
-            # TODO: update keyChain policyManager
             self._keyChain.verifyInterest(interest, 
                     onVerifiedAppRequest, self.verificationFailed)
         else:
@@ -412,7 +427,53 @@ class IotController(BaseNode):
         else:
             self.loop.call_soon(self.displayMenu)
             
-        
+########################
+# application trust schema distribution
+########################
+    def updateTrustSchema(self, appName, keyName, dataPrefix):
+        if appName in self._applications:
+            self._applications[appName]
+
+        else:
+            self._applications[appName] = BoostInfoParser()
+            validatorNode = self._applications[appName].getRoot().createSubtree("validator")
+
+            ruleNode = validatorNode.createSubtree("rule")
+            ruleNode.createSubtree("id", dataPrefix.toUri())
+            ruleNode.createSubtree("for", "data")
+            
+            filterNode = ruleNode.createSubtree("filter")
+            filterNode.createSubtree("type", "name")
+            filterNode.createSubtree("name", dataPrefix.toUri())
+            filterNode.createSubtree("relation", "is-prefix-of")
+
+            checkerNode = ruleNode.createSubtree("checker")
+            checkerNode.createSubtree("type", "customized")
+            checkerNode.createSubtree("sig-type", "rsa-sha256")
+
+            keyLocatorNode = checkerNode.createSubtree("key-locator")
+            keyLocatorNode.createSubtree("type", "name")
+            keyLocatorNode.createSubtree("name", keyName.toUri())
+            keyLocatorNode.createSubtree("relation", "equal")
+
+            trustAnchorNode = validatorNode.createSubtree("trust-anchor")
+            trustAnchorNode.createSubtree("type", "file")
+            trustAnchorNode.createSubtree("file-name", os.path.expanduser("~/.ndn/iot/root.cert"))
+
+            if not os.path.exists(self._applicationDirectory):
+                os.makedirs(self._applicationDirectory)
+            self._applications[appName].write(os.path.join(self._applicationDirectory, appName + ".conf"))
+
+        return
+
+    def loadApplications(self, directory = None):
+        if not directory:
+            directory = self._applicationDirectory
+        if os.path.exists(directory):
+            for f in os.listdir(directory):
+                if os.path.isfile(os.path.join(directory, f)):
+                    pass
+        return
 
 if __name__ == '__main__':
     import os
