@@ -19,11 +19,13 @@ class CachedContentPublisher(IotNode):
         super(CachedContentPublisher, self).__init__()
         self._missedRequests = 0
         self._dataPrefix = None
-        self.addCommand(Name('listPrefixes'), self.listDataPrefixes, ['repo'],
-            False)
+        #self.addCommand(Name('listPrefixes'), self.listDataPrefixes, ['repo'], False)
 
     def setupComplete(self, deviceIdentity):
         print "Setup complete: device identity name is: " + deviceIdentity.toUri()
+        # We install the trust anchor certificate
+
+
         # The cache will clear old values every 100s
         # self._dataCache = MemoryContentCache(self.face, 100000)
         # self._dataPrefix = Name(self.prefix).append('data')

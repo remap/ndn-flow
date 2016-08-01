@@ -84,6 +84,10 @@ class IotController(BaseNode):
                 self.prefix, isKsk=True)
             newCert = self._identityManager.selfSign(newKey)
             self._identityManager.addCertificateAsDefault(newCert)
+        # Trusting root's certificate upon each run
+        # TODO: debug where application starts first and controller starts second, application's interest cannot be verified
+        self._policyManager._certificateCache.insertCertificate(self._keyChain.getCertificate(self.getDefaultCertificateName()))
+        
         self.face.setCommandSigningInfo(self._keyChain, self.getDefaultCertificateName())
         self.face.registerPrefix(self.prefix, 
             self._onCommandReceived, self.onRegisterFailed)
@@ -270,10 +274,12 @@ class IotController(BaseNode):
         """
         """
         interestName = interest.getName()
+        print("Got interest " + interestName.toUri())
         #if it is a certificate name, serve the certificate
+
         try:
-            if interestName.isPrefixOf(self._keyChain.getDefaultCertificateName()):
-                foundCert = self._identityManager.getCertificate(self._keyChain.getDefaultCertificateName())
+            if interestName.isPrefixOf(self.getDefaultCertificateName()):
+                foundCert = self._identityManager.getCertificate(self.getDefaultCertificateName())
                 self.log.debug("Serving certificate request")
                 self.face.putData(foundCert)
                 return
@@ -298,6 +304,7 @@ class IotController(BaseNode):
             # needs to be signed!
             self.log.debug("Received capabilities update")
             def onVerifiedCapabilities(interest):
+                print("capabilities good")
                 response = Data(interest.getName())
                 response.setContent(str(time.time()))
                 self.sendData(response)
@@ -308,6 +315,7 @@ class IotController(BaseNode):
             # application request to publish under some names received; need to be signed
             def onVerifiedAppRequest(interest):
                 # TODO: for now, we automatically grant access to any signed interest
+                print("verified! send response!")
                 response = Data(interest.getName())
                 response.setContent(str(time.time()))
                 self.sendData(response)

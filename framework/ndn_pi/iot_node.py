@@ -19,6 +19,7 @@
 import logging
 import time
 import sys
+import os
 
 from pyndn import Name, Face, Interest, Data
 from pyndn.security import KeyChain
@@ -32,8 +33,11 @@ from base_node import BaseNode, Command
 from ndn_pi.commands import CertificateRequestMessage, UpdateCapabilitiesCommandMessage, DeviceConfigurationMessage
 from security.hmac_helper import HmacHelper
 
+from pyndn.util import Blob
 from pyndn.util.boost_info_parser import BoostInfoParser
 from pyndn.security.security_exception import SecurityException
+
+from base64 import b64encode
 
 default_prefix = Name('/home/configure')
 
@@ -64,6 +68,8 @@ class IotNode(BaseNode):
         self.prefix = Name(default_prefix).append(self.deviceSerial)
 
         self._certificateTimeouts = 0
+
+        self._rootCertificate = None
 
 ###
 # Startup and shutdown
@@ -197,6 +203,19 @@ class IotNode(BaseNode):
                     # Insert root certificate so that we can verify newCert
                     self._policyManager._certificateCache.insertCertificate(data)
                     self._identityManager.addCertificate(IdentityCertificate(data))
+                    self._rootCertificate = data
+
+                    try:
+                        # use the default configuration where possible
+                        # TODO: use environment variable for this, fall back to default
+                        fileName = os.path.expanduser('~/.ndn/.iot.root.cert')
+                        rootCertFile = open(fileName, "w")
+                        rootCertFile.write(Blob(b64encode(self._rootCertificate.wireEncode().toBytes()), False).toRawStr())
+                        rootCertFile.close()
+                    except IOError as e:
+                        self.log.error("Cannot write to root certificate file: " + rootCertFile)
+                        print "Cannot write to root certificate file: " + rootCertFile
+
                 except SecurityException as e:
                     print(str(e))
                     # already exists, or got certificate in wrong format
@@ -306,6 +325,7 @@ class IotNode(BaseNode):
         Called when verification of a data packet or command interest fails.
         :param pyndn.Data or pyndn.Interest: The packet that could not be verified
         """
+        print("Received invalid" + dataOrInterest.getName().toUri())
         self.log.info("Received invalid" + dataOrInterest.getName().toUri())
 
     def _makeVerifiedCommandDispatch(self, function):

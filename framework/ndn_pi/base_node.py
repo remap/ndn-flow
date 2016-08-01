@@ -105,6 +105,7 @@ class BaseNode(object):
         """
         pass
 
+    # TODO: this does not return the default certificate name of the keyChain if a controller identity is configured in iot.controller.conf 
     def getDefaultCertificateName(self):
         try:
             certName = self._identityStorage.getDefaultCertificateNameForIdentity( 

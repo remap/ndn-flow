@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from pyndn import Name, Interest, Data
+from pyndn import Name, Interest, Data, Exclude
 from pyndn.util.memory_content_cache import MemoryContentCache
 from pyndn.security import KeyChain, SecurityException
 from pyndn.security.identity import IdentityManager, FilePrivateKeyStorage, BasicIdentityStorage
@@ -8,6 +8,7 @@ from pyndn.security.policy import NoVerifyPolicyManager
 from pyndn.threadsafe_face import ThreadsafeFace
 from pyndn.encoding import ProtobufTlv
 from pyndn.util.boost_info_parser import BoostInfoParser
+from pyndn.util.memory_content_cache import MemoryContentCache
 
 from ndn_iot_python.commands.app_request_pb2 import AppRequestMessage
 
@@ -34,6 +35,8 @@ class Bootstrap(object):
         self._keyChain = KeyChain(self._identityManager)
 
         self._face = face
+        self._certificateContentCache = MemoryContentCache(face)
+        self._followingTrustSchema = dict()
 
     def getKeyChain(self):
         return self._keyChain
@@ -70,6 +73,9 @@ class Bootstrap(object):
         # Note we'll not be able to issue face commands before this point
         # Decouple this from command interest signing?
         self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
+        print "default cert name " + self._defaultCertificateName.toUri()
+        self._certificateContentCache.registerPrefix(Name(self._defaultCertificateName).getPrefix(-1), self.onRegisterFailed)
+        self._certificateContentCache.add(self._keyChain.getCertificate(self._defaultCertificateName))
 
         if "prefix" in confObj:
             self._dataPrefix = Name(confObj["prefix"])
@@ -99,8 +105,36 @@ class Bootstrap(object):
                 onSetupComplete(self._defaultIdentity, self._keyChain)
         return True
 
-    def startTrustSchemaUpdate(self, namespace):
-        print "startTrustSchemaUpdate not implemented"
+    def onRegisterFailed(self, prefix):
+        print("register failed for prefix " + prefix.getName().toUri())
+        return
+
+    def onTrustSchemaData(self, interest, data):
+        print("Trust schema received: " + data.getName().toUri())
+        # Process newly received trust schema
+
+        newInterest = Interest(interest)
+        newInterest.refreshNonce()
+        excludeComponent = data.getName().get(-1)
+        exclude = Exclude()
+        exclude.appendAny()
+        exclude.appendComponent(excludeComponent)
+        newInterest.setExclude(exclude)
+        self._face.expressInterest(newInterest, self.onTrustSchemaData, self.onTrustSchemaTimeout)
+        return
+
+    def onTrustSchemaTimeout(self, interest):
+        print("Trust schema interest times out: " + interest.getName().toUri())
+        newInterest = Interest(interest)
+        newInterest.refreshNonce()
+        self._face.expressInterest(newInterest, self.onTrustSchemaData, self.onTrustSchemaTimeout)        
+        return  
+
+    def startTrustSchemaUpdate(self, namespace, onUpdateSuccess = None, onUpdateFailed = None):
+        self._followingTrustSchema[namespace] = True
+        initialInterest = Interest(Name(namespace))
+        initialInterest.setChildSelector(1)
+        self._face.expressInterest(initialInterest, self.onTrustSchemaData, self.onTrustSchemaTimeout)
         return
 
     def stopTrustSchemaUpdate(self):
@@ -153,7 +187,7 @@ class Bootstrap(object):
         requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
 
         requestInterest.setInterestLifetimeMilliseconds(4000)
-        self._keyChain.sign(requestInterest, self._defaultCertificateName)
+        self._face.makeCommandInterest(requestInterest)
         self._face.expressInterest(requestInterest, 
           lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
           lambda interest : self.onAppRequestTimeout(interest, onSetupFailed))
@@ -177,5 +211,7 @@ class Bootstrap(object):
         print "Application publishing request times out"
         newInterest = Interest(interest)
         newInterest.refreshNonce()
-        self._face.expressInterest(newInterest, self.onAppRequestData, self.onAppRequestTimeout)
+        self._face.expressInterest(newInterest,
+          lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
+          lambda interest : self.onAppRequestTimeout(interest, onSetupFailed))
         return
