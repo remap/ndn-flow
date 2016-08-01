@@ -1,9 +1,5 @@
 #!/usr/bin/python
 
-#
-# This is the data publisher using MemoryContentCache
-#
-
 from pyndn import Name, Interest, Data
 from pyndn.util.memory_content_cache import MemoryContentCache
 from pyndn.security import KeyChain, SecurityException
@@ -13,7 +9,7 @@ from pyndn.threadsafe_face import ThreadsafeFace
 from pyndn.encoding import ProtobufTlv
 from pyndn.util.boost_info_parser import BoostInfoParser
 
-from ndn_pi.commands import AppRequestMessage
+from ndn_iot_python.commands.app_request_pb2 import AppRequestMessage
 
 import time
 import sys
@@ -26,44 +22,31 @@ try:
 except ImportError:
     import trollius as asyncio
 
-class FlowPublisher(object):
-    def __init__(self, face, confFile = "app.conf"):
+class Bootstrap(object):
+    def __init__(self, face):
         self._defaultIdentity = None
         self._dataPrefix = None
         self._defaultCertificateName = None
         self._controllerName = None
         self._applicationName = ""
 
-        self._identityManager = IdentityManager(BasicIdentityStorage(), FilePrivateKeyStorage())
+        self._identityManager = IdentityManager(BasicIdentityStorage())
         self._keyChain = KeyChain(self._identityManager)
 
         self._face = face
 
-        if self.processConfiguration(confFile):
-            self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
-            print "Using default certificate name: " + self._defaultCertificateName.toUri()
-        else:
-            print "Setup failed"
-
     def getKeyChain(self):
         return self._keyChain
 
-    def processConfiguration(self, confFile, requestPermission = True, onSetupComplete = None, onSetupFailed = None):
-        config = BoostInfoParser()
-        config.read(confFile)
+    def start(self):
+        print "start not implemented"
+        return 
 
-        # TODO: handle missing configuration, refactor dict representation
-        confObj = dict()
-        try:
-            confObj["identity"] = config["application/identity"][0].value
-            confObj["prefix"] = config["application/prefix"][0].value
-
-            confObj["signer"] = config["application/signer"][0].value
-            confObj["application"] = config["application/appName"][0].value
-        except KeyError as e:
-            msg = "Missing key in configuration: " + str(e)
-            print msg
-            return False
+    def setupKeyChain(self, confObjOrFileName, requestPermission = True, onSetupComplete = None, onSetupFailed = None):
+        if isinstance(confObjOrFileName, basestring):
+            confObj = self.processConfiguration(confObjOrFileName)
+        else:
+            confObj = confObjOrFileName
 
         if "identity" in confObj:
             if confObj["identity"] == "default":
@@ -81,8 +64,12 @@ class FlowPublisher(object):
                     return False
         else:
             self._defaultIdentity = self._keyChain.getDefaultIdentity()
+
         # TODO: handling the case where no default identity is present
         self._defaultCertificateName = self._keyChain.getIdentityManager().getDefaultCertificateNameForIdentity(self._defaultIdentity)
+        # Note we'll not be able to issue face commands before this point
+        # Decouple this from command interest signing?
+        self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
 
         if "prefix" in confObj:
             self._dataPrefix = Name(confObj["prefix"])
@@ -105,12 +92,38 @@ class FlowPublisher(object):
         self._controllerName = self.getIdentityNameFromCertName(signerName)
         print "Controller name: " + self._controllerName.toUri()
 
-        if "appName" in confObj:
-            self._applicationName = confObj["appName"]
-
         if requestPermission:
-            self.sendAppRequest()
+            self.sendAppRequest(confObj["application"], onSetupComplete, onSetupFailed)
+        else:
+            if onSetupComplete:
+                onSetupComplete(self._defaultIdentity, self._keyChain)
         return True
+
+    def startTrustSchemaUpdate(self, namespace):
+        print "startTrustSchemaUpdate not implemented"
+        return
+
+    def stopTrustSchemaUpdate(self):
+        print "stopTrustSchemaUpdate not implemented"
+        return
+
+    def processConfiguration(self, confFile):
+        config = BoostInfoParser()
+        config.read(confFile)
+
+        # TODO: handle missing configuration, refactor dict representation
+        confObj = dict()
+        try:
+            confObj["identity"] = config["application/identity"][0].value
+            confObj["prefix"] = config["application/prefix"][0].value
+
+            confObj["signer"] = config["application/signer"][0].value
+            confObj["application"] = config["application/appName"][0].value
+        except KeyError as e:
+            msg = "Missing key in configuration: " + str(e)
+            print msg
+            return None
+        return confObj
 
     def getIdentityNameFromCertName(self, certName):
         i = certName.size() - 1
@@ -127,83 +140,42 @@ class FlowPublisher(object):
 
         return certName.getPrefix(i)
 
-    def sendAppRequest(self):
+    def sendAppRequest(self, applicationName, onSetupComplete, onSetupFailed):
         message = AppRequestMessage()
 
         for component in range(self._defaultIdentity.size()):
             message.command.idName.components.append(self._defaultIdentity.get(component).toEscapedString())
         for component in range(self._dataPrefix.size()):
             message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
-        message.command.appName = self._applicationName
+        message.command.appName = applicationName
         paramComponent = ProtobufTlv.encode(message)
 
         requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
-        # TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
-        requestInterest.setInterestLifetimeMilliseconds(100000)
+
+        requestInterest.setInterestLifetimeMilliseconds(4000)
         self._keyChain.sign(requestInterest, self._defaultCertificateName)
-        self._face.expressInterest(requestInterest, self.onAppRequestData, self.onAppRequestTimeout)
+        self._face.expressInterest(requestInterest, 
+          lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
+          lambda interest : self.onAppRequestTimeout(interest, onSetupFailed))
         print "Application publish request sent: " + requestInterest.getName().toUri()
         return
 
-    def onAppRequestData(self, interest, data):
+    def onAppRequestData(self, interest, data, onSetupComplete, onSetupFailed):
         print "Got application publishing request data"
-
+        def onVerified(data):
+            if data.getContent().toRawStr() == "200":
+                if onSetupComplete:
+                    onSetupComplete(self._defaultIdentity, self._keyChain)
+                else:
+                    print "onSetupComplete"
+        def onVerifyFailed(data):
+            print "Application request response verification failed!"
+        self._keyChain.verifyData(data, onVerified, onVerifyFailed)
         return
 
-    def onAppRequestTimeout(self, interest):
+    def onAppRequestTimeout(self, interest, onSetupFailed):
         print "Application publishing request times out"
+        newInterest = Interest(interest)
+        newInterest.refreshNonce()
+        self._face.expressInterest(newInterest, self.onAppRequestData, self.onAppRequestTimeout)
         return
-    
-    def start(self):
-        self._dataCache = MemoryContentCache(self._face, 100000)
-        self.registerCachePrefix()
-        print "Serving data at {}".format(self._dataPrefix.toUri())
-        self._face.callLater(5000, self.publishData)
-        return
-
-    def registerCachePrefix(self):
-        self._dataCache.registerPrefix(self._dataPrefix, self.cacheRegisterFail, self.onDataMissing)
-
-    def cacheRegisterFail(self, interest):
-        # just try again
-        self.log.warn('Could not register data cache')
-        self.registerCachePrefix()
-
-    def onDataMissing(self, prefix, interest, transport, prefixId):
-        self._missedRequests += 1
-        # let it timeout
-
-    def publishData(self):
-        timestamp = time.time() 
-        cpu_use = ps.cpu_percent()
-        users = [u.name for u in ps.users()]
-        nProcesses = len(ps.pids())
-        memUse = ps.virtual_memory().percent
-        swapUse = ps.swap_memory().percent
-
-        info = {'cpu_usage':cpu_use, 'users':users, 'processes':nProcesses,
-                 'memory_usage':memUse, 'swap_usage':swapUse}
-    
-        dataOut = Data(Name(self._dataPrefix).appendVersion(int(timestamp)))
-        dataOut.setContent(json.dumps(info))
-        dataOut.getMetaInfo().setFreshnessPeriod(10000)
-        self._keyChain.sign(dataOut, self._defaultCertificateName)
-
-        self._dataCache.add(dataOut)
-
-        # repeat every 5 seconds
-        self._face.callLater(5000, self.publishData)
-
-if __name__ == '__main__':
-    try:
-        import psutil as ps
-    except Exception as e:
-        print str(e)
-
-    loop = asyncio.get_event_loop()
-    face = ThreadsafeFace(loop)
-
-    n = FlowPublisher(face)
-    n.start()
-
-    loop.run_forever()
