@@ -1,5 +1,12 @@
 #!/usr/bin/python
 
+"""
+This is an example of calls an application would make to interact with the interface of the IoT framework.
+Covered functions include:
+ - Bootstrapping the application (not the device, which is covered by framework/ndn_pi), including its keyChain, defaultIdentity and policyManager.
+ - Running a producer and consumer after boostrapping, and running discovery
+"""
+
 class IotApplication():
     def __init__(self):
         # Initialize face
