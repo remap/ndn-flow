@@ -13,6 +13,7 @@
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-signature-info.c)
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-structure-decoder.c)
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-interest.c)
+// Note: Don't include src/c/util/crypto.c . Instead use rsaref-crypto.c and contrib/cryptosuite/sha256.cpp.
 
 #include NDN_CPP_ROOT(pp/contrib/rsaref/source/digit.c)
 #include NDN_CPP_ROOT(pp/contrib/rsaref/source/md5c.c)
