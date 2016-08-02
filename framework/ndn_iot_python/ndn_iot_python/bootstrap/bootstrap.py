@@ -70,6 +70,7 @@ class Bootstrap(object):
 
         # TODO: handling the case where no default identity is present
         self._defaultCertificateName = self._keyChain.getIdentityManager().getDefaultCertificateNameForIdentity(self._defaultIdentity)
+        self._defaultKeyName = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(self._defaultIdentity)
         # Note we'll not be able to issue face commands before this point
         # Decouple this from command interest signing?
         self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
@@ -177,8 +178,8 @@ class Bootstrap(object):
     def sendAppRequest(self, applicationName, onSetupComplete, onSetupFailed):
         message = AppRequestMessage()
 
-        for component in range(self._defaultIdentity.size()):
-            message.command.idName.components.append(self._defaultIdentity.get(component).toEscapedString())
+        for component in range(self._defaultCertificateName.size()):
+            message.command.idName.components.append(self._defaultCertificateName.get(component).toEscapedString())
         for component in range(self._dataPrefix.size()):
             message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
         message.command.appName = applicationName
@@ -190,7 +191,7 @@ class Bootstrap(object):
         self._face.makeCommandInterest(requestInterest)
         self._face.expressInterest(requestInterest, 
           lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onSetupFailed))
+          lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
         print "Application publish request sent: " + requestInterest.getName().toUri()
         return
 
@@ -207,11 +208,11 @@ class Bootstrap(object):
         self._keyChain.verifyData(data, onVerified, onVerifyFailed)
         return
 
-    def onAppRequestTimeout(self, interest, onSetupFailed):
+    def onAppRequestTimeout(self, interest, onSetupComplete, onSetupFailed):
         print "Application publishing request times out"
         newInterest = Interest(interest)
         newInterest.refreshNonce()
         self._face.expressInterest(newInterest,
           lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onSetupFailed))
+          lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
         return

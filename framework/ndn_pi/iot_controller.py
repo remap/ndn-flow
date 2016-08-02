@@ -20,7 +20,7 @@ from security.hmac_helper import HmacHelper
 
 from collections import defaultdict
 import json
-from base64 import b64decode
+from base64 import b64encode
 
 try:
     import asyncio
@@ -93,9 +93,10 @@ class IotController(BaseNode):
                 self.prefix, isKsk=True)
             newCert = self._identityManager.selfSign(newKey)
             self._identityManager.addCertificateAsDefault(newCert)
-        # Trusting root's certificate upon each run
+        # Trusting root's own certificate upon each run
         # TODO: debug where application starts first and controller starts second, application's interest cannot be verified
-        self._policyManager._certificateCache.insertCertificate(self._keyChain.getCertificate(self.getDefaultCertificateName()))
+        self._rootCertificate = self._keyChain.getCertificate(self.getDefaultCertificateName())
+        self._policyManager._certificateCache.insertCertificate(self._rootCertificate)
         
         self.face.setCommandSigningInfo(self._keyChain, self.getDefaultCertificateName())
         self.face.registerPrefix(self.prefix, 
@@ -327,20 +328,27 @@ class IotController(BaseNode):
                 print("verified! send response!")
                 message = AppRequestMessage()
                 ProtobufTlv.decode(message, interest.getName().get(prefix.size() + 2).getValue())
-                keyName = Name("/".join(message.command.idName.components))
+                certName = Name("/".join(message.command.idName.components))
                 dataPrefix = Name("/".join(message.command.dataPrefix.components))
                 appName = message.command.appName
-                self.updateTrustSchema(appName, keyName, dataPrefix)
+                isUpdated = self.updateTrustSchema(appName, certName, dataPrefix)
 
                 response = Data(interest.getName())
-                response.setContent(str(time.time()))
+                if isUpdated:
+                    response.setContent("{\"status\": 200, \"message\": \"granted, trust schema updated OK\" }")
+                    self.log.info("Verified and granted application publish request")
+                else:
+                    response.setContent("{\"status\": 400, \"message\": \"not granted, requested publishing namespace already exists\" }")
+                    self.log.info("Verified and but requested namespace already exists")
                 self.sendData(response)
-                self.log.info("Verified and granted application publish request")
-                
                 return
+            def onVerificationFailedAppRequest(interest):
+                response = Data(interest.getName())
+                response.setContent("{\"status\": 401, \"message\": \"command interest verification failed\" }")
+                self.sendData(response)
             self.log.debug("Received application request")
             self._keyChain.verifyInterest(interest, 
-                    onVerifiedAppRequest, self.verificationFailed)
+                    onVerifiedAppRequest, onVerificationFailedAppRequest)
         else:
             response = Data(interest.getName())
             response.setContent("500")
@@ -357,6 +365,7 @@ class IotController(BaseNode):
         menuStr += "P)air a new device with serial and PIN\n"
         menuStr += "D)irectory listing\n"
         menuStr += "E)xpress an interest\n"
+        menuStr += "L)oad hosted applications (" + (self._applicationDirectory) + ")\n"
         menuStr += "Q)uit\n"
 
         print(menuStr)
@@ -372,6 +381,18 @@ class IotController(BaseNode):
                 menuStr += '\t{} ({})\n'.format(info['name'], signingStr)
         print(menuStr)
         self.loop.call_soon(self.displayMenu)
+
+    def loadApplicationsMenuSelect(self):
+        try:
+            confirm = input('This will override existing trust schemas, continue? (Y/N): ').upper().startswith('Y')
+            if confirm:
+                self.loadApplications(override = True)
+            else:
+                print("Aborted")
+        except KeyboardInterrupt:
+            print("Aborted")
+        finally:
+            self.loop.call_soon(self.displayMenu)
 
     def onInterestTimeout(self, interest):
         print('Interest timed out: {}'.interest.getName().toUri())
@@ -424,55 +445,82 @@ class IotController(BaseNode):
             self.expressInterest()
         elif inputStr.startswith('Q'):
             self.stop()
+        elif inputStr.startswith('L'):
+            self.loadApplicationsMenuSelect()
         else:
             self.loop.call_soon(self.displayMenu)
             
 ########################
 # application trust schema distribution
 ########################
-    def updateTrustSchema(self, appName, keyName, dataPrefix):
+    def updateTrustSchema(self, appName, certName, dataPrefix):
         if appName in self._applications:
-            self._applications[appName]
-
+            if dataPrefix.toUri() in self._applications[appName]["dataPrefix"]:
+                print("some key is configured for namespace " + dataPrefix.toUri() + " for application " + appName + ". Ignoring this request.")
+                return False
+            else:
+                # TODO: Handle malformed conf where validator tree does not exist
+                validatorNode = self._applications[appName]["tree"]["validator"][0]
         else:
-            self._applications[appName] = BoostInfoParser()
-            validatorNode = self._applications[appName].getRoot().createSubtree("validator")
-
-            ruleNode = validatorNode.createSubtree("rule")
-            ruleNode.createSubtree("id", dataPrefix.toUri())
-            ruleNode.createSubtree("for", "data")
+            self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": []}
+            validatorNode = self._applications[appName]["tree"].getRoot().createSubtree("validator")
             
-            filterNode = ruleNode.createSubtree("filter")
-            filterNode.createSubtree("type", "name")
-            filterNode.createSubtree("name", dataPrefix.toUri())
-            filterNode.createSubtree("relation", "is-prefix-of")
-
-            checkerNode = ruleNode.createSubtree("checker")
-            checkerNode.createSubtree("type", "customized")
-            checkerNode.createSubtree("sig-type", "rsa-sha256")
-
-            keyLocatorNode = checkerNode.createSubtree("key-locator")
-            keyLocatorNode.createSubtree("type", "name")
-            keyLocatorNode.createSubtree("name", keyName.toUri())
-            keyLocatorNode.createSubtree("relation", "equal")
-
             trustAnchorNode = validatorNode.createSubtree("trust-anchor")
-            trustAnchorNode.createSubtree("type", "file")
-            trustAnchorNode.createSubtree("file-name", os.path.expanduser("~/.ndn/iot/root.cert"))
+            #trustAnchorNode.createSubtree("type", "file")
+            #trustAnchorNode.createSubtree("file-name", os.path.expanduser("~/.ndn/iot/root.cert"))
+            trustAnchorNode.createSubtree("type", "base64")
+            trustAnchorNode.createSubtree("base64-string", Blob(b64encode(self._rootCertificate.wireEncode().toBytes()), False).toRawStr())
 
-            if not os.path.exists(self._applicationDirectory):
-                os.makedirs(self._applicationDirectory)
-            self._applications[appName].write(os.path.join(self._applicationDirectory, appName + ".conf"))
 
-        return
+        ruleNode = validatorNode.createSubtree("rule")
+        ruleNode.createSubtree("id", dataPrefix.toUri())
+        ruleNode.createSubtree("for", "data")
+        
+        filterNode = ruleNode.createSubtree("filter")
+        filterNode.createSubtree("type", "name")
+        filterNode.createSubtree("name", dataPrefix.toUri())
+        filterNode.createSubtree("relation", "is-prefix-of")
 
-    def loadApplications(self, directory = None):
+        checkerNode = ruleNode.createSubtree("checker")
+        checkerNode.createSubtree("type", "customized")
+        checkerNode.createSubtree("sig-type", "rsa-sha256")
+
+        keyLocatorNode = checkerNode.createSubtree("key-locator")
+        keyLocatorNode.createSubtree("type", "name")
+        # We don't put cert version in there
+        keyLocatorNode.createSubtree("name", certName.getPrefix(-1).toUri())
+        # TODO: test if equal is what we want here
+        keyLocatorNode.createSubtree("relation", "equal")
+
+        if not os.path.exists(self._applicationDirectory):
+            os.makedirs(self._applicationDirectory)
+        self._applications[appName]["tree"].write(os.path.join(self._applicationDirectory, appName + ".conf"))
+        self._applications[appName]["dataPrefix"].append(dataPrefix.toUri())
+        return True
+        
+    def loadApplications(self, directory = None, override = False):
         if not directory:
             directory = self._applicationDirectory
+        if override:
+            self._applications.clear()
         if os.path.exists(directory):
             for f in os.listdir(directory):
-                if os.path.isfile(os.path.join(directory, f)):
-                    pass
+                fullFileName = os.path.join(directory, f)
+                if os.path.isfile(fullFileName) and f.endswith('.conf'):
+                    appName = f.rstrip('.conf')
+                    if appName in self._applications and not override:
+                        print("loadApplications: " + appName + " already exists, do nothing for configuration file: " + fullFileName)
+                    else:
+                        self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": []}
+                        self._applications[appName]["tree"].read(fullFileName)
+                        try:
+                            validatorTree = self._applications[appName]["tree"]["validator"][0]
+                            for rule in validatorTree["rule"]:
+                                self._applications[appName]["dataPrefix"].append(rule["id"][0].value)
+                        # TODO: don't swallow any general exceptions, we want to catch only KeyError (make sure) here
+                        except Exception as e:
+                            print("loadApplications parse configuration file " + fullFileName + " : " + str(e))
+
         return
 
 if __name__ == '__main__':
