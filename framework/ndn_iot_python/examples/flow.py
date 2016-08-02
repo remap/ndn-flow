@@ -74,14 +74,16 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     face = ThreadsafeFace(loop)
     
+    bootstrap = Bootstrap(face)
+
     def onSetupComplete(defaultIdentity, keyChain):
-        producer = AppProducer(face, defaultIdentity, keyChain)
-        producer.start()
+        bootstrap.requestProducerAuthorization("app.conf")
+        #producer = AppProducer(face, defaultIdentity, keyChain)
+        #producer.start()
 
     def onSetupFailed(msg):
         print("Setup failed " + msg)
 
-    n = Bootstrap(face)
-    n.setupKeyChain("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
+    bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
 
     loop.run_forever()
