@@ -6,11 +6,11 @@ from sys import stdin, stdout
 import struct
 
 from pyndn import Name, Face, Interest, Data
-from pyndn.util import Blob
 from pyndn.security import KeyChain
 from pyndn.security.certificate import IdentityCertificate, PublicKey, CertificateSubjectDescription
 from pyndn.encoding import ProtobufTlv
 from pyndn.security.security_exception import SecurityException
+from pyndn.util import Blob, MemoryContentCache
 from pyndn.util.boost_info_parser import BoostInfoParser, BoostInfoTree
 
 from base_node import BaseNode, Command
@@ -98,11 +98,13 @@ class IotController(BaseNode):
         self._rootCertificate = self._keyChain.getCertificate(self.getDefaultCertificateName())
         self._policyManager._certificateCache.insertCertificate(self._rootCertificate)
         
+        self._memoryContentCache = MemoryContentCache(self.face)
         self.face.setCommandSigningInfo(self._keyChain, self.getDefaultCertificateName())
-        self.face.registerPrefix(self.prefix, 
-            self._onCommandReceived, self.onRegisterFailed)
+        self._memoryContentCache.registerPrefix(self.prefix, onRegisterFailed = self.onRegisterFailed, 
+          onRegisterSuccess = None, onDataNotFound = self._onCommandReceived)
+        # Serve root certificate in our memoryContentCache
+        self._memoryContentCache.add(self._rootCertificate)
         self.loop.call_soon(self.onStartup)
-
 
 ######
 # Initial configuration
@@ -284,9 +286,9 @@ class IotController(BaseNode):
         """
         """
         interestName = interest.getName()
-        print("Got interest " + interestName.toUri())
-        #if it is a certificate name, serve the certificate
 
+        #if it is a certificate name, serve the certificate
+        # TODO: since we've memoryContentCache serving root cert now, this should no longer be required
         try:
             if interestName.isPrefixOf(self.getDefaultCertificateName()):
                 foundCert = self._identityManager.getCertificate(self.getDefaultCertificateName())
@@ -331,7 +333,7 @@ class IotController(BaseNode):
                 certName = Name("/".join(message.command.idName.components))
                 dataPrefix = Name("/".join(message.command.dataPrefix.components))
                 appName = message.command.appName
-                isUpdated = self.updateTrustSchema(appName, certName, dataPrefix)
+                isUpdated = self.updateTrustSchema(appName, certName, dataPrefix, True)
 
                 response = Data(interest.getName())
                 if isUpdated:
@@ -453,7 +455,7 @@ class IotController(BaseNode):
 ########################
 # application trust schema distribution
 ########################
-    def updateTrustSchema(self, appName, certName, dataPrefix):
+    def updateTrustSchema(self, appName, certName, dataPrefix, publishNew = False):
         if appName in self._applications:
             if dataPrefix.toUri() in self._applications[appName]["dataPrefix"]:
                 print("some key is configured for namespace " + dataPrefix.toUri() + " for application " + appName + ". Ignoring this request.")
@@ -462,7 +464,7 @@ class IotController(BaseNode):
                 # TODO: Handle malformed conf where validator tree does not exist
                 validatorNode = self._applications[appName]["tree"]["validator"][0]
         else:
-            self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": []}
+            self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": [], "version": 0}
             validatorNode = self._applications[appName]["tree"].getRoot().createSubtree("validator")
             
             trustAnchorNode = validatorNode.createSubtree("trust-anchor")
@@ -496,8 +498,17 @@ class IotController(BaseNode):
             os.makedirs(self._applicationDirectory)
         self._applications[appName]["tree"].write(os.path.join(self._applicationDirectory, appName + ".conf"))
         self._applications[appName]["dataPrefix"].append(dataPrefix.toUri())
+        self._applications[appName]["version"] = int(time.time())
+        if publishNew:
+            # TODO: ideally, this is the trust schema of the application, and does not necessarily carry controller prefix. 
+            # We make it carry controller prefix here so that prefix registration / route setup is easier (implementation workaround)
+            data = Data(Name(self.prefix).append(appName).append("_schema").appendVersion(self._applications[appName]["version"]))
+            data.getMetaInfo().setFreshnessPeriod(100000)
+            self.signData(data)
+            self._memoryContentCache.add(data)
         return True
-        
+    
+    # TODO: putting existing confs into memoryContentCache        
     def loadApplications(self, directory = None, override = False):
         if not directory:
             directory = self._applicationDirectory
@@ -511,7 +522,7 @@ class IotController(BaseNode):
                     if appName in self._applications and not override:
                         print("loadApplications: " + appName + " already exists, do nothing for configuration file: " + fullFileName)
                     else:
-                        self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": []}
+                        self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": [], "version": int(time.time())}
                         self._applications[appName]["tree"].read(fullFileName)
                         try:
                             validatorTree = self._applications[appName]["tree"]["validator"][0]

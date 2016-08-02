@@ -1,14 +1,16 @@
 #!/usr/bin/python
 
 from pyndn import Name, Interest, Data, Exclude
-from pyndn.util.memory_content_cache import MemoryContentCache
+
 from pyndn.security import KeyChain, SecurityException
-from pyndn.security.identity import IdentityManager, FilePrivateKeyStorage, BasicIdentityStorage
+from pyndn.security.identity import IdentityManager, FilePrivateKeyStorage, BasicIdentityStorage, 
 from pyndn.security.policy import NoVerifyPolicyManager
+from pyndn.security.certificate import IdentityCertificate
+
 from pyndn.threadsafe_face import ThreadsafeFace
 from pyndn.encoding import ProtobufTlv
+from pyndn.util MemoryContentCache
 from pyndn.util.boost_info_parser import BoostInfoParser
-from pyndn.util.memory_content_cache import MemoryContentCache
 
 from ndn_iot_python.commands.app_request_pb2 import AppRequestMessage
 
@@ -28,7 +30,10 @@ class Bootstrap(object):
         self._defaultIdentity = None
         self._dataPrefix = None
         self._defaultCertificateName = None
+        
         self._controllerName = None
+        self._controllerCertificate = None
+
         self._applicationName = ""
 
         self._identityManager = IdentityManager(BasicIdentityStorage())
@@ -36,7 +41,8 @@ class Bootstrap(object):
 
         self._face = face
         self._certificateContentCache = MemoryContentCache(face)
-        self._followingTrustSchema = dict()
+        
+        self._trustSchemas = dict()
 
     def getKeyChain(self):
         return self._keyChain
@@ -45,6 +51,11 @@ class Bootstrap(object):
         print "start not implemented"
         return 
 
+    def setupDefaultIdentityAndRoot(self, defaultIdentity, rootKey):
+        print "setupDefaultIdentityAndRoot not implemented"
+        return
+
+    # TODO: decoupling keyChain setup with producer configuration setup
     def setupKeyChain(self, confObjOrFileName, requestPermission = True, onSetupComplete = None, onSetupFailed = None):
         if isinstance(confObjOrFileName, basestring):
             confObj = self.processConfiguration(confObjOrFileName)
@@ -57,7 +68,7 @@ class Bootstrap(object):
             else:
                 defaultIdName = Name(confObj["identity"])
                 try:
-                    defaultKey = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(defaultIdName)
+                    defaultKey = self._keyChain.getIdentityManager.getDefaultKeyNameForIdentity(defaultIdName)
                     self._defaultIdentity = defaultIdName
                 except SecurityException:
                     msg = "Identity " + defaultIdName.toUri() + " in configuration does not exist. Please configure the device with this identity first"
@@ -96,6 +107,20 @@ class Bootstrap(object):
                     signerName = Name(intendedSigner)
         else:
             print "Deriving from " + signerName.toUri() + " for controller name"
+
+        try:
+            # TODO: this could be looking at the wrong name, signerName may end with ID-CERT, while getCertificate requires full certificate name
+            # At this point we should have the controller's certificate in our identity storage, if not, we ask for it again
+            self._controllerCertificate = self._keyChain.getCertificate(signerName)
+            # TODO: this does not seem a good approach, implementation-wise and security implication
+            self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
+        except SecurityException as e:
+            print "don't have controller certificate " + signerName.toUri() + " yet"
+            controllerCertInterest = Interest(Name(signerName))
+            controllerCertInterest.setInterestLifetimeMilliseconds(4000)
+            
+            self._face.expressInterest(controllerCertInterest, self.onControllerCertData, self.onControllerCertTimeout)
+
         self._controllerName = self.getIdentityNameFromCertName(signerName)
         print "Controller name: " + self._controllerName.toUri()
 
@@ -106,6 +131,41 @@ class Bootstrap(object):
                 onSetupComplete(self._defaultIdentity, self._keyChain)
         return True
 
+    def onControllerCertData(self, interest, data):
+        # TODO: verification rule for received self-signed cert. 
+        # So, if a controller comes masquerading in at this point with the right name, it is problematic. Similar with ndn-pi's implementation
+        self._controllerCertificate = IdentityCertificate(data)
+        # insert root certificate so that we could verify initial trust schemas
+        # TODO: this does not seem a good approach, implementation-wise and security implication
+        self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
+        try:
+            self._identityManager.addCertificate(self._controllerCertificate)
+        except SecurityException as e:
+            print str(e)
+        for schema in self._trustSchemas:
+            if "pending-schema" in self._trustSchemas[schema]:
+                self._keyChain.verifyData(self._trustSchemas[schema]["pending-schema"], self.onSchemaVerified, self.onSchemaVerificationFailed)
+        return
+
+    def onSchemaVerified(self, data):
+        print "trust schema verified"
+        namespace = data.getName().getPrefix(-2).toUri()
+        if self._trustSchemas[namespace]["pending-schema"].getName().toUri() == data.getName().toUri():
+            # we verified a pending trust schema
+            del self._trustSchemas[namespace]["pending-schema"]
+        return
+
+    def onSchemaVerificationFailed(self, data):
+        print "trust schema verification failed"
+        return
+
+    def onControllerCertTimeout(self, interest):
+        print "Controller certificate interest times out"
+        newInterest = Interest(interest)
+        newInterest.refreshNonce()
+        self._face.expressInterest(newInterest, self.onControllerCertData, self.onControllerCertTimeout)
+        return
+
     def onRegisterFailed(self, prefix):
         print("register failed for prefix " + prefix.getName().toUri())
         return
@@ -113,6 +173,9 @@ class Bootstrap(object):
     def onTrustSchemaData(self, interest, data):
         print("Trust schema received: " + data.getName().toUri())
         # Process newly received trust schema
+        if not self._controllerCertificate:
+            print "Controller certificate not yet present, verify once it's in place"
+            self._trustSchemas[data.getName().getPrefix(-2).toUri()]["pending-schema"] = data
 
         newInterest = Interest(interest)
         newInterest.refreshNonce()
@@ -129,11 +192,19 @@ class Bootstrap(object):
         newInterest = Interest(interest)
         newInterest.refreshNonce()
         self._face.expressInterest(newInterest, self.onTrustSchemaData, self.onTrustSchemaTimeout)        
-        return  
+        return
 
-    def startTrustSchemaUpdate(self, namespace, onUpdateSuccess = None, onUpdateFailed = None):
-        self._followingTrustSchema[namespace] = True
-        initialInterest = Interest(Name(namespace))
+    def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
+        namespace = appPrefix.toUri()
+        if namespace in self._trustSchemas:
+            if self._trustSchemas[namespace]["following"] == True:
+                print "Already following trust schema under this namespace!"
+                return
+            self._trustSchemas[namespace]["following"] = True
+        else:
+            self._trustSchemas[namespace] = {"following": True, "version": 0}
+
+        initialInterest = Interest(Name(namespace).append("_schema"))
         initialInterest.setChildSelector(1)
         self._face.expressInterest(initialInterest, self.onTrustSchemaData, self.onTrustSchemaTimeout)
         return
