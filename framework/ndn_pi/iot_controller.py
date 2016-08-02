@@ -79,8 +79,7 @@ class IotController(BaseNode):
             applicationDirectory = os.path.expanduser('~/.ndn/iot/applications')
         self._applicationDirectory = applicationDirectory
         self._applications = dict()
-        self.loadApplications()
-
+        
     def _insertIntoCapabilities(self, commandName, keyword, isSigned):
         newUri = Name(self.prefix).append(Name(commandName)).toUri()
         self._baseDirectory[keyword] = [{'signed':isSigned, 'name':newUri}]
@@ -104,6 +103,7 @@ class IotController(BaseNode):
           onRegisterSuccess = None, onDataNotFound = self._onCommandReceived)
         # Serve root certificate in our memoryContentCache
         self._memoryContentCache.add(self._rootCertificate)
+        self.loadApplications()
         self.loop.call_soon(self.onStartup)
 
 ######
@@ -352,10 +352,12 @@ class IotController(BaseNode):
             self._keyChain.verifyInterest(interest, 
                     onVerifiedAppRequest, onVerificationFailedAppRequest)
         else:
-            response = Data(interest.getName())
-            response.setContent("500")
-            response.getMetaInfo().setFreshnessPeriod(1000)
-            self.sendData(response)
+            print("Got interest unable to answer yet: " + interest.getName().toUri())
+            pass
+            # response = Data(interest.getName())
+            # response.setContent("500")
+            # response.getMetaInfo().setFreshnessPeriod(1000)
+            # self.sendData(response)
 
     def onStartup(self):
         # begin taking add requests
@@ -504,6 +506,7 @@ class IotController(BaseNode):
             # We make it carry controller prefix here so that prefix registration / route setup is easier (implementation workaround)
             data = Data(Name(self.prefix).append(appName).append("_schema").appendVersion(self._applications[appName]["version"]))
             data.getMetaInfo().setFreshnessPeriod(100000)
+            data.setContent(str(self._applications[appName]["tree"].getRoot()))
             self.signData(data)
             self._memoryContentCache.add(data)
         return True
@@ -524,6 +527,12 @@ class IotController(BaseNode):
                     else:
                         self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": [], "version": int(time.time())}
                         self._applications[appName]["tree"].read(fullFileName)
+                        data = Data(Name(self.prefix).append(appName).append("_schema").appendVersion(self._applications[appName]["version"]))
+                        # TODO: change this arbitrary freshness period
+                        data.getMetaInfo().setFreshnessPeriod(100000)
+                        data.setContent(str(self._applications[appName]["tree"].getRoot()))
+                        self.signData(data)
+                        self._memoryContentCache.add(data)
                         try:
                             validatorTree = self._applications[appName]["tree"]["validator"][0]
                             for rule in validatorTree["rule"]:

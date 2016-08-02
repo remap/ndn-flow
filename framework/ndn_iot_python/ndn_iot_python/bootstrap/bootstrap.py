@@ -182,18 +182,26 @@ class Bootstrap(object):
         return
 
     def onSchemaVerified(self, data, onUpdateSuccess, onUpdateFailed):
-        print "trust schema verified"
+        print "trust schema verified: " + data.getName().toUri()
         version = data.getName().get(-1)
         namespace = data.getName().getPrefix(-2).toUri()
         if not (namespace in self._trustSchemas):
             print "unexpected: received trust schema for application namespace that's not being followed; malformed data name?"
             return
 
-        if self._trustSchemas[namespace]["pending-schema"].getName().toUri() == data.getName().toUri():
+        if version.toVersion() <= self._trustSchemas[namespace]["version"]:
+            msg = "Got out-of-date trust schema"
+            print msg
+            if onUpdateFailed:
+                onUpdateFailed(msg)
+            return
+
+        self._trustSchemas[namespace]["version"] = version.toVersion()
+        
+        if "pending-schema" in self._trustSchemas[namespace] and self._trustSchemas[namespace]["pending-schema"].getName().toUri() == data.getName().toUri():
             # we verified a pending trust schema, don't need to keep that any more
             del self._trustSchemas[namespace]["pending-schema"]
-        
-        self._trustSchemas[namespace]["version"] = version.toVersion()
+
         self._trustSchemas[namespace]["trust-schema"] = data.getContent().toRawStr()
         print self._trustSchemas[namespace]["trust-schema"]
 
@@ -210,8 +218,10 @@ class Bootstrap(object):
           lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
 
         if onUpdateSuccess:
-            onUpdateSuccess(data, self._trustSchemas[namespace]["is-initial"])
+            onUpdateSuccess(data.getContent().toRawStr(), self._trustSchemas[namespace]["is-initial"])
         self._trustSchemas[namespace]["is-initial"] = False
+        # Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
+        self._keyChain.getPolicyManager().config.read(self._trustSchemas[namespace]["trust-schema"], "use-string!")
         return
 
     def onSchemaVerificationFailed(self, data, onUpdateSuccess, onUpdateFailed):
@@ -235,11 +245,12 @@ class Bootstrap(object):
 
     def onTrustSchemaData(self, interest, data, onUpdateSuccess, onUpdateFailed):
         print("Trust schema received: " + data.getName().toUri())
+        namespace = data.getName().getPrefix(-2).toUri()
         # Process newly received trust schema
         if not self._controllerCertificate:
             # we don't yet have the root certificate fetched, so we store this cert for now
             print "Controller certificate not yet present, verify once it's in place"
-            self._trustSchemas[data.getName().getPrefix(-2).toUri()]["pending-schema"] = data
+            self._trustSchemas[namespace]["pending-schema"] = data
         else:
             # we veriy the received trust schema, should we use an internal KeyChain instead?
             self._keyChain.verifyData(data, 
@@ -257,6 +268,7 @@ class Bootstrap(object):
           lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))        
         return
 
+    # TODO: if trust schema gets over packet size limit, segmentation
     def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
         namespace = appPrefix.toUri()
         if namespace in self._trustSchemas:

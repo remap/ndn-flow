@@ -76,8 +76,23 @@ if __name__ == '__main__':
     
     bootstrap = Bootstrap(face)
 
+    def onUpdateFailed(msg):
+        return
+        
+    def onUpdateSuccess(trustSchemaString, isInitial):
+        return
+
+    def onRequestSuccess():
+        print "data production authorized by controller"
+        return
+
+    def onRequestFailed(msg):
+        print "data production not authorized by controller : " + msg
+        return
+
     def onSetupComplete(defaultIdentity, keyChain):
-        bootstrap.requestProducerAuthorization("app.conf")
+        bootstrap.requestProducerAuthorization("app.conf", onRequestSuccess, onRequestFailed)
+        bootstrap.startTrustSchemaUpdate(Name("/home/gateway/flow"), onUpdateSuccess, onUpdateFailed)
         #producer = AppProducer(face, defaultIdentity, keyChain)
         #producer.start()
 
