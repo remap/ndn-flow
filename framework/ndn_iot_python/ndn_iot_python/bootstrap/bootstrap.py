@@ -28,7 +28,6 @@ except ImportError:
 class Bootstrap(object):
     def __init__(self, face):
         self._defaultIdentity = None
-        self._dataPrefix = None
         self._defaultCertificateName = None
         
         self._controllerName = None
@@ -45,6 +44,8 @@ class Bootstrap(object):
         self._keyChain = KeyChain(self._identityManager, self._policyManager)
 
         self._face = face
+        # setFace for keyChain or else it won't be able to express interests for certs
+        self._keyChain.setFace(self._face)
         self._certificateContentCache = MemoryContentCache(face)
         
         self._trustSchemas = dict()
@@ -95,7 +96,7 @@ class Bootstrap(object):
                 # TODO: this does not seem a good approach, implementation-wise and security implication
                 self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
                 if onSetupComplete:
-                    onSetupComplete(Name(self._defaultIdentity), self._keyChain)
+                    onSetupComplete(Name(self._defaultCertificateName), self._keyChain)
             except SecurityException as e:
                 print "don't have controller certificate " + actualSignerName.toUri() + " yet"
                 controllerCertInterest = Interest(Name(actualSignerName))
@@ -135,24 +136,15 @@ class Bootstrap(object):
                 raise RuntimeError("Please call setupDefaultIdentityAndRoot with identity name and root key name")
         return
 
-    # TODO: decoupling keyChain setup with producer configuration setup
-    def requestProducerAuthorization(self, confObjOrFileName, requestPermission = True, onRequestSuccess = None, onRequestFailed = None):
-        if isinstance(confObjOrFileName, basestring):
-            confObj = self.processConfiguration(confObjOrFileName)
-        else:
-            confObj = confObjOrFileName
+    # Wrapper for sendAppRequest, fills in already configured defaultCertificateName
+    def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
+        # TODO: update logic on this part, should the presence of default certificate name be mandatory? 
+        # And allow application developer to send app request to a configured root/controller?
+        if not self._defaultCertificateName:
+            raise RuntimeError("Default certificate is missing! Try setupDefaultIdentityAndRoot first?")
+            return
+        self.sendAppRequest(self._defaultCertificateName, dataPrefix, appName, onRequestSuccess, onRequestFailed)
         
-        if "prefix" in confObj:
-            self._dataPrefix = Name(confObj["prefix"])
-        else:
-            print "Configuration file " + confFile + " is missing application data prefix"
-        
-        if requestPermission:
-            self.sendAppRequest(confObj["application"], onRequestSuccess, onRequestFailed)
-        else:
-            if onRequestSuccess:
-                onRequestSuccess()
-        return
 
     def onControllerCertData(self, interest, data, onSetupComplete, onSetupFailed):
         # TODO: verification rule for received self-signed cert. 
@@ -169,7 +161,7 @@ class Bootstrap(object):
             if "pending-schema" in self._trustSchemas[schema]:
                 self._keyChain.verifyData(self._trustSchemas[schema]["pending-schema"], self.onSchemaVerified, self.onSchemaVerificationFailed)
         if onSetupComplete:
-            onSetupComplete(Name(self._defaultIdentity), self._keyChain)
+            onSetupComplete(Name(self._defaultCertificateName), self._keyChain)
         return
 
     def onControllerCertTimeout(self, interest, onSetupComplete, onSetupFailed):
@@ -217,11 +209,14 @@ class Bootstrap(object):
           lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
           lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
 
+        # Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
+        # Per reset function in ConfigPolicyManager; For now we don't call reset as we still want root cert in our certCache, instead of asking for it again (when we want to verify) each time we update the trust schema
+        self._keyChain.getPolicyManager().config = BoostInfoParser()
+        self._keyChain.getPolicyManager().config.read(self._trustSchemas[namespace]["trust-schema"], "use-string!")
+        
         if onUpdateSuccess:
             onUpdateSuccess(data.getContent().toRawStr(), self._trustSchemas[namespace]["is-initial"])
         self._trustSchemas[namespace]["is-initial"] = False
-        # Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
-        self._keyChain.getPolicyManager().config.read(self._trustSchemas[namespace]["trust-schema"], "use-string!")
         return
 
     def onSchemaVerificationFailed(self, data, onUpdateSuccess, onUpdateFailed):
@@ -298,10 +293,7 @@ class Bootstrap(object):
         confObj = dict()
         try:
             confObj["identity"] = config["application/identity"][0].value
-            confObj["prefix"] = config["application/prefix"][0].value
-
             confObj["signer"] = config["application/signer"][0].value
-            confObj["application"] = config["application/appName"][0].value
         except KeyError as e:
             msg = "Missing key in configuration: " + str(e)
             print msg
@@ -323,14 +315,15 @@ class Bootstrap(object):
 
         return certName.getPrefix(i)
 
-    def sendAppRequest(self, applicationName, onRequestSuccess, onRequestFailed):
+    def sendAppRequest(self, certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed):
         message = AppRequestMessage()
 
-        for component in range(self._defaultCertificateName.size()):
-            message.command.idName.components.append(self._defaultCertificateName.get(component).toEscapedString())
-        for component in range(self._dataPrefix.size()):
-            message.command.dataPrefix.components.append(self._dataPrefix.get(component).toEscapedString())
+        for component in range(certificateName.size()):
+            message.command.idName.components.append(certificateName.get(component).toEscapedString())
+        for component in range(dataPrefix.size()):
+            message.command.dataPrefix.components.append(dataPrefix.get(component).toEscapedString())
         message.command.appName = applicationName
+
         paramComponent = ProtobufTlv.encode(message)
 
         requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))

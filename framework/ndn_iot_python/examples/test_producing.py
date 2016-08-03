@@ -19,10 +19,11 @@ except ImportError:
     import trollius as asyncio
 
 class AppProducer():
-    def __init__(self, face, identity, keyChain):
+    def __init__(self, face, certificateName, keyChain, dataPrefix):
         self._keyChain = keyChain
-        self._identityName = identity
+        self._certificateName = certificateName
         self._face = face
+        self._dataPrefix = dataPrefix
         return
 
     def start(self):
@@ -40,8 +41,8 @@ class AppProducer():
         self.log.warn('Could not register data cache')
         self.registerCachePrefix()
 
-    def onDataMissing(self, prefix, interest, transport, prefixId):
-        self._missedRequests += 1
+    def onDataMissing(self, prefix, interest, face, interestFilterId, filter):
+        print "data not found for " + interest.getName().toUri()
         # let it timeout
 
     def publishData(self):
@@ -58,9 +59,10 @@ class AppProducer():
         dataOut = Data(Name(self._dataPrefix).appendVersion(int(timestamp)))
         dataOut.setContent(json.dumps(info))
         dataOut.getMetaInfo().setFreshnessPeriod(10000)
-        self._keyChain.sign(dataOut, self._defaultCertificateName)
+        self._keyChain.sign(dataOut, self._certificateName)
 
         self._dataCache.add(dataOut)
+        print "data added: " + dataOut.getName().toUri()
 
         # repeat every 5 seconds
         self._face.callLater(5000, self.publishData)
@@ -75,27 +77,25 @@ if __name__ == '__main__':
     face = ThreadsafeFace(loop)
     
     bootstrap = Bootstrap(face)
+    appName = "flow"
+    dataPrefix = Name("/home/flow/ps-publisher-4")
 
-    def onUpdateFailed(msg):
-        return
+    def onSetupComplete(defaultCertificateName, keyChain):
+        def onRequestSuccess():
+            print "data production authorized by controller"
+            producer = AppProducer(face, defaultCertificateName, keyChain, dataPrefix)
+            producer.start()
+            return
+
+        def onRequestFailed(msg):
+            print "data production not authorized by controller : " + msg
+            # For this test, we start anyway
+            producer = AppProducer(face, defaultCertificateName, keyChain, dataPrefix)
+            producer.start()
+            return
+
+        bootstrap.requestProducerAuthorization(dataPrefix, appName, onRequestSuccess, onRequestFailed)
         
-    def onUpdateSuccess(trustSchemaString, isInitial):
-        return
-
-    def onRequestSuccess():
-        print "data production authorized by controller"
-        return
-
-    def onRequestFailed(msg):
-        print "data production not authorized by controller : " + msg
-        return
-
-    def onSetupComplete(defaultIdentity, keyChain):
-        bootstrap.requestProducerAuthorization("app.conf", onRequestSuccess, onRequestFailed)
-        bootstrap.startTrustSchemaUpdate(Name("/home/gateway/flow"), onUpdateSuccess, onUpdateFailed)
-        #producer = AppProducer(face, defaultIdentity, keyChain)
-        #producer.start()
-
     def onSetupFailed(msg):
         print("Setup failed " + msg)
 

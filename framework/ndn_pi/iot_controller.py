@@ -475,6 +475,30 @@ class IotController(BaseNode):
             trustAnchorNode.createSubtree("type", "base64")
             trustAnchorNode.createSubtree("base64-string", Blob(b64encode(self._rootCertificate.wireEncode().toBytes()), False).toRawStr())
 
+            #create cert verification rule
+            # TODO: the idea for this would be, if the cert has /home-prefix/<one-component>/KEY/ksk-*/ID-CERT, then it should be signed by fixed controller(s)
+            # if the cert has /home-prefix/<multiple-components>/KEY/ksk-*/ID-CERT, then it should be checked hierarchically (this is for subdomain support)
+            certRuleNode = validatorNode.createSubtree("rule")
+            certRuleNode.createSubtree("id", "Certs")
+            certRuleNode.createSubtree("for", "data")
+
+            filterNode = certRuleNode.createSubtree("filter")
+            filterNode.createSubtree("type", "regex")
+            filterNode.createSubtree("regex", "^[^<KEY>]*<KEY><>*<ID-CERT>")
+
+            checkerNode = certRuleNode.createSubtree("checker")
+            # TODO: wait how did my first hierarchical verifier work?
+            #checkerNode.createSubtree("type", "hierarchical")
+
+            checkerNode.createSubtree("type", "customized")
+            checkerNode.createSubtree("sig-type", "rsa-sha256")
+
+            keyLocatorNode = checkerNode.createSubtree("key-locator")
+            keyLocatorNode.createSubtree("type", "name")
+            # We don't put cert version in there
+            keyLocatorNode.createSubtree("name", Name(self.getDefaultCertificateName()).getPrefix(-1).toUri())
+            keyLocatorNode.createSubtree("relation", "equal")
+
 
         ruleNode = validatorNode.createSubtree("rule")
         ruleNode.createSubtree("id", dataPrefix.toUri())
@@ -493,7 +517,6 @@ class IotController(BaseNode):
         keyLocatorNode.createSubtree("type", "name")
         # We don't put cert version in there
         keyLocatorNode.createSubtree("name", certName.getPrefix(-1).toUri())
-        # TODO: test if equal is what we want here
         keyLocatorNode.createSubtree("relation", "equal")
 
         if not os.path.exists(self._applicationDirectory):
