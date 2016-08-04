@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html>
+<head>
+<title>NDN Ping</title>
+
+<script type="text/javascript" src="ndn-js.min.js"></script>
+<script type="text/javascript" src="hmac-helper.js"></script>
+<script type="text/javascript">
+  function test() {
+    var pin = HmacHelper.generatePin();
+    console.log(pin);
+
+    var hash = Crypto.createHash('sha256');
+    hash.update(pin)
+    var key = new Blob(new Buffer(hash.digest()), false);
+    //var keyChain = KeyChain();
+    var interest = new Interest(new Name("/test/abc"));
+    HmacHelper.signInterest(interest, key);
+
+    var verified = HmacHelper.verifyInterest(interest, key);
+    console.log(verified);
+  }
+</script>
+
+</head>
+
+<body>
+
+  <button onclick="test()">Test</button>
+
+</body>
+</html>
