@@ -50,13 +50,9 @@ class Bootstrap(object):
         
         self._trustSchemas = dict()
 
-    def getKeyChain(self):
-        return self._keyChain
-
-    def start(self):
-        print "start not implemented"
-        return 
-
+###############################################
+# Initial keyChain and defaultCertificate setup
+###############################################
     def setupDefaultIdentityAndRoot(self, defaultIdentityOrFileName, signerName = None, onSetupComplete = None, onSetupFailed = None):
         def helper(identityName, signerName):
             try:
@@ -136,16 +132,6 @@ class Bootstrap(object):
                 raise RuntimeError("Please call setupDefaultIdentityAndRoot with identity name and root key name")
         return
 
-    # Wrapper for sendAppRequest, fills in already configured defaultCertificateName
-    def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
-        # TODO: update logic on this part, should the presence of default certificate name be mandatory? 
-        # And allow application developer to send app request to a configured root/controller?
-        if not self._defaultCertificateName:
-            raise RuntimeError("Default certificate is missing! Try setupDefaultIdentityAndRoot first?")
-            return
-        self.sendAppRequest(self._defaultCertificateName, dataPrefix, appName, onRequestSuccess, onRequestFailed)
-        
-
     def onControllerCertData(self, interest, data, onSetupComplete, onSetupFailed):
         # TODO: verification rule for received self-signed cert. 
         # So, if a controller comes masquerading in at this point with the right name, it is problematic. Similar with ndn-pi's implementation
@@ -171,6 +157,31 @@ class Bootstrap(object):
         self._face.expressInterest(newInterest, 
           lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
           lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed))
+        return
+
+#########################################################
+# Handling application consumption (trust schema updates)
+#########################################################
+    # TODO: if trust schema gets over packet size limit, segmentation
+    def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
+        namespace = appPrefix.toUri()
+        if namespace in self._trustSchemas:
+            if self._trustSchemas[namespace]["following"] == True:
+                print "Already following trust schema under this namespace!"
+                return
+            self._trustSchemas[namespace]["following"] = True
+        else:
+            self._trustSchemas[namespace] = {"following": True, "version": 0, "is-initial": True}
+
+        initialInterest = Interest(Name(namespace).append("_schema"))
+        initialInterest.setChildSelector(1)
+        self._face.expressInterest(initialInterest, 
+          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
+          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
+        return
+
+    def stopTrustSchemaUpdate(self):
+        print "stopTrustSchemaUpdate not implemented"
         return
 
     def onSchemaVerified(self, data, onUpdateSuccess, onUpdateFailed):
@@ -233,9 +244,11 @@ class Bootstrap(object):
         exclude.appendAny()
         exclude.appendComponent(Name.Component.fromVersion(self._trustSchemas[namespace]["version"]))
         newInterest.setExclude(exclude)
-        self._face.expressInterest(newInterest, 
-          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
+        # Don't immediately ask for potentially the same content again if verification fails
+        self._face.callLater(4000, lambda : 
+          self._face.expressInterest(newInterest, 
+            lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
+            lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed)))
         return
 
     def onTrustSchemaData(self, interest, data, onUpdateSuccess, onUpdateFailed):
@@ -263,57 +276,17 @@ class Bootstrap(object):
           lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))        
         return
 
-    # TODO: if trust schema gets over packet size limit, segmentation
-    def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
-        namespace = appPrefix.toUri()
-        if namespace in self._trustSchemas:
-            if self._trustSchemas[namespace]["following"] == True:
-                print "Already following trust schema under this namespace!"
-                return
-            self._trustSchemas[namespace]["following"] = True
-        else:
-            self._trustSchemas[namespace] = {"following": True, "version": 0, "is-initial": True}
-
-        initialInterest = Interest(Name(namespace).append("_schema"))
-        initialInterest.setChildSelector(1)
-        self._face.expressInterest(initialInterest, 
-          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
-        return
-
-    def stopTrustSchemaUpdate(self):
-        print "stopTrustSchemaUpdate not implemented"
-        return
-
-    def processConfiguration(self, confFile):
-        config = BoostInfoParser()
-        config.read(confFile)
-
-        # TODO: handle missing configuration, refactor dict representation
-        confObj = dict()
-        try:
-            confObj["identity"] = config["application/identity"][0].value
-            confObj["signer"] = config["application/signer"][0].value
-        except KeyError as e:
-            msg = "Missing key in configuration: " + str(e)
-            print msg
-            return None
-        return confObj
-
-    def getIdentityNameFromCertName(self, certName):
-        i = certName.size() - 1
-
-        idString = "KEY"
-        while i >= 0:
-            if certName.get(i).toEscapedString() == idString:
-                break
-            i -= 1
-
-        if i < 0:
-            print "Error: unexpected certName " + certName.toUri()
-            return None
-
-        return certName.getPrefix(i)
+###############################################
+# Handling application producing authorizations
+###############################################
+    # Wrapper for sendAppRequest, fills in already configured defaultCertificateName
+    def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
+        # TODO: update logic on this part, should the presence of default certificate name be mandatory? 
+        # And allow application developer to send app request to a configured root/controller?
+        if not self._defaultCertificateName:
+            raise RuntimeError("Default certificate is missing! Try setupDefaultIdentityAndRoot first?")
+            return
+        self.sendAppRequest(self._defaultCertificateName, dataPrefix, appName, onRequestSuccess, onRequestFailed)
 
     def sendAppRequest(self, certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed):
         message = AppRequestMessage()
@@ -366,6 +339,45 @@ class Bootstrap(object):
           lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
         return
 
+###############################################
+# Helper functions
+###############################################
     def onRegisterFailed(self, prefix):
         print("register failed for prefix " + prefix.getName().toUri())
         return
+
+    def processConfiguration(self, confFile):
+        config = BoostInfoParser()
+        config.read(confFile)
+
+        # TODO: handle missing configuration, refactor dict representation
+        confObj = dict()
+        try:
+            confObj["identity"] = config["application/identity"][0].value
+            confObj["signer"] = config["application/signer"][0].value
+        except KeyError as e:
+            msg = "Missing key in configuration: " + str(e)
+            print msg
+            return None
+        return confObj
+
+    def getIdentityNameFromCertName(self, certName):
+        i = certName.size() - 1
+
+        idString = "KEY"
+        while i >= 0:
+            if certName.get(i).toEscapedString() == idString:
+                break
+            i -= 1
+
+        if i < 0:
+            print "Error: unexpected certName " + certName.toUri()
+            return None
+
+        return certName.getPrefix(i)
+
+#################################
+# Getters and setters
+#################################
+    def getKeyChain(self):
+        return self._keyChain
