@@ -90,9 +90,9 @@ class Bootstrap(object):
             print "Controller name: " + self._controllerName.toUri()
 
             try:
-                # TODO: this could be looking at the wrong name, signerName may end with ID-CERT, while getCertificate requires full certificate name
-                # At this point we should have the controller's certificate in our identity storage, if not, we ask for it again
-                self._controllerCertificate = self._keyChain.getCertificate(actualSignerName)
+                identityName = self.getIdentityNameFromCertName(actualSignerName)
+                self._controllerCertificate = self._keyChain.getCertificate(self._identityManager.getDefaultCertificateNameForIdentity(identityName))
+                self._controllerCertificate.getName().toUri()
                 # TODO: this does not seem a good approach, implementation-wise and security implication
                 self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
                 if onSetupComplete:
