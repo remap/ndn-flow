@@ -2,12 +2,15 @@
 var IotNode = function IoTNode(host, dbName)
 {
     this.face = new Face({host: host});
-
+    if (dbName === undefined) {
+        dbName = "iot-db";
+    }
     if (typeof Dexie !== 'undefined') {
         this.database = new Dexie(dbName);
+        console.log(this.database);
 
         // our DB stores the serial
-        this.database.version(1).store({
+        this.database.version(1).stores({
             device: "serial"
         });
         this.database.open().catch(function(error) {
@@ -22,8 +25,9 @@ var IotNode = function IoTNode(host, dbName)
 
 IotNode.prototype.getSerial = function()
 {
-    if (this.serial === null) {
-        self = this;
+    if (this.serial === undefined) {
+        console.log("work");
+        var self = this;
         this.database.device.count(function (number) {
             if (number === 0) {
                 id = makeid(6);
@@ -31,30 +35,23 @@ IotNode.prototype.getSerial = function()
                 self.serial = id;
             } else {
                 self.database.device.first(function (item) {
+                    // under debug
+                    console.log(item);
                     self.serial = item["serial"];
                 })
             }
-        })
+            console.log("Serial: " + self.serial);
+        });
     }
 };
 
 IotNode.prototype._createNewPin = function()
 {
-    /*
-    def _createNewPin(self):
-        pin = HmacHelper.generatePin() 
-        self._hmacHandler = HmacHelper(pin.decode('hex'))
-        return pin
-    */
-}
-
-function makeid(length)
-{
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (var i = 0; i < length; i++)
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    return text;
+    var pin = HmacHelper.generatePin();
+    var hash = Crypto.createHash('sha256');
+    hash.update(pin);
+    this.key = new Blob(new Buffer(hash.digest()), false);
+    return pin;
 }
 
 IotNode.prototype.beforeLoopStart = function()
@@ -68,33 +65,44 @@ IotNode.prototype.beforeLoopStart = function()
     */
 }
 
-IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, interestFilterId, filter):
-    // the interest we get here is signed by HMAC, let's verify it
+IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, interestFilterId, filter)
+{
     this.tempPrefixId = interestFilterId /// didn't get it from register because of the event loop
-    dataName = new Name(interest.getName())
-    replyData = new Data(dataName)
-    if (verifyInterest(interest)):
-        # we have a match! decode the controller's name
-        configComponent = interest.getName().get(prefix.size())
-        replyData.setContent('200')
-        self._hmacHandler.signData(replyData, keyName=self.prefix)
-        self.face.putData(replyData)
+    var dataName = new Name(interest.getName());
+    var replyData = new Data(dataName);
+    
+    // the interest we get here is signed by HMAC, let's verify it
+    if (HmacHelper.verifyInterest(interest)) {
+        // we have a match! decode the controller's name
+        var configComponent = interest.getName().get(prefix.size());
+        replyData.setContent('200');
+        
+        KeyChain.signWithHmacWithSha256(replyData, this.key);
+        this.face.putData(replyData);
 
-        environmentConfig = DeviceConfigurationMessage()
-        ProtobufTlv.decode(environmentConfig, configComponent.getValue()) 
-        networkPrefix = self._extractNameFromField(environmentConfig.configuration.networkPrefix)
-        controllerName = self._extractNameFromField(environmentConfig.configuration.controllerName)
-        controllerName = Name(networkPrefix).append(controllerName)
+        var ProtoBuf = dcodeIO.ProtoBuf;
+        var builder = ProtoBuf.loadProtoFile('commands/configure-device.proto');
+        var descriptor = builder.lookup('DeviceConfigurationMessage');
+        var DeviceConfigurationMessage = descriptor.build();
 
-        self._policyManager.setEnvironmentPrefix(networkPrefix)
-        self._policyManager.setTrustRootIdentity(controllerName)
+        var environmentConfig = new DeviceConfigurationMessage();
+        ProtobufTlv.decode(environmentConfig, descriptor, configComponent.getValue());
+        
+        var networkPrefix = ProtobufTlv.toName(environmentConfig.configuration.networkPrefix);
+        var controllerName = new Name(networkPrefix).append(ProtobufTlv.toName(environmentConfig.configuration.controllerName));
 
-        self.deviceSuffix = self._extractNameFromField(environmentConfig.configuration.deviceSuffix)
+        this.policyManager.setEnvironmentPrefix(networkPrefix);
+        this.policyManager.setTrustRootIdentity(controllerName);
 
-        self._configureIdentity = Name(networkPrefix).append(self.deviceSuffix) 
-        self._sendCertificateRequest(self._configureIdentity)
+        this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix);
+        this.configureIdentity = new Name(networkPrefix).append(this.deviceSuffix);
+
+        this.sendCertificateRequest(this.configureIdentity);
+    }
     // else, ignore!
-            
+}
+    
+/*            
     def _onConfigurationRegistrationFailure(self, prefix):
         #this is so bad... try a few times
         if self._registrationFailures < 5:
@@ -426,3 +434,14 @@ IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, in
         control logic, etc
         """
         pass
+*/
+
+// Helper function
+function makeid(length)
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (var i = 0; i < length; i++)
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}

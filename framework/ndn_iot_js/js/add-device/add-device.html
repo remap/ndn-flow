@@ -3,12 +3,14 @@
 
 <html>
 <head>
-<title>NDN Ping</title>
+<title>IoT Test</title>
 
 <script type="text/javascript" src="ndn-js.min.js"></script>
 <script type="text/javascript" src="hmac-helper.js"></script>
+<script type="text/javascript" src="add-device.js"></script>
+
 <script type="text/javascript">
-  function test() {
+  function testInterestHmacSigningAndVerification() {
     var pin = HmacHelper.generatePin();
     console.log(pin);
 
@@ -22,13 +24,18 @@
     var verified = HmacHelper.verifyInterest(interest, key);
     console.log(verified);
   }
+
+  function testAddDevice() {
+    var node = new IotNode("127.0.0.1");
+
+  }
 </script>
 
 </head>
 
 <body>
 
-  <button onclick="test()">Test</button>
+  <button onclick="testAddDevice()">Test</button>
 
 </body>
 </html>
