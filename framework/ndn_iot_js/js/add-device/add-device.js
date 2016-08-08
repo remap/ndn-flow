@@ -1,5 +1,6 @@
+default_prefix = new Name("/home/configure");
 
-var IotNode = function IoTNode(host, dbName)
+var IotNode = function IotNode(host, dbName)
 {
     this.face = new Face({host: host});
     if (dbName === undefined) {
@@ -7,8 +8,7 @@ var IotNode = function IoTNode(host, dbName)
     }
     if (typeof Dexie !== 'undefined') {
         this.database = new Dexie(dbName);
-        console.log(this.database);
-
+        
         // our DB stores the serial
         this.database.version(1).stores({
             device: "serial"
@@ -21,6 +21,16 @@ var IotNode = function IoTNode(host, dbName)
     }
 
     this.getSerial();
+
+    // KeyChain and Identity set up
+    this.identityStorage = new IndexedDbIdentityStorage();
+    this.privateKeyStorage = new IndexedDbPrivateKeyStorage();
+    this.identityManager = new IdentityManager(this.identityStorage, this.privateKeyStorage);
+    this.policyManager = new ConfigPolicyManager();
+    this.keyChain = new KeyChain(this.identityManager, this.policyManager);
+
+    // Use this hack so that by the time loop starts we should already have filled in the serial number from IndexedDB
+    setTimeout(this.beforeLoopStart.bind(this), 200);
 };
 
 IotNode.prototype.getSerial = function()
@@ -34,18 +44,20 @@ IotNode.prototype.getSerial = function()
                 self.database.device.put({"serial": id});
                 self.serial = id;
             } else {
-                self.database.device.first(function (item) {
-                    // under debug
-                    console.log(item);
+                self.database.device.toCollection().first(function (item) {
+                    // TODO: this function could probably return a promise to get "serial"
                     self.serial = item["serial"];
-                })
+                    console.log("Serial: " + self.serial);
+                });
             }
-            console.log("Serial: " + self.serial);
         });
+    } else {
+        console.log("Serial: " + this.serial);
+        return this.serial;
     }
 };
 
-IotNode.prototype._createNewPin = function()
+IotNode.prototype.createNewPin = function()
 {
     var pin = HmacHelper.generatePin();
     var hash = Crypto.createHash('sha256');
@@ -56,23 +68,43 @@ IotNode.prototype._createNewPin = function()
 
 IotNode.prototype.beforeLoopStart = function()
 {
-    /*
-    def beforeLoopStart(self):
-        print("Serial: {}\nConfiguration PIN: {}".format(self.deviceSerial, self._createNewPin()))
-        # TODO: after PyNDN update, openloop publisher's registration would call onRegisterFailed; while nfd-status on the other side shows it's actually successful
-        self.face.registerPrefix(self.prefix, 
-            self._onConfigurationReceived, self.onRegisterFailed)
-    */
+    if (this.serial === undefined) {
+        console.log("Error: get serial has not yet finished.");
+        return;
+    }
+    console.log("Serial: " + this.serial + "; Configuration PIN: " + this.createNewPin());
+    this.prefix = new Name(default_prefix).append(this.serial);
+
+    // Make sure that we are trusted by the remote NFD to registerPrefix
+    // For now as a quick hack, we can enable localhop security on the NFD of the web host (or whatever other NFDs this code defaults to)
+    var self = this;
+    this.keyChain.getDefaultCertificateName(function (certificateName) {
+        self.face.setCommandSigningInfo(self.keyChain, certificateName);
+        self.face.registerPrefix(self.prefix, self.onConfigurationReceived.bind(self), self.onRegisterFailed.bind(self));
+    }, function (error) {
+        self.keyChain.createIdentityAndCertificate(new Name("/temp/device/initial"), function (certificateName) {
+            self.face.setCommandSigningInfo(self.keyChain, certificateName);
+            self.face.setCommandSigningInfo(self.keyChain, certificateName);
+            self.face.registerPrefix(self.prefix, self.onConfigurationReceived.bind(self), self.onRegisterFailed.bind(self));
+        }, function (error) {
+            console.log(error);
+        });
+    });
 }
 
-IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, interestFilterId, filter)
+IotNode.prototype.onRegisterFailed = function(prefix)
+{
+    console.log("Registration failed for prefix: " + prefix.toUri());
+}
+
+IotNode.prototype.onConfigurationReceived = function(prefix, interest, face, interestFilterId, filter)
 {
     this.tempPrefixId = interestFilterId /// didn't get it from register because of the event loop
     var dataName = new Name(interest.getName());
     var replyData = new Data(dataName);
     
     // the interest we get here is signed by HMAC, let's verify it
-    if (HmacHelper.verifyInterest(interest)) {
+    if (HmacHelper.verifyInterest(interest, this.key)) {
         // we have a match! decode the controller's name
         var configComponent = interest.getName().get(prefix.size());
         replyData.setContent('200');
@@ -81,7 +113,7 @@ IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, in
         this.face.putData(replyData);
 
         var ProtoBuf = dcodeIO.ProtoBuf;
-        var builder = ProtoBuf.loadProtoFile('commands/configure-device.proto');
+        var builder = ProtoBuf.loadProtoFile('../commands/configure-device.proto');
         var descriptor = builder.lookup('DeviceConfigurationMessage');
         var DeviceConfigurationMessage = descriptor.build();
 
@@ -91,8 +123,7 @@ IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, in
         var networkPrefix = ProtobufTlv.toName(environmentConfig.configuration.networkPrefix);
         var controllerName = new Name(networkPrefix).append(ProtobufTlv.toName(environmentConfig.configuration.controllerName));
 
-        this.policyManager.setEnvironmentPrefix(networkPrefix);
-        this.policyManager.setTrustRootIdentity(controllerName);
+        this.trustRootIdentity = controllerName;
 
         this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix);
         this.configureIdentity = new Name(networkPrefix).append(this.deviceSuffix);
@@ -101,128 +132,121 @@ IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, in
     }
     // else, ignore!
 }
-    
-/*            
-    def _onConfigurationRegistrationFailure(self, prefix):
-        #this is so bad... try a few times
-        if self._registrationFailures < 5:
-            self._registrationFailures += 1
-            self.log.warn("Could not register {}, retry: {}/{}".format(prefix.toUri(), self._registrationFailures, 5)) 
-            self.face.registerPrefix(self.prefix, self._onConfigurationReceived, 
-                self._onConfigurationRegistrationFailure)
-        else:
-            self.log.critical("Could not register device prefix, ABORTING")
-            self._isStopped = True
 
-###
-# Certificate signing requests
-# On startup, if we don't have a certificate signed by the controller, we request one.
-###
-       
-    def _sendCertificateRequest(self, keyIdentity):
-        """
-        We compose a command interest with our public key info so the controller
-        can sign us a certificate that can be used with other nodes in the network.
-        """
+IotNode.prototype.onConfigurationRegistrationFailure = function(prefix)
+{
+    console.log("Prefix registration failed: " + prefix.toUri());
+    return ;
+}
 
-        try:
-            defaultKey = self._identityStorage.getDefaultKeyNameForIdentity(keyIdentity)
-        except SecurityException:
-            defaultKey = self._identityManager.generateRSAKeyPairAsDefault(keyIdentity)
+/**
+ * Certificate signing requests
+ * On startup, if we don't have a certificate signed by the controller, we request one.
+ */
+IotNode.sendCertificateRequest = function(keyIdentity)
+{
+    /**
+     * We compose a command interest with our public key info so the controller
+     * can sign us a certificate that can be used with other nodes in the network.
+     */
+    try {
+        var defaultKey = this.identityStorage.getDefaultKeyNameForIdentity(keyIdentity);
+    } catch (e) {
+        var defaultKey = this.identityManager.generateRSAKeyPairAsDefault(keyIdentity);
+    }
+    console.log("Key name: " + defaultKey.toUri());
+
+    var ProtoBuf = dcodeIO.ProtoBuf;
+    var builder = ProtoBuf.loadProtoFile('../commands/cert-request.proto');
+    var descriptor = builder.lookup('CertificateRequestMessage');
+    var CertificateRequestMessage = descriptor.build();
+
+    var message = new CertificateRequestMessage();
+    message.command = new CertificateRequestMessage.Command();
+    message.command.keyName = new CertificateRequestMessage.Name();
+    for (var i = 0; i < defaultKey.size(); i++) {
+        message.command.keyName.add("component", defaultKey.get(i).getValue().buf());
+    }
+    var publicKey = self.identityManager.getPublicKey(defaultKey);
+    message.command.keyType = publicKey.getKeyType();
+    message.command.keyBits = publicKey.getKeyDer().buf();
+
+    var interest = new Interest
+      (new Name(this.trustRootIdentity).append("certificateRequest").append(ProtobufTlv.encode(message, descriptor)));
+
+    interest.setInterestLifetimeMilliseconds(10000);
+    HmacHelper.signInterest(interest, this.key, this.prefix);
+
+    console.log("Sending certificate request to controller");
+    console.log("Certificate request: " + interest.getName().toUri());
+    this.face.expressInterest(interest, this.onCertificateReceived.bind(this), this.onCertificateTimeout(this))
+}
+
+IotNode.prototype.onCertificateTimeout = function(interest)
+{
+    // don't give up?
+    var newInterest = new Interest(interest);
+    newInterest.refreshNonce();
+    this.face.expressInterest(newInterest, this.onCertificateReceived.bind(this), this.onCertificateTimeout.bind(this));
+}
+
+IotNode.prototype.processValidCertificate = function(data)
+{
+    // unpack the cert from the HMAC signed packet and verify
+    try {
+        var newCert = new IdentityCertificate();
+        newCert.wireDecode(data.getContent());
+        console.log("Received certificate from controller");
+
+        /**
+         * NOTE: we download and install the root certificate without verifying it (!)
+         * otherwise our policy manager will reject it.
+         * we may need a static method on KeyChain to allow verifying before adding
+         */
+        var rootCertName = newCert.getSignature().getKeyLocator().getKeyName();
         
-        self.log.debug("Key name: " + defaultKey.toUri())
+        // update trust rules so we trust the controller
+        //self._policyManager.setDeviceIdentity(self._configureIdentity) 
+        //self._policyManager.updateTrustRules()
 
-        message = CertificateRequestMessage()
-        publicKey = self._identityManager.getPublicKey(defaultKey)
+        var self = this;
+        function onRootCertificateDownload(interest, data) {
+            try {
+                self.policyManager.certificateCache.insertCertificate(data);
+                self.rootCertificate = data;
+            } catch (e) {
+                console.log(e);
+            }
+            // we already inserted into certificate cache, so could pass this verification for the received self signed cert
+            self.keyChain.verifyData(newCert, self.finalizeCertificateDownload, self.certificateValidationFailed);
+        }
+        function onRootCertificateTimeout(interest) {
+            console.log("Root certificate times out");
+            self.face.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout);
+        }
 
-        message.command.keyType = publicKey.getKeyType()
-        message.command.keyBits = publicKey.getKeyDer().toRawStr()
+        this.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout);
 
-        for component in range(defaultKey.size()):
-            message.command.keyName.components.append(defaultKey.get(component).toEscapedString())
+    } catch (e) {
+        console.log("Could not import new certificate");
+        console.log(e);
+    }
+}
 
-        paramComponent = ProtobufTlv.encode(message)
+IotNode.prototype.finalizeCertificateDownload = function(newCert)
+{
+    try {
+        this.identityManager.addCertificate(new IdentityCertificate(data));
+    } catch (e) {
 
-        interestName = Name(self._policyManager.getTrustRootIdentity()).append("certificateRequest").append(paramComponent)
-        interest = Interest(interestName)
-        interest.setInterestLifetimeMilliseconds(10000) # takes a tick to verify and sign
-        self._hmacHandler.signInterest(interest, keyName=self.prefix)
+    }
+    this.identityManager.setDefaultCertificateForKey(newCert);
+    console.log("Add device complete!");
 
-        self.log.info("Sending certificate request to controller")
-        self.log.debug("Certificate request: "+interest.getName().toUri())
-        self.face.expressInterest(interest, self._onCertificateReceived, self._onCertificateTimeout)
-
-    def _onCertificateTimeout(self, interest):
-        #give up?
-        self.log.warn("Timed out trying to get certificate")
-        if self._certificateTimeouts > 5:
-            self.log.critical("Trust root cannot be reached, exiting")
-            self._isStopped = True
-        else:
-            self._certificateTimeouts += 1
-            self.loop.call_soon(self._sendCertificateRequest, self._configureIdentity)
-        pass
-
-
-    def _processValidCertificate(self, data):
-        # unpack the cert from the HMAC signed packet and verify
-        try:
-            newCert = IdentityCertificate()
-            newCert.wireDecode(data.getContent())
-            self.log.info("Received certificate from controller")
-
-            # NOTE: we download and install the root certificate without verifying it (!)
-            # otherwise our policy manager will reject it.
-            # we may need a static method on KeyChain to allow verifying before adding
-    
-            rootCertName = newCert.getSignature().getKeyLocator().getKeyName()
-            # update trust rules so we trust the controller
-            self._policyManager.setDeviceIdentity(self._configureIdentity) 
-            self._policyManager.updateTrustRules()
-
-            def onRootCertificateDownload(interest, data):
-                try:
-                    # zhehao: the root cert is downloaded and installed without verifying; should the root cert be preconfigured?
-                    # Insert root certificate so that we can verify newCert
-                    self._policyManager._certificateCache.insertCertificate(data)
-                    self._identityManager.addCertificate(IdentityCertificate(data))
-                    self._rootCertificate = data
-
-                    try:
-                        # use the default configuration where possible
-                        # TODO: use environment variable for this, fall back to default
-                        fileName = os.path.expanduser('~/.ndn/.iot.root.cert')
-                        rootCertFile = open(fileName, "w")
-                        rootCertFile.write(Blob(b64encode(self._rootCertificate.wireEncode().toBytes()), False).toRawStr())
-                        rootCertFile.close()
-                    except IOError as e:
-                        self.log.error("Cannot write to root certificate file: " + rootCertFile)
-                        print "Cannot write to root certificate file: " + rootCertFile
-
-                except SecurityException as e:
-                    print(str(e))
-                    # already exists, or got certificate in wrong format
-                    pass
-                self._keyChain.verifyData(newCert, self._finalizeCertificateDownload, self._certificateValidationFailed)
-
-            def onRootCertificateTimeout(interest):
-                # TODO: limit number of tries, then revert trust root + network prefix
-                # reset salt, create new Hmac key
-                self.face.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout)
-
-            self.face.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout)
-
-        except Exception as e:
-            self.log.exception("Could not import new certificate", exc_info=True)
-   
-    def _finalizeCertificateDownload(self, newCert):
-        try:
-            self._identityManager.addCertificate(newCert)
-        except SecurityException as e:
-            #print(e)
-            pass # can't tell existing certificat from another error
-        self._identityManager.setDefaultCertificateForKey(newCert)
-
+    this.prefix = this.configureIdentity;
+    this.face.setCommandCertificateName(this.getDefaultCertificateName());
+// For adding device only, the rest shouldn't matter
+/*
         # unregister localhop prefix, register new prefix, change identity
         self.prefix = self._configureIdentity
         self._policyManager.setDeviceIdentity(self.prefix)
@@ -233,27 +257,28 @@ IotNode.prototype._onConfigurationReceived = function(prefix, interest, face, in
         self.face.registerPrefix(self.prefix, self._onCommandReceived, self.onRegisterFailed)
 
         self.loop.call_later(5, self._updateCapabilities)
+*/
+}
 
-    def _certificateValidationFailed(self, data):
-        self.log.error("Certificate from controller is invalid!")
-        # remove trust info
-        self._policyManager.removeTrustRules()
+IotNode.prototype.certificateValidationFailed = function(data)
+{
+    console.log("Certificate from controller is invalid!");
+}
+        
+IotNode.prototype.onCertificateReceived = function(interest, data)
+{
+    if (KeyChain.verifyDataWithHmacWithSha256(data, this.key)) {
+        this.processValidCertificate(data);
+    } else {
+        this.certificateValidationFailed(data);
+    }
+}
 
-    def _onCertificateReceived(self, interest, data):
-        # if we were successful, the content of this data is an HMAC
-        # signed packet containing an encoded cert
-        if self._hmacHandler.verifyData(data):
-            self._processValidCertificate(data)
-        else:
-            self._certificateValidationFailed(data)
-
-
-
-###
-# Device capabilities
-# On startup, tell the controller what types of commands are available
-##
-
+/**
+ * Device capabilities
+ * On startup, tell the controller what types of commands are available
+ */
+/*
     def _onCapabilitiesAck(self, interest, data):
         self.log.debug('Received {}'.format(data.getName().toUri()))
         if not self._setupComplete:
