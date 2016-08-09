@@ -328,7 +328,7 @@ IotNode.prototype.finalizeCertificateDownload = function(newCert)
     self.loop.call_later(5, self._updateCapabilities)
 */
 }
-        
+
 IotNode.prototype.onCertificateReceived = function(interest, data)
 {
     if (KeyChain.verifyDataWithHmacWithSha256(data, this.key)) {
