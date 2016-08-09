@@ -211,7 +211,8 @@ class IotController(BaseNode):
 
         try:
             self._identityStorage.addKey(keyName, keyType, keyDer)
-        except SecurityException:
+        except SecurityException as e:
+            print(e)
             # assume this is due to already existing?
             pass
 
@@ -221,6 +222,7 @@ class IotController(BaseNode):
         # store it for later use + verification
         self._identityStorage.addCertificate(certificate)
         self._policyManager._certificateCache.insertCertificate(certificate)
+
         return certificate
 
 ######

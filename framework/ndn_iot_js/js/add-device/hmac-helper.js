@@ -66,7 +66,42 @@ HmacHelper.verifyInterest = function(interest, key, wireFormat)
     var signer = Crypto.createHmac('sha256', key.buf());
     signer.update(encoding.signedBuf());
     var newSignatureBits = new Blob(signer.digest(), false);
-    console.log(newSignatureBits)
+    
     // Use the flexible Blob.equals operator.
     return newSignatureBits.equals(signature.getSignature());
 };
+
+/**
+ * Data signing and verification were using library functions in the add-device script
+ */
+
+HmacHelper.signData = function(data, key, keyName, wireFormat)
+{
+    wireFormat = (typeof wireFormat === "function" || !wireFormat) ? WireFormat.getDefaultWireFormat() : wireFormat;
+
+    data.setSignature(new HmacWithSha256Signature());
+    var s = data.getSignature();
+
+    s.getKeyLocator().setType(KeyLocatorType.KEYNAME);
+    s.getKeyLocator().setKeyName(keyName);
+
+    var encoding = data.wireEncode(wireFormat);
+    var signer = Crypto.createHmac('sha256', key.buf());
+    signer.update(encoding.signedBuf());
+    s.setSignature(new Blob(signer.digest(), false));
+    data.wireEncode(wireFormat);
+};
+     
+HmacHelper.verifyData = function(data, key, wireFormat)
+{
+    wireFormat = (typeof wireFormat === "function" || !wireFormat) ? WireFormat.getDefaultWireFormat() : wireFormat;
+    var encoding = data.wireEncode(wireFormat);
+        
+    var signer = Crypto.createHmac('sha256', key.buf());
+    signer.update(encoding.signedBuf());
+    var newSignatureBits = new Blob(signer.digest(), false);
+    var sigBytes = data.getSignature().getSignature();
+    
+    // Use the flexible Blob.equals operator.
+    return newSignatureBits.equals(sigBytes);
+};      

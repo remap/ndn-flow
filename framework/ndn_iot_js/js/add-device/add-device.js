@@ -28,7 +28,8 @@ var IotNode = function IotNode(host, dbName)
     this.identityManager = new IdentityManager(this.identityStorage, this.privateKeyStorage);
     this.policyManager = new ConfigPolicyManager();
     this.keyChain = new KeyChain(this.identityManager, this.policyManager);
-
+    this.keyChain.setFace(this.face);
+    
     // Use this hack so that by the time loop starts we should already have filled in the serial number from IndexedDB
     setTimeout(this.beforeLoopStart.bind(this), 200);
 };
@@ -99,12 +100,12 @@ IotNode.prototype.onRegisterFailed = function(prefix)
 
 IotNode.prototype.onConfigurationReceived = function(prefix, interest, face, interestFilterId, filter)
 {
-    this.tempPrefixId = interestFilterId /// didn't get it from register because of the event loop
-    var dataName = new Name(interest.getName());
-    var replyData = new Data(dataName);
-    
     // the interest we get here is signed by HMAC, let's verify it
     if (HmacHelper.verifyInterest(interest, this.key)) {
+        this.tempPrefixId = interestFilterId /// didn't get it from register because of the event loop
+        var dataName = new Name(interest.getName());
+        var replyData = new Data(dataName);
+
         // we have a match! decode the controller's name
         var configComponent = interest.getName().get(prefix.size());
         replyData.setContent('200');
@@ -118,14 +119,19 @@ IotNode.prototype.onConfigurationReceived = function(prefix, interest, face, int
         var DeviceConfigurationMessage = descriptor.build();
 
         var environmentConfig = new DeviceConfigurationMessage();
-        ProtobufTlv.decode(environmentConfig, descriptor, configComponent.getValue());
-        
-        var networkPrefix = ProtobufTlv.toName(environmentConfig.configuration.networkPrefix);
-        var controllerName = new Name(networkPrefix).append(ProtobufTlv.toName(environmentConfig.configuration.controllerName));
+        try {
+            ProtobufTlv.decode(environmentConfig, descriptor, configComponent.getValue());
+        } catch (ex) {
+            console.log(ex);
+        }
+
+        var networkPrefix = ProtobufTlv.toName(environmentConfig.configuration.networkPrefix.components);
+        var controllerName = new Name(networkPrefix).append(ProtobufTlv.toName(environmentConfig.configuration.controllerName.components));
 
         this.trustRootIdentity = controllerName;
+        console.log(controllerName.toUri());
 
-        this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix);
+        this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix.components);
         this.configureIdentity = new Name(networkPrefix).append(this.deviceSuffix);
 
         this.sendCertificateRequest(this.configureIdentity);
@@ -143,43 +149,59 @@ IotNode.prototype.onConfigurationRegistrationFailure = function(prefix)
  * Certificate signing requests
  * On startup, if we don't have a certificate signed by the controller, we request one.
  */
-IotNode.sendCertificateRequest = function(keyIdentity)
+IotNode.prototype.sendCertificateRequest = function(keyIdentity)
 {
     /**
      * We compose a command interest with our public key info so the controller
      * can sign us a certificate that can be used with other nodes in the network.
      */
-    try {
-        var defaultKey = this.identityStorage.getDefaultKeyNameForIdentity(keyIdentity);
-    } catch (e) {
-        var defaultKey = this.identityManager.generateRSAKeyPairAsDefault(keyIdentity);
+    var self = this;
+
+    function sendRequest(defaultKey) {
+        console.log("Key name: " + defaultKey.toUri());
+
+        var ProtoBuf = dcodeIO.ProtoBuf;
+        var builder = ProtoBuf.loadProtoFile('../commands/cert-request.proto');
+        var descriptor = builder.lookup('CertificateRequestMessage');
+        var CertificateRequestMessage = descriptor.build();
+
+        var message = new CertificateRequestMessage();
+        message.command = new CertificateRequestMessage.CertificateRequest();
+        message.command.keyName = new CertificateRequestMessage.Name();
+        for (var i = 0; i < defaultKey.size(); i++) {
+            message.command.keyName.add("components", defaultKey.get(i).getValue().buf());
+            console.log(defaultKey.get(i).getValue().buf());
+        }
+        self.identityManager.getPublicKey(defaultKey, function (publicKey) {
+            message.command.keyType = publicKey.getKeyType();
+            //var publicKeyBuffer = new dcodeIO.ByteBuffer();
+            message.command.keyBits = dcodeIO.ByteBuffer.wrap(publicKey.getKeyDer().buf());
+            //console.log(message.command.keyBits);
+
+            var certRequestComponent = new Name.Component(ProtobufTlv.encode(message, descriptor));
+            var interest = new Interest
+              (new Name(self.trustRootIdentity).append("certificateRequest").append(certRequestComponent));
+            
+            interest.setInterestLifetimeMilliseconds(10000);
+            HmacHelper.signInterest(interest, self.key, self.prefix);
+
+            console.log("Sending certificate request to controller");
+            console.log("Certificate request: " + interest.getName().toUri());
+            self.face.expressInterest(interest, self.onCertificateReceived.bind(self), self.onCertificateTimeout.bind(self));
+        }, function (error) {
+            console.log(error);
+        });
     }
-    console.log("Key name: " + defaultKey.toUri());
 
-    var ProtoBuf = dcodeIO.ProtoBuf;
-    var builder = ProtoBuf.loadProtoFile('../commands/cert-request.proto');
-    var descriptor = builder.lookup('CertificateRequestMessage');
-    var CertificateRequestMessage = descriptor.build();
-
-    var message = new CertificateRequestMessage();
-    message.command = new CertificateRequestMessage.Command();
-    message.command.keyName = new CertificateRequestMessage.Name();
-    for (var i = 0; i < defaultKey.size(); i++) {
-        message.command.keyName.add("component", defaultKey.get(i).getValue().buf());
-    }
-    var publicKey = self.identityManager.getPublicKey(defaultKey);
-    message.command.keyType = publicKey.getKeyType();
-    message.command.keyBits = publicKey.getKeyDer().buf();
-
-    var interest = new Interest
-      (new Name(this.trustRootIdentity).append("certificateRequest").append(ProtobufTlv.encode(message, descriptor)));
-
-    interest.setInterestLifetimeMilliseconds(10000);
-    HmacHelper.signInterest(interest, this.key, this.prefix);
-
-    console.log("Sending certificate request to controller");
-    console.log("Certificate request: " + interest.getName().toUri());
-    this.face.expressInterest(interest, this.onCertificateReceived.bind(this), this.onCertificateTimeout(this))
+    console.log("Key identity received is " + keyIdentity.toUri());
+    this.identityManager.getDefaultKeyNameForIdentity(keyIdentity, sendRequest, function (error) {
+        self.keyChain.createIdentityAndCertificate(keyIdentity, function (certName) {
+            var defaultKey = IdentityCertificate.certificateNameToPublicKeyName(certName);
+            sendRequest(defaultKey);
+        }, function (error) {
+            console.log(error);
+        });
+    });
 }
 
 IotNode.prototype.onCertificateTimeout = function(interest)
@@ -214,19 +236,56 @@ IotNode.prototype.processValidCertificate = function(data)
             try {
                 self.policyManager.certificateCache.insertCertificate(data);
                 self.rootCertificate = data;
+                var trustAnchorBase64 = data.wireEncode().buf().toString('base64');
+
+                var defaultPolicy = 
+                  "validator"                   + "\n" +
+                  "{"                           + "\n" +
+                  "  rule"                      + "\n" +
+                  "  {"                         + "\n" +
+                  "    id \"initial\""          + "\n" +
+                  "    for data"                + "\n" +
+                  "    checker"                 + "\n" +
+                  "    {"                       + "\n" +
+                  "      type customized"       + "\n" +
+                  "      sig-type rsa-sha256"   + "\n" +
+                  "      key-locator "          + "\n" +
+                  "      {"                     + "\n" +
+                  "         type name"          + "\n" +
+                  "         name " + interest.getName().toUri()     + "\n" +
+                  "         relation equal"     + "\n" +
+                  "      }"                     + "\n" +
+                  "    }"                       + "\n" +
+                  "  }"                         + "\n" +
+                  "  trust-anchor"              + "\n" +
+                  "  {"                         + "\n" +
+                  "    type base64"             + "\n" +
+                  "    base64-string \"" + trustAnchorBase64 + "\"" + "\n" +
+                  "  }"                         + "\n" +
+                  "}";
+
+                self.policyManager.load(defaultPolicy, "default-policy");
+                console.log(defaultPolicy);
+
+                self.identityManager.addCertificate(new IdentityCertificate(data), function () {
+                    // we already inserted into certificate cache, so could pass this verification for the received self signed cert
+                    console.log("Verifying new cert!");
+                    self.keyChain.verifyData(newCert, self.finalizeCertificateDownload.bind(self), function (error) {
+                        console.log("New certificate verification failed.");
+                    });
+                }, function (error) {
+                    console.log(error);
+                });
             } catch (e) {
                 console.log(e);
             }
-            // we already inserted into certificate cache, so could pass this verification for the received self signed cert
-            self.keyChain.verifyData(newCert, self.finalizeCertificateDownload, self.certificateValidationFailed);
         }
         function onRootCertificateTimeout(interest) {
             console.log("Root certificate times out");
-            self.face.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout);
+            self.face.expressInterest(rootCertName, onRootCertificateDownload.bind(self), onRootCertificateTimeout.bind(self));
         }
 
-        this.expressInterest(rootCertName, onRootCertificateDownload, onRootCertificateTimeout);
-
+        this.face.expressInterest(rootCertName, onRootCertificateDownload.bind(this), onRootCertificateTimeout.bind(this));
     } catch (e) {
         console.log("Could not import new certificate");
         console.log(e);
@@ -235,34 +294,39 @@ IotNode.prototype.processValidCertificate = function(data)
 
 IotNode.prototype.finalizeCertificateDownload = function(newCert)
 {
-    try {
-        this.identityManager.addCertificate(new IdentityCertificate(data));
-    } catch (e) {
-
-    }
-    this.identityManager.setDefaultCertificateForKey(newCert);
-    console.log("Add device complete!");
+    console.log("New cert verified!");
+    var self = this;
+    
+    this.identityManager.addCertificate(new IdentityCertificate(newCert), function () {
+        self.identityManager.setDefaultCertificateForKey(newCert, function() {
+            console.log("Add device complete!");
+        }, function (error) {
+            console.log("Error setting default certificate for key!");
+            console.log(error);
+        });
+    }, function (error) {
+        console.log("Error adding new cert!");
+        console.log(error);
+    });
+    
+// For adding device only, the rest shouldn't matter
+/*
 
     this.prefix = this.configureIdentity;
     this.face.setCommandCertificateName(this.getDefaultCertificateName());
-// For adding device only, the rest shouldn't matter
-/*
-        # unregister localhop prefix, register new prefix, change identity
-        self.prefix = self._configureIdentity
-        self._policyManager.setDeviceIdentity(self.prefix)
+    
+    // Unported Python
+    # unregister localhop prefix, register new prefix, change identity
+    self.prefix = self._configureIdentity
+    self._policyManager.setDeviceIdentity(self.prefix)
 
-        self.face.setCommandCertificateName(self.getDefaultCertificateName())
+    self.face.setCommandCertificateName(self.getDefaultCertificateName())
 
-        self.face.removeRegisteredPrefix(self.tempPrefixId)
-        self.face.registerPrefix(self.prefix, self._onCommandReceived, self.onRegisterFailed)
+    self.face.removeRegisteredPrefix(self.tempPrefixId)
+    self.face.registerPrefix(self.prefix, self._onCommandReceived, self.onRegisterFailed)
 
-        self.loop.call_later(5, self._updateCapabilities)
+    self.loop.call_later(5, self._updateCapabilities)
 */
-}
-
-IotNode.prototype.certificateValidationFailed = function(data)
-{
-    console.log("Certificate from controller is invalid!");
 }
         
 IotNode.prototype.onCertificateReceived = function(interest, data)
@@ -270,10 +334,11 @@ IotNode.prototype.onCertificateReceived = function(interest, data)
     if (KeyChain.verifyDataWithHmacWithSha256(data, this.key)) {
         this.processValidCertificate(data);
     } else {
-        this.certificateValidationFailed(data);
+        console.log("Certificate from controller verification failed.");
     }
 }
 
+// Unported Python IotNode functions
 /**
  * Device capabilities
  * On startup, tell the controller what types of commands are available
