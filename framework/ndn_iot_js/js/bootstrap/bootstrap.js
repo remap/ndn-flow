@@ -1,6 +1,6 @@
 var Bootstrap = function Bootstrap(face)
 {
-    this.identityManager = new IdentityManager(new IndexedDbIdentityStorage());
+    this.identityManager = new IdentityManager(new IndexedDbIdentityStorage(), new IndexedDbPrivateKeyStorage());
     
     var defaultPolicy = 
       "validator"                + "\n" +
@@ -16,7 +16,7 @@ var Bootstrap = function Bootstrap(face)
       "  }"                      + "\n" +
       "}";
 
-    this.policyManager = var ConfigPolicyManager();
+    this.policyManager = new ConfigPolicyManager();
     this.policyManager.load(defaultPolicy, "default-policy");
 
     // keyChain is what we return to the application after successful setup
@@ -34,75 +34,91 @@ var Bootstrap = function Bootstrap(face)
 /**
  * Initial keyChain and defaultCertificate setup
  */
-Bootstrap.prototype.setupDefaultIdentityAndRoot = function(defaultIdentity, signerName, onSetupComplete, onSetupFailed)
+Bootstrap.prototype.setupDefaultIdentityAndRoot = function(identityName, signerName, onSetupComplete, onSetupFailed)
 {
     var self = this;
-    this.identityManager.getDefaultCertificateNameForIdentity(defaultIdentity, function (defaultCertificateName) {
-        self.defaultIdentity = defaultIdentity;
-        self.defaultCertificateName = defaultCertificateName;
-        self.identityManager.getDefaultKeyNameForIdentity(defaultIdentity, function (defaultKeyName) {
-            self.defaultKeyName = defaultKeyName;
-            // Note we'll not be able to issue face commands before this point
-            self.face.setCommandSigningInfo(self.keyChain, self.defaultCertificateName);
-            // Serve our own certificate
-            self.certificateContentCache.registerPrefix(new Name(this.defaultCertificateName.getPrefix(-1)), function (prefix) {
-                console.log("Prefix registration failed: " + prefix.toUri());
-            });
-            self.keyChain.getCertificate(self.defaultCertificateName, function (certificate) {
-                self.certificateContentCache.add(certificate);
-                var actualSignerName = certificate.getSignature().getKeyLocator().getKeyName();
-                if (actualSignerName.toUri() !== signerName.toUri()) {
-                    var msg = "Configuration signer names mismatch: expected " + signerName.toUri() + "; got " + actualSignerName.toUri();
-                    if (onSetupFailed !== undefined)
-                        onSetupFailed(msg);
-                    return;
-                }
-                self.controllerName = self.getIdentityNameFromCertName(actualSignerName);
-                console.log("Controller name: " + self.controllerName.toUri());
-                
-                self.identityManager.getDefaultCertificateNameForIdentity(self.controllerName, function (certificateName) {
-                    self.keyChain.getCertificate(certificateName, function (certificate) {
-                        self.controllerCertificate = certificate;   
-                        // TODO: this does not seem a good approach, implementation-wise and security implication
-                        self.policyManager.certificateCache.insertCertificate(self.controllerCertificate);
-                        if (onSetupComplete !== undefined) {
-                            onSetupComplete(new Name(self.defaultCertificateName), self.keyChain);
-                        }
+
+    function helper (defaultIdentity) {
+        self.identityManager.getDefaultCertificateNameForIdentity(defaultIdentity, function (defaultCertificateName) {
+            self.defaultIdentity = defaultIdentity;
+            self.defaultCertificateName = defaultCertificateName;
+
+            self.identityManager.getDefaultKeyNameForIdentity(defaultIdentity, function (defaultKeyName) {
+                self.defaultKeyName = defaultKeyName;
+                // Note we'll not be able to issue face commands before this point
+                self.face.setCommandSigningInfo(self.keyChain, self.defaultCertificateName);
+                // Serve our own certificate
+                self.certificateContentCache.registerPrefix(new Name(self.defaultCertificateName.getPrefix(-1)), function (prefix) {
+                    console.log("Prefix registration failed: " + prefix.toUri());
+                });
+                self.keyChain.getCertificate(self.defaultCertificateName, function (certificate) {
+                    self.certificateContentCache.add(certificate);
+                    var actualSignerName = certificate.getSignature().getKeyLocator().getKeyName();
+                    if (signerName !== undefined && actualSignerName.toUri() !== signerName.toUri()) {
+                        var msg = "Configuration signer names mismatch: expected " + signerName.toUri() + "; got " + actualSignerName.toUri();
+                        if (onSetupFailed !== undefined)
+                            onSetupFailed(msg);
+                        return;
+                    }
+                    self.controllerName = self.getIdentityNameFromCertName(actualSignerName);
+                    console.log("Controller name: " + self.controllerName.toUri());
+                    
+                    self.identityManager.getDefaultCertificateNameForIdentity(self.controllerName, function (certificateName) {
+                        self.keyChain.getCertificate(certificateName, function (certificate) {
+                            self.controllerCertificate = certificate;   
+                            // TODO: this does not seem a good approach, implementation-wise and security implication
+                            self.policyManager.certificateCache.insertCertificate(self.controllerCertificate);
+                            if (onSetupComplete !== undefined) {
+                                onSetupComplete(new Name(self.defaultCertificateName), self.keyChain);
+                            }
+                        }, function (error) {
+                            var msg = "Cannot find controller certificate: " + certificateName.toUri();
+                            console.log(error);
+                            if (onSetupFailed !== undefined) {
+                                onSetupFailed(msg);
+                            }
+                        })
                     }, function (error) {
-                        var msg = "Cannot find controller certificate: " + certificateName.toUri();
+                        var msg = "Cannot find default ceritificate for controller identity: " + self.controllerName.toUri();
                         console.log(error);
                         if (onSetupFailed !== undefined) {
                             onSetupFailed(msg);
                         }
-                    })
+                    });
                 }, function (error) {
-                    var msg = "Cannot find default ceritificate for controller identity: " + self.controllerName.toUri();
-                    console.log(error);
-                    if (onSetupFailed !== undefined) {
+                    var msg = "Certificate does not exist " + self.defaultCertificateName.toUri();
+                    if (onSetupFailed !== undefined)
                         onSetupFailed(msg);
-                    }
+                    return;
                 });
             }, function (error) {
-                var msg = "Certificate does not exist " + self.defaultCertificateName.toUri();
+                console.log(error);
+                var msg = "Identity " + defaultIdentity.toUri() + " in configuration does not have a default key. Please configure the device with this identity first";
                 if (onSetupFailed !== undefined)
                     onSetupFailed(msg);
                 return;
             });
         }, function (error) {
             console.log(error);
-            var msg = "Identity " + defaultIdentity.toUri() + " in configuration does not have a default key. Please configure the device with this identity first";
+            var msg = "Identity " + defaultIdentity.toUri() + " in configuration does not have a default certificate. Please configure the device with this identity first";
             if (onSetupFailed !== undefined)
                 onSetupFailed(msg);
             return;
         });
-    }, function (error) {
-        console.log(error);
-        var msg = "Identity " + defaultIdentity.toUri() + " in configuration does not have a default certificate. Please configure the device with this identity first";
-        if (onSetupFailed !== undefined)
-            onSetupFailed(msg);
-        return;
-    });
-
+    }
+    
+    if (identityName === undefined) {
+        this.identityManager.getDefaultIdentity(function (defaultIdentityName) {
+            helper(defaultIdentityName);
+        }, function (error) {
+            var msg = "Default identity not configured";
+            if (onSetupFailed !== undefined)
+                onSetupFailed(msg);
+            return;
+        });
+    } else {
+        helper(identityName);
+    }
 }
 
 /**
@@ -343,7 +359,6 @@ Bootstrap.prototype.onAppRequestData = function (interest, data, onRequestSucces
     console.log("Got application publishing request data");
     function onVerified(data) {
         if (data.getContent().toString("binary") == "200") {
-            console.log("onSetupComplete");
             if (onRequestSuccess !== undefined) {
                 onRequestSuccess();
             }

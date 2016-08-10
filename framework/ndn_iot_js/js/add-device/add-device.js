@@ -264,16 +264,22 @@ IotNode.prototype.processValidCertificate = function(data)
                   "}";
 
                 self.policyManager.load(defaultPolicy, "default-policy");
-                console.log(defaultPolicy);
+                var rootCert = new IdentityCertificate(data);
 
-                self.identityManager.addCertificate(new IdentityCertificate(data), function () {
+                self.identityManager.addCertificateAsDefault(rootCert, function () {
                     // we already inserted into certificate cache, so could pass this verification for the received self signed cert
                     console.log("Verifying new cert!");
                     self.keyChain.verifyData(newCert, self.finalizeCertificateDownload.bind(self), function (error) {
                         console.log("New certificate verification failed.");
                     });
+                    var publicKeyName = rootCert.getPublicKeyName();
+                    self.identityManager.setDefaultKeyForIdentity(publicKeyName);
                 }, function (error) {
                     console.log(error);
+                    // assuming certificate already exist, set it as default then
+                    self.identityManager.setDefaultCertificateForKey(rootCert);
+                    var publicKeyName = rootCert.getPublicKeyName();
+                    self.identityStorage.setDefaultKeyForIdentity(publicKeyName)
                 });
             } catch (e) {
                 console.log(e);

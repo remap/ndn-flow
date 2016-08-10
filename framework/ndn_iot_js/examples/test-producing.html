@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html>
+<head>
+<title>IoT Test</title>
+
+<script type="text/javascript" src="../contrib/dcodeio/long.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/bytebuffer-ab.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/protobuf.min.js"></script>
+
+<script type="text/javascript" src="../js/ndn.js"></script>
+<script type="text/javascript" src="../js/bootstrap/bootstrap.js"></script>
+
+<script type="text/javascript">
+
+function onSetupComplete(defaultCertificateName, keyChain)
+{
+    console.log("Default certificate name and keyChain set up complete.");
+    var dataPrefix = new Name("/home/flow/browser-publisher1");
+    var appName = "flow";
+
+    bootstrap.requestProducerAuthorization(dataPrefix, appName, onRequestSuccess, onRequestFailed);
+    return;
+}
+
+function onRequestSuccess()
+{
+    console.log("Requested granted by controller.");
+    return;
+}
+
+function onRequestFailed(msg)
+{
+    console.log("data production not authorized by controller : " + msg);
+    // For this test, we start anyway
+    return;
+}
+
+function onSetupFailed(msg)
+{
+    console.log("Setup failed " + msg);
+}
+
+function start()
+{    
+    var face = new Face({"host": "127.0.0.1"});
+    var bootstrap = new Bootstrap(face);
+
+    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/b1"), undefined, onSetupComplete, onSetupFailed);
+}
+
+</script>
+
+</head>
+
+<body>
+<button onclick="start()">Test</button>
+</body>
+
+</html>
