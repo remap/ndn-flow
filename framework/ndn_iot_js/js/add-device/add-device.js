@@ -170,7 +170,6 @@ IotNode.prototype.sendCertificateRequest = function(keyIdentity)
         message.command.keyName = new CertificateRequestMessage.Name();
         for (var i = 0; i < defaultKey.size(); i++) {
             message.command.keyName.add("components", defaultKey.get(i).getValue().buf());
-            console.log(defaultKey.get(i).getValue().buf());
         }
         self.identityManager.getPublicKey(defaultKey, function (publicKey) {
             message.command.keyType = publicKey.getKeyType();

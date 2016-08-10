@@ -57,8 +57,8 @@ class Bootstrap(object):
         def helper(identityName, signerName):
             try:
                 self._defaultIdentity = identityName
-                self._defaultCertificateName = self._keyChain.getIdentityManager().getDefaultCertificateNameForIdentity(self._defaultIdentity)
-                self._defaultKeyName = self._keyChain.getIdentityManager().getDefaultKeyNameForIdentity(identityName)
+                self._defaultCertificateName = self._identityManager.getDefaultCertificateNameForIdentity(self._defaultIdentity)
+                self._defaultKeyName = self._identityManager.getDefaultKeyNameForIdentity(identityName)
             except SecurityException:
                 msg = "Identity " + identityName.toUri() + " in configuration does not exist. Please configure the device with this identity first"
                 print msg
@@ -86,11 +86,10 @@ class Bootstrap(object):
             print "Controller name: " + self._controllerName.toUri()
 
             try:
-                identityName = self.getIdentityNameFromCertName(actualSignerName)
-                self._controllerCertificate = self._keyChain.getCertificate(self._identityManager.getDefaultCertificateNameForIdentity(identityName))
-                self._controllerCertificate.getName().toUri()
+                self._controllerCertificate = self._keyChain.getCertificate(self._identityManager.getDefaultCertificateNameForIdentity(self._controllerName))
+                
                 # TODO: this does not seem a good approach, implementation-wise and security implication
-                self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
+                self._policyManager._certificateCache.insertCertificate(self._controllerCertificate)
                 if onSetupComplete:
                     onSetupComplete(Name(self._defaultCertificateName), self._keyChain)
             except SecurityException as e:
@@ -222,8 +221,8 @@ class Bootstrap(object):
 
         # Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
         # Per reset function in ConfigPolicyManager; For now we don't call reset as we still want root cert in our certCache, instead of asking for it again (when we want to verify) each time we update the trust schema
-        self._keyChain.getPolicyManager().config = BoostInfoParser()
-        self._keyChain.getPolicyManager().config.read(self._trustSchemas[namespace]["trust-schema"], "use-string!")
+        self._policyManager.config = BoostInfoParser()
+        self._policyManager.config.read(self._trustSchemas[namespace]["trust-schema"], "updated-schema")
         
         if onUpdateSuccess:
             onUpdateSuccess(data.getContent().toRawStr(), self._trustSchemas[namespace]["is-initial"])
@@ -299,7 +298,7 @@ class Bootstrap(object):
 
         paramComponent = ProtobufTlv.encode(message)
 
-        requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
+        requestInterest = Interest(Name(self._controllerName).append("requests").append(paramComponent))
 
         requestInterest.setInterestLifetimeMilliseconds(4000)
         self._face.makeCommandInterest(requestInterest)
@@ -374,7 +373,7 @@ class Bootstrap(object):
             print "Error: unexpected certName " + certName.toUri()
             return None
 
-        return certName.getPrefix(i)
+        return Name(certName.getPrefix(i))
 
 #################################
 # Getters and setters

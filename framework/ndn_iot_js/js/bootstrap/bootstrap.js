@@ -59,7 +59,29 @@ Bootstrap.prototype.setupDefaultIdentityAndRoot = function(defaultIdentity, sign
                 }
                 self.controllerName = self.getIdentityNameFromCertName(actualSignerName);
                 console.log("Controller name: " + self.controllerName.toUri());
-                // TODO: check if we have controller certificate
+                
+                self.identityManager.getDefaultCertificateNameForIdentity(self.controllerName, function (certificateName) {
+                    self.keyChain.getCertificate(certificateName, function (certificate) {
+                        self.controllerCertificate = certificate;   
+                        // TODO: this does not seem a good approach, implementation-wise and security implication
+                        self.policyManager.certificateCache.insertCertificate(self.controllerCertificate);
+                        if (onSetupComplete !== undefined) {
+                            onSetupComplete(new Name(self.defaultCertificateName), self.keyChain);
+                        }
+                    }, function (error) {
+                        var msg = "Cannot find controller certificate: " + certificateName.toUri();
+                        console.log(error);
+                        if (onSetupFailed !== undefined) {
+                            onSetupFailed(msg);
+                        }
+                    })
+                }, function (error) {
+                    var msg = "Cannot find default ceritificate for controller identity: " + self.controllerName.toUri();
+                    console.log(error);
+                    if (onSetupFailed !== undefined) {
+                        onSetupFailed(msg);
+                    }
+                });
             }, function (error) {
                 var msg = "Certificate does not exist " + self.defaultCertificateName.toUri();
                 if (onSetupFailed !== undefined)
@@ -82,55 +104,11 @@ Bootstrap.prototype.setupDefaultIdentityAndRoot = function(defaultIdentity, sign
     });
 
 }
-            
 
-            try:
-                identityName = self.getIdentityNameFromCertName(actualSignerName)
-                self._controllerCertificate = self._keyChain.getCertificate(self._identityManager.getDefaultCertificateNameForIdentity(identityName))
-                self._controllerCertificate.getName().toUri()
-                # TODO: this does not seem a good approach, implementation-wise and security implication
-                self._keyChain.getPolicyManager()._certificateCache.insertCertificate(self._controllerCertificate)
-                if onSetupComplete:
-                    onSetupComplete(Name(self._defaultCertificateName), self._keyChain)
-            except SecurityException as e:
-                print "don't have controller certificate " + actualSignerName.toUri() + " yet"
-                controllerCertInterest = Interest(Name(actualSignerName))
-                controllerCertInterest.setInterestLifetimeMilliseconds(4000)
-                
-                self._face.expressInterest(controllerCertInterest, 
-                  lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
-                  lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed))
-            return
-
-        if isinstance(defaultIdentityOrFileName, basestring):
-            confObj = self.processConfiguration(defaultIdentityOrFileName)
-            if "identity" in confObj:
-                if confObj["identity"] == "default":
-                    # TODO: handling the case where no default identity is present
-                    defaultIdentity = self._keyChain.getDefaultIdentity()
-                else:
-                    defaultIdentity = Name(confObj["identity"])
-            else:
-                defaultIdentity = self._keyChain.getDefaultIdentity()
-
-            # TODO: handling signature with direct bits instead of keylocator keyname
-            if "signer" in confObj:    
-                if confObj["signer"] == "default":
-                    signerName = None
-                else:
-                    signerName = Name(confObj["signer"])
-            else:
-                signerName = None
-                print "Deriving from " + signerName.toUri() + " for controller name"
-
-            helper(defaultIdentity, signerName)
-        else:
-            if signerName and isinstance(defaultIdentityOrFileName, Name):
-                helper(defaultIdentityOrFileName, signerName)
-            else:
-                raise RuntimeError("Please call setupDefaultIdentityAndRoot with identity name and root key name")
-        return
-
+/**
+ * We don't ask for controller certificate in this implementation, but expects it to be existent per the add device step
+ */
+/*
     def onControllerCertData(self, interest, data, onSetupComplete, onSetupFailed):
         # TODO: verification rule for received self-signed cert. 
         # So, if a controller comes masquerading in at this point with the right name, it is problematic. Similar with ndn-pi's implementation
@@ -157,195 +135,262 @@ Bootstrap.prototype.setupDefaultIdentityAndRoot = function(defaultIdentity, sign
           lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
           lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed))
         return
+*/
 
+/**
+ * Handling application consumption (trust schema updates)
+ */
+// TODO: if trust schema gets over packet size limit, segmentation
+Bootstrap.prototype.startTrustSchemaUpdate = function (appPrefix, onUpdateSuccess, onUpdateFailed)
+{
+    var namespace = appPrefix.toUri()
+    if (namespace in this.trustSchemas) {
+        if (this.trustSchemas[namespace]["following"] == true) {
+            console.log("already following trust schema under this namespace: " + namespace);
+            return;
+        }
+        this.trustSchemas[namespace]["following"] = true;
+    } else {
+        this.trustSchemas[namespace] = {"following": true, "version": 0, "is-initial": true};
+    }
 
-#########################################################
-# Handling application consumption (trust schema updates)
-#########################################################
-    # TODO: if trust schema gets over packet size limit, segmentation
-    def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
-        namespace = appPrefix.toUri()
-        if namespace in self._trustSchemas:
-            if self._trustSchemas[namespace]["following"] == True:
-                print "Already following trust schema under this namespace!"
-                return
-            self._trustSchemas[namespace]["following"] = True
-        else:
-            self._trustSchemas[namespace] = {"following": True, "version": 0, "is-initial": True}
-
-        initialInterest = Interest(Name(namespace).append("_schema"))
-        initialInterest.setChildSelector(1)
-        self._face.expressInterest(initialInterest, 
-          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
-        return
-
-    def stopTrustSchemaUpdate(self):
-        print "stopTrustSchemaUpdate not implemented"
-        return
-
-    def onSchemaVerified(self, data, onUpdateSuccess, onUpdateFailed):
-        print "trust schema verified: " + data.getName().toUri()
-        version = data.getName().get(-1)
-        namespace = data.getName().getPrefix(-2).toUri()
-        if not (namespace in self._trustSchemas):
-            print "unexpected: received trust schema for application namespace that's not being followed; malformed data name?"
-            return
-
-        if version.toVersion() <= self._trustSchemas[namespace]["version"]:
-            msg = "Got out-of-date trust schema"
-            print msg
-            if onUpdateFailed:
-                onUpdateFailed(msg)
-            return
-
-        self._trustSchemas[namespace]["version"] = version.toVersion()
+    var initialInterest = new Interest(new Name(namespace).append("_schema"));
+    initialInterest.setChildSelector(1);
+    var self = this;
+    this.face.expressInterest(initialInterest, function (interest, data) {
+        self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed);
+    }, function (interest) {
+        self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
+    });
+    return;
+}
         
-        if "pending-schema" in self._trustSchemas[namespace] and self._trustSchemas[namespace]["pending-schema"].getName().toUri() == data.getName().toUri():
-            # we verified a pending trust schema, don't need to keep that any more
-            del self._trustSchemas[namespace]["pending-schema"]
+Bootstrap.prototype.stopTrustSchemaUpdate = function ()
+{
+    console.log("stopTrustSchemaUpdate not implemented");
+    return;
+}
 
-        self._trustSchemas[namespace]["trust-schema"] = data.getContent().toRawStr()
-        print self._trustSchemas[namespace]["trust-schema"]
+Bootstrap.prototype.onSchemaVerified = function (data, onUpdateSuccess, onUpdateFailed)
+{
+    console.log("trust schema verified: " + data.getName().toUri());
+    var version = data.getName().get(-1);
+    var namespace = data.getName().getPrefix(-2).toUri();
 
-        # TODO: what about trust schema for discovery, is discovery its own application?
-        newInterest = Interest(Name(data.getName()).getPrefix(-1))
-        newInterest.setChildSelector(1)
-        excludeComponent = data.getName().get(-1)
-        exclude = Exclude()
-        exclude.appendAny()
-        exclude.appendComponent(version)
-        newInterest.setExclude(exclude)
-        self._face.expressInterest(newInterest, 
-          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))
+    if (!(namespace in this.trustSchemas)) {
+        console.log("unexpected: received trust schema for application namespace that's not being followed; malformed data name?");
+        return;
+    }
 
-        # Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
-        # Per reset function in ConfigPolicyManager; For now we don't call reset as we still want root cert in our certCache, instead of asking for it again (when we want to verify) each time we update the trust schema
-        self._keyChain.getPolicyManager().config = BoostInfoParser()
-        self._keyChain.getPolicyManager().config.read(self._trustSchemas[namespace]["trust-schema"], "use-string!")
+    if (version.toVersion() <= this.trustSchemas[namespace]["version"]) {
+        var msg = "Got out-of-date trust schema";
+        console.log(msg);
+        if (onUpdateFailed !== undefined) {
+            onUpdateFailed(msg);
+        }
+        return;
+    }
+
+    this.trustSchemas[namespace]["version"] = version.toVersion();
+    // Remove pending trust schema (while fetching root certificate) logic
+    
+    var trustSchemaString = data.getContent().toString("binary");
+    this.trustSchemas[namespace]["trust-schema"] = trustSchemaString;
+
+    // TODO: what about trust schema for discovery, is discovery its own application?
+    var newInterest = new Interest(new Name(data.getName()).getPrefix(-1));
+    newInterest.setChildSelector(1);
+    var excludeComponent = data.getName().get(-1);
+    var exclude = new Exclude();
+    exclude.appendAny();
+    exclude.appendComponent(version);
+    newInterest.setExclude(exclude);
+    var self = this;
+    this.face.expressInterest(newInterest, function (interest, data) {
+        self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed);
+    }, function (interest) {
+        self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
+    });
+
+    // Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
+    // Per reset function in ConfigPolicyManager; For now we don't call reset as we still want root cert in our certCache, instead of asking for it again (when we want to verify) each time we update the trust schema
+    // TODO: check if the above note holds for our JS implementation and whether it matters as we are using base64 root by default
+    this.policyManager.load(trustSchemaString, "updated-schema");
+
+    if (onUpdateSuccess !== undefined) {
+        onUpdateSuccess(trustSchemaString, this.trustSchemas[namespace]["is-initial"]);
+    }
+    this.trustSchemas[namespace]["is-initial"] = false;
+    return;
+}
+
+Bootstrap.prototype.onSchemaVerificationFailed = function (data, onUpdateSuccess, onUpdateFailed)
+{
+    console.log("trust schema verification failed");
+    var namespace = data.getName().getPrefix(-2).toUri();
+    if (!(namespace in self._trustSchemas)) {
+        console.log("unexpected: received trust schema for application namespace that's not being followed; malformed data name?");
+        return ;
+    }
+    
+    var newInterest = new Interest(new Name(data.getName()).getPrefix(-1));
+    newInterest.setChildSelector(1);
+    var excludeComponent = data.getName().get(-1);
+    var exclude = new Exclude();
+    exclude.appendAny();
+    exclude.appendComponent(Name.Component.fromVersion(this.trustSchemas[namespace]["version"]));
+    newInterest.setExclude(exclude);
+
+    // Don't immediately ask for potentially the same content again if verification fails
+    var self = this;
+    setTimeout(4000, function () {
+        self.face.expressInterest(newInterest, function (interest, data) {
+            self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed);
+        }, function (interest) {
+            self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
+        })
+    });
+    return;
+}
+
+Bootstrap.prototype.onTrustSchemaData = function (interest, data, onUpdateSuccess, onUpdateFailed)
+{
+    console.log("Trust schema received: " + data.getName().toUri());
+    var namespace = data.getName().getPrefix(-2).toUri();
+
+    // Process newly received trust schema
+    if (this.controllerCertificate === undefined) {
+        // We should have controller certificate, don't do pending schema in JS implementation
+        console.log("Controller certificate not yet present, verify once it's in place");
+    } else {
+        // we veriy the received trust schema, should we use an internal KeyChain instead?
+        var self = this;
+        this.keyChain.verifyData(data, function (data) {
+            self.onSchemaVerified(data, onUpdateSuccess, onUpdateFailed);
+        }, function (data) {
+            self.onSchemaVerificationFailed(data, onUpdateSuccess, onUpdateFailed); 
+        });
+    }
         
-        if onUpdateSuccess:
-            onUpdateSuccess(data.getContent().toRawStr(), self._trustSchemas[namespace]["is-initial"])
-        self._trustSchemas[namespace]["is-initial"] = False
-        return
+    return;
+}
 
-    def onSchemaVerificationFailed(self, data, onUpdateSuccess, onUpdateFailed):
-        print "trust schema verification failed"
-        namespace = data.getName().getPrefix(-2).toUri()
-        if not (namespace in self._trustSchemas):
-            print "unexpected: received trust schema for application namespace that's not being followed; malformed data name?"
-            return
+Bootstrap.prototype.onTrustSchemaTimeout = function (interest, onUpdateSuccess, onUpdateFailed)
+{
+    console.log("Trust schema interest times out: " + interest.getName().toUri());
+    var newInterest = new Interest(interest);
+    newInterest.refreshNonce();
+    var self = this;
+    this.face.expressInterest(newInterest, function (interest, data) {
+        self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed);
+    }, function (interest) {
+        self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
+    });
+    return
+}
+
+/**
+ * Handling application producing authorizations
+ */
+// Wrapper for sendAppRequest, fills in already configured defaultCertificateName
+Bootstrap.prototype.requestProducerAuthorization = function (dataPrefix, appName, onRequestSuccess, onRequestFailed)
+{
+    // TODO: update logic on this part, should the presence of default certificate name be mandatory? 
+    // And allow application developer to send app request to a configured root/controller?
+    if (this.defaultCertificateName === undefined) {
+        console.log("Default certificate is missing! Try setupDefaultIdentityAndRoot first?");
+        return;
+    }
+
+    this.sendAppRequest(this.defaultCertificateName, dataPrefix, appName, onRequestSuccess, onRequestFailed);
+}
         
-        newInterest = Interest(Name(data.getName()).getPrefix(-1))
-        newInterest.setChildSelector(1)
-        excludeComponent = data.getName().get(-1)
-        exclude = Exclude()
-        exclude.appendAny()
-        exclude.appendComponent(Name.Component.fromVersion(self._trustSchemas[namespace]["version"]))
-        newInterest.setExclude(exclude)
-        # Don't immediately ask for potentially the same content again if verification fails
-        self._face.callLater(4000, lambda : 
-          self._face.expressInterest(newInterest, 
-            lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-            lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed)))
-        return
+Bootstrap.prototype.sendAppRequest = function (certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed)
+{
+    var ProtoBuf = dcodeIO.ProtoBuf;
+    var builder = ProtoBuf.loadProtoFile('../commands/app-request.proto');
+    var descriptor = builder.lookup('AppRequestMessage');
+    var AppRequestMessage = descriptor.build();
 
-    def onTrustSchemaData(self, interest, data, onUpdateSuccess, onUpdateFailed):
-        print("Trust schema received: " + data.getName().toUri())
-        namespace = data.getName().getPrefix(-2).toUri()
-        # Process newly received trust schema
-        if not self._controllerCertificate:
-            # we don't yet have the root certificate fetched, so we store this cert for now
-            print "Controller certificate not yet present, verify once it's in place"
-            self._trustSchemas[namespace]["pending-schema"] = data
-        else:
-            # we veriy the received trust schema, should we use an internal KeyChain instead?
-            self._keyChain.verifyData(data, 
-              lambda data: self.onSchemaVerified(data, onUpdateSuccess, onUpdateFailed), 
-              lambda data: self.onSchemaVerificationFailed(data, onUpdateSuccess, onUpdateFailed))
+    var message = new AppRequestMessage();
+    
+    for (var i = 0; i < certificateName.size(); i++) {
+        message.command.idName.add("components", certificateName.get(i).getValue().buf());
+    }
+    for (var i = 0; i < dataPrefix.size(); i++) {
+        message.command.dataPrefix.add("components", dataPrefix.get(i).getValue().buf());
+    }
 
-        return
+    message.command.appName = applicationName;
 
-    def onTrustSchemaTimeout(self, interest, onUpdateSuccess, onUpdateFailed):
-        print("Trust schema interest times out: " + interest.getName().toUri())
-        newInterest = Interest(interest)
-        newInterest.refreshNonce()
-        self._face.expressInterest(newInterest, 
-          lambda interest, data: self.onTrustSchemaData(interest, data, onUpdateSuccess, onUpdateFailed), 
-          lambda interest: self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed))        
-        return
+    var paramComponent = new Name.Component(ProtobufTlv.encode(message, descriptor));
+    var requestInterest = new Interest
+      (new Name(this.controllerName).append("requests").append(paramComponent));
+    requestInterest.setInterestLifetimeMilliseconds(4000)
+    this.face.makeCommandInterest(requestInterest);
+    var self = this;
+    this.face.expressInterest(requestInterest, function (interest, data) {
+        self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed); 
+    }, function (interest) {
+        self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed);
+    });
+    console.log("Application publish request sent: " + requestInterest.getName().toUri())
+    return;
+}
+        
+Bootstrap.prototype.onAppRequestData = function (interest, data, onRequestSuccess, onRequestFailed)
+{
+    console.log("Got application publishing request data");
+    function onVerified(data) {
+        if (data.getContent().toString("binary") == "200") {
+            console.log("onSetupComplete");
+            if (onRequestSuccess !== undefined) {
+                onRequestSuccess();
+            }
+        } else {
+            console.log("Verified content: " + data.getContent().toString("binary"));
+            if (onRequestFailed !== undefined) {
+                onRequestFailed(data.getContent().toString("binary"));
+            }
+        }
+    }
+        
+    function onVerifyFailed(data) {
+        var msg = "Application request response verification failed!"
+        console.log(msg);
+        if (onRequestFailed !== undefined) {
+            onRequestFailed(msg);
+        }
+    }
+        
+    this.keyChain.verifyData(data, onVerified, onVerifyFailed);
+    return;
+}
+    
+Bootstrap.prototype.onAppRequestTimeout = function(interest, onSetupComplete, onSetupFailed)
+{
+    console.log("Application publishing request times out");
+    var newInterest = new Interest(interest);
+    newInterest.refreshNonce();
+    var self = this;
+    this.face.expressInterest(newInterest, function (interest, data) {
+        self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed); 
+    }, function (interest) {
+        self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed);
+    });
+    return;    
+}
 
-###############################################
-# Handling application producing authorizations
-###############################################
-    # Wrapper for sendAppRequest, fills in already configured defaultCertificateName
-    def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
-        # TODO: update logic on this part, should the presence of default certificate name be mandatory? 
-        # And allow application developer to send app request to a configured root/controller?
-        if not self._defaultCertificateName:
-            raise RuntimeError("Default certificate is missing! Try setupDefaultIdentityAndRoot first?")
-            return
-        self.sendAppRequest(self._defaultCertificateName, dataPrefix, appName, onRequestSuccess, onRequestFailed)
+/**
+ * Helper functions
+ */
+Bootstrap.prototype.onRegisterFailed = function (prefix)
+{
+    console.log("register failed for prefix " + prefix.getName().toUri());
+    return;
+}
 
-    def sendAppRequest(self, certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed):
-        message = AppRequestMessage()
-
-        for component in range(certificateName.size()):
-            message.command.idName.components.append(certificateName.get(component).toEscapedString())
-        for component in range(dataPrefix.size()):
-            message.command.dataPrefix.components.append(dataPrefix.get(component).toEscapedString())
-        message.command.appName = applicationName
-
-        paramComponent = ProtobufTlv.encode(message)
-
-        requestInterest = Interest(Name(self._controllerName).append("requests").appendVersion(int(time.time())).append(paramComponent))
-
-        requestInterest.setInterestLifetimeMilliseconds(4000)
-        self._face.makeCommandInterest(requestInterest)
-        self._face.expressInterest(requestInterest, 
-          lambda interest, data : self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed))
-        print "Application publish request sent: " + requestInterest.getName().toUri()
-        return
-
-    def onAppRequestData(self, interest, data, onRequestSuccess, onRequestFailed):
-        print "Got application publishing request data"
-        def onVerified(data):
-            if data.getContent().toRawStr() == "200":
-                if onRequestSuccess:
-                    onRequestSuccess()
-                else:
-                    print "onSetupComplete"
-            else:
-                print "Verified content: " + data.getContent().toRawStr()
-                if onRequestFailed:
-                    onRequestFailed(data.getContent().toRawStr())
-        def onVerifyFailed(data):
-            msg = "Application request response verification failed!"
-            print msg
-            if onRequestFailed:
-                onRequestFailed(msg)
-
-        self._keyChain.verifyData(data, onVerified, onVerifyFailed)
-        return
-
-    def onAppRequestTimeout(self, interest, onSetupComplete, onSetupFailed):
-        print "Application publishing request times out"
-        newInterest = Interest(interest)
-        newInterest.refreshNonce()
-        self._face.expressInterest(newInterest,
-          lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
-        return
-
-###############################################
-# Helper functions
-###############################################
-    def onRegisterFailed(self, prefix):
-        print("register failed for prefix " + prefix.getName().toUri())
-        return
-
+/*
     def processConfiguration(self, confFile):
         config = BoostInfoParser()
         config.read(confFile)
@@ -360,24 +405,32 @@ Bootstrap.prototype.setupDefaultIdentityAndRoot = function(defaultIdentity, sign
             print msg
             return None
         return confObj
+*/
 
-    def getIdentityNameFromCertName(self, certName):
-        i = certName.size() - 1
+Bootstrap.prototype.getIdentityNameFromCertName = function (certName)
+{
+    var i = certName.size() - 1;
 
-        idString = "KEY"
-        while i >= 0:
-            if certName.get(i).toEscapedString() == idString:
-                break
-            i -= 1
-
-        if i < 0:
-            print "Error: unexpected certName " + certName.toUri()
-            return None
-
-        return certName.getPrefix(i)
-
-#################################
-# Getters and setters
-#################################
-    def getKeyChain(self):
-        return self._keyChain
+    var idString = "KEY";
+    while (i >= 0) {
+        if (certName.get(i).toEscapedString() == idString) {
+            break;            
+        }
+        i -= 1;
+    }
+        
+    if (i < 0) {
+        console.log("Error: unexpected certName " + certName.toUri())
+        return;
+    }
+    
+    return new Name(certName.getPrefix(i));
+}
+    
+/**
+ * Getters and setters
+ */
+Bootstrap.prototype.getKeyChain = function()
+{
+    return this.keyChain;
+}

@@ -328,10 +328,10 @@ class IotController(BaseNode):
         elif afterPrefix == "requests":
             # application request to publish under some names received; need to be signed
             def onVerifiedAppRequest(interest):
-                # TODO: for now, we automatically grant access to any signed interest
+                # TODO: for now, we automatically grant access to any valid signed interest
                 print("verified! send response!")
                 message = AppRequestMessage()
-                ProtobufTlv.decode(message, interest.getName().get(prefix.size() + 2).getValue())
+                ProtobufTlv.decode(message, interest.getName().get(prefix.size() + 1).getValue())
                 certName = Name("/".join(message.command.idName.components))
                 dataPrefix = Name("/".join(message.command.dataPrefix.components))
                 appName = message.command.appName
