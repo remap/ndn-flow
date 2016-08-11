@@ -49,7 +49,8 @@ function start()
     var face = new Face({"host": "127.0.0.1"});
     bootstrap = new Bootstrap(face);
 
-    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/bad"), undefined, onSetupComplete, onSetupFailed);
+    // TODO: seems that certain names cannot be added! for example "bad", debug this in add-device.js and iot-controller.py
+    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/wat"), undefined, onSetupComplete, onSetupFailed);
 }
 
 </script>

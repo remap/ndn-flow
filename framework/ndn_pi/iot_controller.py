@@ -176,8 +176,8 @@ class IotController(BaseNode):
                 self._hmacDevices.pop(deviceSerial)
         except KeyError:
             self.log.warn('Received certificate request for device with no registered key')
-        except SecurityException:
-            self.log.warn('Could not create device certificate')
+        except SecurityException as e:
+            self.log.warn('Could not create device certificate: ' + str(e))
         else:
             self.log.info('Creating certificate for device {}'.format(deviceSerial))
 
