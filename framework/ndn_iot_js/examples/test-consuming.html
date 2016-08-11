@@ -1,61 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-class AppConsumer():
-    def __init__(self, face, certificateName, keyChain, dataPrefix):
-        self._keyChain = keyChain
-        self._defaultCertificateName = certificateName
-        self._face = face
-        self._dataPrefix = dataPrefix
-        return
+<html>
+<head>
+<title>IoT Test</title>
 
-    def start(self):
-        interest = Interest(self._dataPrefix)
-        self._face.expressInterest(interest, self.onData, self.onTimeout)
-        print "Interest expressed " + interest.getName().toUri()
-        return
+<script type="text/javascript" src="../contrib/dcodeio/long.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/bytebuffer-ab.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/protobuf.min.js"></script>
 
-    def onData(self, interest, data):
-        print "Got data " + data.getName().toUri()
-        print "Data keyLocator KeyName " + data.getSignature().getKeyLocator().getKeyName().toUri()
-        def onVerified(data):
-            print "data verified: " + data.getContent().toRawStr()
-            return
-        def onVerifyFailed(data):
-            print "data verification failed"
-            return
-        self._keyChain.verifyData(data, onVerified, onVerifyFailed)
-        return
+<script type="text/javascript" src="../js/ndn.js"></script>
+<script type="text/javascript" src="../js/bootstrap/bootstrap.js"></script>
 
-    def onTimeout(self, interest):
-        print "Interest times out " + interest.getName().toUri()
-        return
+<script type="text/javascript">
 
-if __name__ == '__main__':
-    try:
-        import psutil as ps
-    except Exception as e:
-        print str(e)
+var bootstrap = undefined;
+var face = undefined;
+var myKeyChain = undefined;
+var myCertificateName = undefined;
 
-    loop = asyncio.get_event_loop()
-    face = ThreadsafeFace(loop)
+function onSetupComplete(defaultCertificateName, keyChain)
+{
+    console.log("Default certificate name and keyChain set up complete.");
+    var dataPrefix = new Name("/home/flow/browser-publisher1");
+    var appName = "flow";
     
-    bootstrap = Bootstrap(face)
+    myKeyChain = keyChain;
+    myCertificateName = myCertificateName;
 
-    def onSetupComplete(defaultCertificateName, keyChain):
-        def onUpdateFailed(msg):
-            print "Trust scheme update failed"
-            return
-            
-        def onUpdateSuccess(trustSchemaString, isInitial):
-            print "Got a trust schema"
-            if isInitial:
-                consumer.start()
-            return
-        consumer = AppConsumer(face, defaultCertificateName, keyChain, Name("/home/flow/ps-publisher-4"))
-        bootstrap.startTrustSchemaUpdate(Name("/home/gateway/flow"), onUpdateSuccess, onUpdateFailed)
-        
-    def onSetupFailed(msg):
-        print("Setup failed " + msg)
+    bootstrap.startTrustSchemaUpdate(new Name("/home/gateway/flow"), onUpdateSuccess, onUpdateFailed);
+    return;
+}
 
-    bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
+function onUpdateSuccess(schema, isInitial)
+{
+    var interest = new Interest(new Name("/home/flow/ps-publisher-4"));
+    if (isInitial === true) {
+        face.expressInterest(interest, function (interest, data) {
+            console.log("Verifying data: " + data.getName().toUri());
+            myKeyChain.verifyData(data, function (data) {
+                console.log("Data verified: " + data.getContent().toString("binary"));
+            }, function (data) {
+                console.log("Data verification failed!");
+            })
+        }, function (interest) {
+            console.log("Interest times out: " + interest.getName().toUri());
+        });
+    }
+    return;
+}
 
-    loop.run_forever()
+function onUpdateFailed(msg)
+{
+    console.log("trust schema update failed : " + msg);
+    // For this test, we start anyway
+    return;
+}
+
+function onSetupFailed(msg)
+{
+    console.log("Setup failed " + msg);
+}
+
+function start()
+{    
+    face = new Face({"host": "127.0.0.1"});
+    bootstrap = new Bootstrap(face);
+
+    // TODO: seems that certain names cannot be added! for example "bad", debug this in add-device.js and iot-controller.py
+    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/wat"), undefined, onSetupComplete, onSetupFailed);
+}
+
+</script>
+
+</head>
+
+<body>
+<button onclick="start()">Test</button>
+</body>
+
+</html>
