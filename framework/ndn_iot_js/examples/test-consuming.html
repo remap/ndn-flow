@@ -34,10 +34,11 @@ function onSetupComplete(defaultCertificateName, keyChain)
 
 function onUpdateSuccess(schema, isInitial)
 {
-    var interest = new Interest(new Name("/home/flow/ps-publisher-4"));
+    var interest = new Interest(new Name("/home/flow/browser-publisher-1"));
     if (isInitial === true) {
         face.expressInterest(interest, function (interest, data) {
             console.log("Verifying data: " + data.getName().toUri());
+            console.log(data.getSignature().getKeyLocator().getKeyName().toUri());
             myKeyChain.verifyData(data, function (data) {
                 console.log("Data verified: " + data.getContent().toString("binary"));
             }, function (data) {
