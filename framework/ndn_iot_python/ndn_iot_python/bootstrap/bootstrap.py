@@ -302,6 +302,7 @@ class Bootstrap(object):
 
         requestInterest.setInterestLifetimeMilliseconds(4000)
         self._face.makeCommandInterest(requestInterest)
+        
         self._face.expressInterest(requestInterest, 
           lambda interest, data : self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed), 
           lambda interest : self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed))

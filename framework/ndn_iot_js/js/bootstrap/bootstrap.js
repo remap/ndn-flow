@@ -346,14 +346,16 @@ Bootstrap.prototype.sendAppRequest = function (certificateName, dataPrefix, appl
     var requestInterest = new Interest
       (new Name(this.controllerName).append("requests").append(paramComponent));
     requestInterest.setInterestLifetimeMilliseconds(4000);
-    this.face.makeCommandInterest(requestInterest);
+    
     var self = this;
-    this.face.expressInterest(requestInterest, function (interest, data) {
-        self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed); 
-    }, function (interest) {
-        self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed);
+    this.face.nodeMakeCommandInterest(requestInterest, this.keyChain, this.defaultCertificateName, TlvWireFormat.get(), function () {
+        self.face.expressInterest(requestInterest, function (interest, data) {
+            self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed); 
+        }, function (interest) {
+            self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed);
+        });
+        console.log("Application publish request sent: " + requestInterest.getName().toUri())
     });
-    console.log("Application publish request sent: " + requestInterest.getName().toUri())
     return;
 }
         
