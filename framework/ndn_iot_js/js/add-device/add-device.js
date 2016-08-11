@@ -273,13 +273,21 @@ IotNode.prototype.processValidCertificate = function(data)
                         console.log("New certificate verification failed.");
                     });
                     var publicKeyName = rootCert.getPublicKeyName();
-                    self.identityManager.setDefaultKeyForIdentity(publicKeyName);
+                    self.identityManager.setDefaultKeyForIdentity(publicKeyName, function () {
+                        console.log("Default key for identity set");
+                    }, function (error) {
+                        console.log(error);
+                    });
                 }, function (error) {
                     console.log(error);
                     // assuming certificate already exist, set it as default then
                     self.identityManager.setDefaultCertificateForKey(rootCert);
                     var publicKeyName = rootCert.getPublicKeyName();
-                    self.identityStorage.setDefaultKeyForIdentity(publicKeyName)
+                    self.identityManager.setDefaultKeyForIdentity(publicKeyName, function () {
+                        console.log("Default key for identity set");
+                    }, function (error) {
+                        console.log(error);
+                    });
                 });
             } catch (e) {
                 console.log(e);

@@ -311,7 +311,8 @@ class Bootstrap(object):
     def onAppRequestData(self, interest, data, onRequestSuccess, onRequestFailed):
         print "Got application publishing request data"
         def onVerified(data):
-            if data.getContent().toRawStr() == "200":
+            responseObj = json.loads(data.getContent().toRawStr())
+            if responseObj["status"] == "200":
                 if onRequestSuccess:
                     onRequestSuccess()
                 else:

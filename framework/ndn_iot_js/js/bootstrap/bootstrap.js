@@ -324,11 +324,14 @@ Bootstrap.prototype.requestProducerAuthorization = function (dataPrefix, appName
 Bootstrap.prototype.sendAppRequest = function (certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed)
 {
     var ProtoBuf = dcodeIO.ProtoBuf;
-    var builder = ProtoBuf.loadProtoFile('../commands/app-request.proto');
+    var builder = ProtoBuf.loadProtoFile('app-request.proto');
     var descriptor = builder.lookup('AppRequestMessage');
     var AppRequestMessage = descriptor.build();
 
     var message = new AppRequestMessage();
+    message.command = new AppRequestMessage.AppRequest();
+    message.command.idName = new AppRequestMessage.Name();
+    message.command.dataPrefix = new AppRequestMessage.Name();
     
     for (var i = 0; i < certificateName.size(); i++) {
         message.command.idName.add("components", certificateName.get(i).getValue().buf());
@@ -342,7 +345,7 @@ Bootstrap.prototype.sendAppRequest = function (certificateName, dataPrefix, appl
     var paramComponent = new Name.Component(ProtobufTlv.encode(message, descriptor));
     var requestInterest = new Interest
       (new Name(this.controllerName).append("requests").append(paramComponent));
-    requestInterest.setInterestLifetimeMilliseconds(4000)
+    requestInterest.setInterestLifetimeMilliseconds(4000);
     this.face.makeCommandInterest(requestInterest);
     var self = this;
     this.face.expressInterest(requestInterest, function (interest, data) {
@@ -358,7 +361,8 @@ Bootstrap.prototype.onAppRequestData = function (interest, data, onRequestSucces
 {
     console.log("Got application publishing request data");
     function onVerified(data) {
-        if (data.getContent().toString("binary") == "200") {
+        var responseObj = JSON.parse(data.getContent().toString("binary"));
+        if (responseObj["status"] == "200") {
             if (onRequestSuccess !== undefined) {
                 onRequestSuccess();
             }

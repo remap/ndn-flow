@@ -14,6 +14,8 @@
 
 <script type="text/javascript">
 
+var bootstrap = undefined;
+
 function onSetupComplete(defaultCertificateName, keyChain)
 {
     console.log("Default certificate name and keyChain set up complete.");
@@ -45,9 +47,9 @@ function onSetupFailed(msg)
 function start()
 {    
     var face = new Face({"host": "127.0.0.1"});
-    var bootstrap = new Bootstrap(face);
+    bootstrap = new Bootstrap(face);
 
-    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/b1"), undefined, onSetupComplete, onSetupFailed);
+    bootstrap.setupDefaultIdentityAndRoot(new Name("/home/bad"), undefined, onSetupComplete, onSetupFailed);
 }
 
 </script>

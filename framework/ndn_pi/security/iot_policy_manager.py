@@ -93,7 +93,7 @@ class IotPolicyManager(ConfigPolicyManager):
             
             environmentUri = self._environmentPrefix.toUri()
             deviceUri = self._deviceIdentity.toUri()
-             
+            
             for rule in validatorTree["rule"]:
                 ruleId = rule["id"][0].value
                 if ruleId == 'Certificate Trust':
