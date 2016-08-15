@@ -1,8 +1,25 @@
-NDNoT Framework Design
+NDN IoT Framework (for Flow)
 =======================
 
-Interfaces:
+### Functionality
+NDNoT (Named data networking of things) is an IoT framework running on top on NDN, featuring
+* Naming things, devices, and their data
+* Device and application bootstrapping
+* Service and capability discovery
+* Schematized trust
+* Application-level pub/sub
+* Global Internet integration
 
-* interface_discovery: interface for discovery library
-* interface_iot_node:  interface for each IoT node (Each node that publishes any data and should be added to the home network) (To be expanded with definitions from the NDN-pi)
-* interface_sequential_consumer: interface for consuming under a sequence number namespace
+###### Naming
+
+###### Trust and bootstrapping
+
+###### Discovery
+
+###### Application-level pub/sub
+
+### Availability
+
+### Interface
+
+### Application example
