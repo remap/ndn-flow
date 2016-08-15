@@ -1,6 +1,6 @@
 #include <time.h>
 
-#include "app-bootstrap.hpp"
+#include "bootstrap.hpp"
 #include "boost-info-parser.hpp"
 #include "app-request.pb.h"
 #include <ndn-cpp/encoding/protobuf-tlv.hpp>
