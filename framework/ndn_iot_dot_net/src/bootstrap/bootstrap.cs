@@ -1,19 +1,110 @@
-
 namespace ndn_iot.bootstrap {
     using System;
     using System.Collections;
-    
-    using net.named-data.jndn;
-    using net.named-data.jndn.encoding;
-    using net.named-data.jndn.util;
-    using net.named-data.jndn.security;
+    using System.Collections.Generic;
+    //using Google.Protobuf;
+
+    using net.named_data.jndn.security.policy;    
+    using net.named_data.jndn;
+    using net.named_data.jndn.encoding;
+    using net.named_data.jndn.util;
+    using net.named_data.jndn.security;
+    using net.named_data.jndn.security.identity;
+    using net.named_data.jndn.security.certificate;
+
+    // TODO: abandoned protobuf-C# for now, not wise to investigate given we don't have enough time, hack controller instead
+    //using ndn_iot.bootstrap.command;
 
     public class Bootstrap {
-        public Bootstrap() {
+        public Bootstrap(Face face) {
+            applicationName_ = "";
+            identityManager_ = new IdentityManager(new BasicIdentityStorage());
+            policyManager_ = new ConfigPolicyManager();
+            keyChain_ = new KeyChain(identityManager_, policyManager_);
+            face_ = face;
+            keyChain_.setFace(face_);
+
+            certificateContentCache_ = new MemoryContentCache(face_);
+        }
+
+        public void setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
 
         }
+
+        public void sendAppRequest(Name certificateName, Name dataPrefix, string applicationName) {
+            
+        }
+
+        Name defaultIdentity_;
+        Name defaultCertificateName_;
+        Name controllerName_;
+        IdentityCertificate controllerCertificate_;
+
+        string applicationName_;
+        IdentityManager identityManager_;
+        ConfigPolicyManager policyManager_;
+
+        KeyChain keyChain_;
+        Face face_;
+        MemoryContentCache certificateContentCache_;
+        Dictionary<string, string> trustSchemas_;
     }
 }
+
+/*
+    def sendAppRequest(self, certificateName, dataPrefix, applicationName, onRequestSuccess, onRequestFailed):
+        message = AppRequestMessage()
+
+        for component in range(certificateName.size()):
+            message.command.idName.components.append(certificateName.get(component).toEscapedString())
+        for component in range(dataPrefix.size()):
+            message.command.dataPrefix.components.append(dataPrefix.get(component).toEscapedString())
+        message.command.appName = applicationName
+
+        paramComponent = ProtobufTlv.encode(message)
+
+        requestInterest = Interest(Name(self._controllerName).append("requests").append(paramComponent))
+
+        requestInterest.setInterestLifetimeMilliseconds(4000)
+        self._face.makeCommandInterest(requestInterest)
+        
+        self._face.expressInterest(requestInterest, 
+          lambda interest, data : self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed), 
+          lambda interest : self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed))
+        print "Application publish request sent: " + requestInterest.getName().toUri()
+        return
+
+    def onAppRequestData(self, interest, data, onRequestSuccess, onRequestFailed):
+        print "Got application publishing request data"
+        def onVerified(data):
+            responseObj = json.loads(data.getContent().toRawStr())
+            if responseObj["status"] == "200":
+                if onRequestSuccess:
+                    onRequestSuccess()
+                else:
+                    print "onSetupComplete"
+            else:
+                print "Verified content: " + data.getContent().toRawStr()
+                if onRequestFailed:
+                    onRequestFailed(data.getContent().toRawStr())
+        def onVerifyFailed(data):
+            msg = "Application request response verification failed!"
+            print msg
+            if onRequestFailed:
+                onRequestFailed(msg)
+
+        self._keyChain.verifyData(data, onVerified, onVerifyFailed)
+        return
+
+    def onAppRequestTimeout(self, interest, onSetupComplete, onSetupFailed):
+        print "Application publishing request times out"
+        newInterest = Interest(interest)
+        newInterest.refreshNonce()
+        self._face.expressInterest(newInterest,
+          lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
+          lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
+        return
+*/
 
 /*
 class Bootstrap(object):
