@@ -468,6 +468,9 @@ class IotController(BaseNode):
                 # TODO: Handle malformed conf where validator tree does not exist
                 validatorNode = self._applications[appName]["tree"]["validator"][0]
         else:
+            # This application does not previously exist, we create its trust schema 
+            # (and for now, add in static rules for sync data)
+
             self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": [], "version": 0}
             validatorNode = self._applications[appName]["tree"].getRoot().createSubtree("validator")
             
@@ -500,6 +503,27 @@ class IotController(BaseNode):
             # We don't put cert version in there
             keyLocatorNode.createSubtree("name", Name(self.getDefaultCertificateName()).getPrefix(-1).toUri())
             keyLocatorNode.createSubtree("relation", "equal")
+
+            # Discovery rule: anything that multicasts under my home prefix should be signed, and the signer should have been authorized by root
+            # TODO: This rule as of right now is over-general
+            discoveryRuleNode = validatorNode.createSubtree("rule")
+            discoveryRuleNode.createSubtree("id", "sync-data")
+            discoveryRuleNode.createSubtree("for", "data")
+
+            filterNode = certRuleNode.createSubtree("filter")
+            filterNode.createSubtree("type", "regex")
+            filterNode.createSubtree("regex", "^[^<MULTICAST>]*<MULTICAST><>*")
+
+            checkerNode = certRuleNode.createSubtree("checker")
+            # TODO: wait how did my first hierarchical verifier work?
+            #checkerNode.createSubtree("type", "hierarchical")
+
+            checkerNode.createSubtree("type", "customized")
+            checkerNode.createSubtree("sig-type", "rsa-sha256")
+
+            keyLocatorNode = checkerNode.createSubtree("key-locator")
+            keyLocatorNode.createSubtree("type", "name")
+            keyLocatorNode.createSubtree("regex", "^[^<KEY>]*<KEY><>*<ID-CERT>")
 
 
         ruleNode = validatorNode.createSubtree("rule")
