@@ -188,6 +188,100 @@ Bootstrap::onNetworkNack
   return;
 }
 
+/**
+ * Handling application consumption (trust schema update)
+ */
+void
+Bootstrap::startTrustSchemaUpdate
+(Name appPrefix, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  std::string appNamespace = appPrefix.toUri();
+  std::map<std::string, ptr_lib::shared_ptr<AppTrustSchema>>::iterator it = trustSchemas_.find(appNamespace);
+  if (it != trustSchemas_.end()) {
+    if (it->second->getFollowing()) {
+      cout << "Already following this trust schema" << endl;
+      return;
+    }
+    it->second->setFollowing(true);
+  } else {
+    trustSchemas_[appNamespace].reset(new AppTrustSchema(true, "", 0, true));
+  }
+
+  Interest initialInterest(Name(appNamespace).append("_schema"));
+  initialInterest.setChildSelector(1);
+  face_.expressInterest(initialInterest, 
+    bind(&Bootstrap::onTrustSchemaData, this, _1, _2, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onTrustSchemaTimeout, this, _1, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onNetworkNackSchema, this, _1, _2, onUpdateSuccess, onUpdateFailed));
+}
+
+void
+Bootstrap::stopTrustSchemaUpdate()
+{
+  cout << "Stop trust schema update not implemented" << endl;
+}
+
+void
+Bootstrap::onTrustSchemaData
+(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  if (controllerCertificate_) {
+    cout << "Unexpected: controller certificate not present" << endl;
+  } else {
+    keyChain_->verifyData(data, 
+      bind(&Bootstrap::onSchemaVerified, this, _1, onUpdateSuccess, onUpdateFailed),
+      bind(&Bootstrap::onSchemaVerificationFailed, this, _1, onUpdateSuccess, onUpdateFailed));
+  }
+  return;
+}
+
+void
+Bootstrap::onTrustSchemaTimeout
+(const ptr_lib::shared_ptr<const Interest>& interest, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  Interest newInterest(*interest);
+  newInterest.refreshNonce();
+  face_.expressInterest(newInterest, 
+    bind(&Bootstrap::onTrustSchemaData, this, _1, _2, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onTrustSchemaTimeout, this, _1, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onNetworkNackSchema, this, _1, _2, onUpdateSuccess, onUpdateFailed));
+}
+
+void
+Bootstrap::onSchemaVerified
+(const ptr_lib::shared_ptr<const Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  Name::Component version = data->getName().get(-1);
+  std::string appNamespace = data->getName().getPrefix(-2).toUri();
+  
+  std::map<std::string, ptr_lib::shared_ptr<AppTrustSchema>>::iterator it = trustSchemas_.find(appNamespace);
+  if (it == trustSchemas_.end()) {
+    cout << "unexpected: received trust schema for application namespace that's not being followed; malformed data name?" << endl;
+    return;
+  }
+
+/*
+  if (version.toVersion() < it->second) {
+
+  }
+*/
+}
+
+void
+Bootstrap::onSchemaVerificationFailed
+(const ptr_lib::shared_ptr<const Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+
+}
+
+void
+Bootstrap::onNetworkNackSchema
+(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<NetworkNack>& networkNack, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  cout << "Network NACK not yet handled" << endl;
+  return;
+}
+
 void 
 Bootstrap::onRegisterFailed
 (const ptr_lib::shared_ptr<const Name>& prefix)
