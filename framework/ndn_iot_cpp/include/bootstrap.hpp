@@ -6,19 +6,36 @@
 
 namespace ndn_iot {
 
-class AppBootstrap {
-
+// Setup functions are now made synchronous, the following aren't used
 typedef ndn::func_lib::function<void
   (const std::string)> OnSetupFailed;
 
 typedef ndn::func_lib::function<void
   (const ndn::Name&, const ndn::KeyChain&)> OnSetupComplete;
 
+// Application publishing request granted, no param
+typedef ndn::func_lib::function<void
+  ()> OnRequestSuccess;
+
+// Application publishing request failed, msg param
+typedef ndn::func_lib::function<void
+  (const std::string)> OnRequestFailed;
+
+// Trust schema update success, (schema string, is-first-update) param
+typedef ndn::func_lib::function<void
+  (const std::string, bool)> OnUpdateSuccess;
+
+// Trust schema update failed, msg param
+typedef ndn::func_lib::function<void
+  (const std::string)> OnUpdateFailed;
+
+class Bootstrap {
+
 public:
-  AppBootstrap
+  Bootstrap
     (ndn::ThreadsafeFace& face, std::string confFile = "app.conf");
   
-  ~AppBootstrap();
+  ~Bootstrap();
 
   bool 
   processConfiguration
@@ -30,37 +47,53 @@ public:
   getIdentityNameFromCertName(ndn::Name certName);
 
   void
-  sendAppRequest();
+  requestProducerAuthorization(ndn::Name dataPrefix, std::string appName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
   void
-  onAppRequestData(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::Data>& data);
+  sendAppRequest(ndn::Name certificateName, ndn::Name dataPrefix, std::string appName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
-  void 
-  onAppRequestTimeout(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest);
-
-  void
-  onNetworkNack(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack);
-  
-  ndn::Name
+  ndn::ptr_lib::shared_ptr<ndn::KeyChain>
   setupDefaultIdentityAndRoot(ndn::Name defaultIdentity, ndn::Name signerName);
 
+  ndn::Name
+  getDefaultIdentity();
+
 private:
-  ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
+
+  void 
+  onAppRequestDataVerified(const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+
+  void 
+  onAppRequestDataVerifyFailed(const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+
+  void
+  onNetworkNack(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack,  OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+
+  void
+  onAppRequestData(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+
+  void 
+  onAppRequestTimeout(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+
+  void 
+  onRegisterFailed(const ndn::ptr_lib::shared_ptr<const ndn::Name>& prefix);
+
   ndn::ThreadsafeFace& face_;
   ndn::Name defaultIdentity_;
   ndn::Name defaultCertificateName_;
   ndn::Name defaultKeyName_;
   ndn::Name controllerName_;
-  ndn::IdentityCertificate controllerCertificate_;
+  ndn::ptr_lib::shared_ptr<ndn::IdentityCertificate> controllerCertificate_;
   ndn::Name dataPrefix_;
 
   std::string applicationName_;
+  ndn::MemoryContentCache certificateContentCache_;
 
-
-  ptr_lib::shared_ptr<BasicIdentityStorage> identityStorage_;
-  ptr_lib::shared_ptr<ConfigPolicyManager> policyManager_;
-  ptr_lib::shared_ptr<IdentityManager> identityManager_;
-  ptr_lib::shared_ptr<CertificateCache> certificateCache_;
+  ndn::ptr_lib::shared_ptr<ndn::BasicIdentityStorage> identityStorage_;
+  ndn::ptr_lib::shared_ptr<ndn::ConfigPolicyManager> policyManager_;
+  ndn::ptr_lib::shared_ptr<ndn::IdentityManager> identityManager_;
+  ndn::ptr_lib::shared_ptr<ndn::CertificateCache> certificateCache_;
+  ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
 
   bool setupComplete;
 };
