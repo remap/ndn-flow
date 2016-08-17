@@ -37,9 +37,9 @@ def build (ctx):
         target = "ndn_iot_cpp",
         name = "ndn_iot_cpp",
         
-        source = ctx.path.ant_glob(['src/*.cpp']),
+        source = ctx.path.ant_glob(['src/**/*.cpp', 'src/**/*.cc']),
         use = 'BOOST NDNCPP PROTOBUF',
-        includes = '. src include',
+        includes = '. src include src/commands',
         export_includes = "src",
         install_path = '${LIBDIR}',
     )
@@ -58,8 +58,7 @@ def build (ctx):
             features = ["cxx", "cxxprogram"],
             target = name,
             source = [i],
-            use = 'ndn_iot_cpp',
-            libpath = ctx.path.abspath() + '/build',
+            use = 'ndn_iot_cpp BOOST NDNCPP',
             includes = 'include',
             install_path = None
         )

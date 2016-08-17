@@ -11,8 +11,6 @@ using namespace ndn::func_lib;
 
 namespace ndn_iot {
 
-class AppBootstrap;
-
 AppBootstrap::AppBootstrap
   (ndn::ThreadsafeFace& face, std::string confFile)
  : face_(face)
