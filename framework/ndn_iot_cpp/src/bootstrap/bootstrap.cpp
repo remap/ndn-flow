@@ -11,21 +11,59 @@ using namespace ndn::func_lib;
 
 namespace ndn_iot {
 
-AppBootstrap::AppBootstrap
-  (ndn::ThreadsafeFace& face, std::string confFile)
+Bootstrap::Bootstrap
+  (ndn::ThreadsafeFace& face)
  : face_(face)
 {
-  ptr_lib::shared_ptr<BasicIdentityStorage> identityStorage = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
-  ptr_lib::shared_ptr<ConfigPolicyManager> policyManager = ptr_lib::shared_ptr<ConfigPolicyManager>(new ConfigPolicyManager());
-  ptr_lib::shared_ptr<FilePrivateKeyStorage> filePrivateKeyStorage = ptr_lib::shared_ptr<FilePrivateKeyStorage>(new FilePrivateKeyStorage());
-  ptr_lib::shared_ptr<IdentityManager> identityManager = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage, filePrivateKeyStorage));
+  identityStorage_ = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
+  certificateCache_ = ptr_lib::shared_ptr<CertificateCache>();
+  policyManager_ = ptr_lib::shared_ptr<ConfigPolicyManager>(new ConfigPolicyManager("", certificateCache_));
+  identityManager_ = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage));
   keyChain_.reset(new KeyChain(identityManager, policyManager));
 
-  processConfiguration(confFile);
+  //processConfiguration(confFile);
 }
 
 AppBootstrap::~AppBootstrap()
 {
+}
+
+/**
+ * Initial keyChain and defaultCertificate setup
+ */
+Name
+Bootstrap::setupDefaultIdentityAndRoot
+  (Name defaultIdentity, Name signerName)
+{
+  if (defaultIdentity.size() == 0) {
+    try {
+      defaultIdentity = identityManager_.getDefaultIdentity();
+    } catch (const SecurityException& e) {
+      cout << "Default identity does not exist " << e.what() << endl;
+    }
+    
+  }
+  try {
+    defaultIdentity_ = Name(defaultIdentity);
+    defaultCertificateName_ = identityManager_.getDefaultCertificateNameForIdentity(defaultIdentity_);
+    defaultKeyName_ = identityManager_->getDefaultKeyNameForIdentity(defaultIdentity_);
+  } catch (const SecurityException& e) {
+    cout << "Cannot find keys for configured identity " << defaultIdentityString << endl;
+    return Name();
+  }
+  face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
+  Name actualSignerName = (KeyLocator::getFromSignature(keyChain_->getCertificate(defaultCertificateName_)->getSignature())).getKeyName();
+
+  if (actualSignerName != signerName) {
+    cout << "Signer name mismatch" << endl;
+    return Name();
+  }
+
+  controllerName_ = getIdentityNameFromCertName(signerName);
+  try {
+    controllerCertificate_ = keyChain_.getCertificate(identityManager_.getDefaultCertificateNameForIdentity(controllerName_))
+    policyManager_
+  }
 }
 
 bool 

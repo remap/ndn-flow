@@ -41,15 +41,26 @@ public:
   void
   onNetworkNack(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack);
   
+  ndn::Name
+  setupDefaultIdentityAndRoot(ndn::Name defaultIdentity, ndn::Name signerName);
+
 private:
   ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
   ndn::ThreadsafeFace& face_;
   ndn::Name defaultIdentity_;
   ndn::Name defaultCertificateName_;
+  ndn::Name defaultKeyName_;
   ndn::Name controllerName_;
+  ndn::IdentityCertificate controllerCertificate_;
   ndn::Name dataPrefix_;
 
   std::string applicationName_;
+
+
+  ptr_lib::shared_ptr<BasicIdentityStorage> identityStorage_;
+  ptr_lib::shared_ptr<ConfigPolicyManager> policyManager_;
+  ptr_lib::shared_ptr<IdentityManager> identityManager_;
+  ptr_lib::shared_ptr<CertificateCache> certificateCache_;
 
   bool setupComplete;
 };
