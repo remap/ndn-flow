@@ -37,6 +37,7 @@ Bootstrap::Bootstrap
     }", "initial-rule");
   identityManager_ = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage_));
   keyChain_.reset(new KeyChain(identityManager_, policyManager_));
+  keyChain_->setFace(&face_);
   defaultCertificateName_ = Name();
 
   //processConfiguration(confFile);
@@ -250,9 +251,11 @@ void
 Bootstrap::onTrustSchemaData
 (const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
 {
-  if (controllerCertificate_) {
+  if (!controllerCertificate_) {
     cout << "Unexpected: controller certificate not present" << endl;
   } else {
+    cout << certificateCache_->getCertificate(controllerCertificate_->getName().getPrefix(-1))->getName().toUri() << endl;
+    cout << data->getName().toUri() << endl;
     keyChain_->verifyData(data, 
       bind(&Bootstrap::onSchemaVerified, this, _1, onUpdateSuccess, onUpdateFailed),
       bind(&Bootstrap::onSchemaVerificationFailed, this, _1, onUpdateSuccess, onUpdateFailed));
@@ -323,8 +326,10 @@ void
 Bootstrap::onSchemaVerificationFailed
 (const ptr_lib::shared_ptr<const Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
 {
+  // TODO: verification failure seems to deliver the last data packet that fails to verify, is this the expected behavior from the library?
   cout << "trust schema verification failed" << endl;
   std::string appNamespace = data->getName().getPrefix(-2).toUri();
+  cout << appNamespace << endl;
 
   std::map<std::string, ptr_lib::shared_ptr<AppTrustSchema>>::iterator it = trustSchemas_.find(appNamespace);
   if (it == trustSchemas_.end()) {

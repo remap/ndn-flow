@@ -34,7 +34,7 @@ public:
 private:
   void onRequestSuccess() {
     cout << "request granted" << endl;
-    Data data(Name("/home/gateway/cpp-publisher-1/0"));
+    Data data(Name("/home/flow/cpp-publisher-1/0"));
     string content = "good good";
     data.setContent((const uint8_t *)&content[0], content.size());
     keyChain_->sign(data, defaultCertificateName_);
@@ -43,7 +43,14 @@ private:
   }
 
   void onRequestFailed(string msg) {
-    cout << "request not granted: " << msg << endl;
+    cout << "request not granted: " << msg << "; in this test, publish anyway" << endl;
+
+    Data data(Name("/home/flow/cpp-publisher-1/0"));
+    string content = "good good";
+    data.setContent((const uint8_t *)&content[0], content.size());
+    keyChain_->sign(data, defaultCertificateName_);
+
+    memoryContentCache_->add(data);
   }
 
   void onVerified(const ptr_lib::shared_ptr<const Data>& data) {

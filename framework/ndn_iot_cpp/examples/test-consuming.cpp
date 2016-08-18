@@ -19,7 +19,7 @@ public:
   void run() {
     cout << "Running test consumer" << endl;
     Bootstrap bootstrap(*(face_.get()));
-    keyChain_ = bootstrap.setupDefaultIdentityAndRoot();
+    keyChain_ = bootstrap.setupDefaultIdentityAndRoot(Name("/home/mygooddevice"));
     Name defaultCertificate = bootstrap.getDefaultCertificateName();
     bootstrap.startTrustSchemaUpdate(Name("/home/gateway/flow"), 
       bind(&AppConsumer::onUpdateSuccess, this, _1, _2), 
