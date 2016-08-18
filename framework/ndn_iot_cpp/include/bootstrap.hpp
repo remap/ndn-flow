@@ -104,10 +104,13 @@ public:
   sendAppRequest(ndn::Name certificateName, ndn::Name dataPrefix, std::string appName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
   ndn::ptr_lib::shared_ptr<ndn::KeyChain>
-  setupDefaultIdentityAndRoot(ndn::Name defaultIdentity, ndn::Name signerName);
+  setupDefaultIdentityAndRoot(ndn::Name defaultIdentity = ndn::Name(), ndn::Name signerName = ndn::Name());
 
   ndn::Name
   getDefaultIdentity();
+
+  ndn::Name
+  getDefaultCertificateName();
 
   void
   stopTrustSchemaUpdate();
@@ -159,7 +162,6 @@ private:
   ndn::Name defaultKeyName_;
   ndn::Name controllerName_;
   ndn::ptr_lib::shared_ptr<ndn::IdentityCertificate> controllerCertificate_;
-  ndn::Name dataPrefix_;
 
   std::string applicationName_;
   ndn::MemoryContentCache certificateContentCache_;

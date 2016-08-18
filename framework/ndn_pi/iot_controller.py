@@ -350,7 +350,9 @@ class IotController(BaseNode):
                 response = Data(interest.getName())
                 response.setContent("{\"status\": 401, \"message\": \"command interest verification failed\" }")
                 self.sendData(response)
-            self.log.debug("Received application request")
+            self.log.info("Received application request: " + interestName.toUri())
+            #print("Verifying with trust schema: ")
+            #print(self._policyManager.config)
             self._keyChain.verifyInterest(interest, 
                     onVerifiedAppRequest, onVerificationFailedAppRequest)
         else:

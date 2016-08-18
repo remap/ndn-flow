@@ -20,8 +20,21 @@ Bootstrap::Bootstrap
  : face_(face), certificateContentCache_(&face)
 {
   identityStorage_ = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
-  certificateCache_ = ptr_lib::shared_ptr<CertificateCache>();
+  certificateCache_ = ptr_lib::shared_ptr<CertificateCache>(new CertificateCache());
   policyManager_ = ptr_lib::shared_ptr<ConfigPolicyManager>(new ConfigPolicyManager("", certificateCache_));
+  policyManager_->load(" \n \
+    validator            \n \
+    {                    \n \
+      rule               \n \
+      {                  \n \
+        id \"initial rule\" \n \
+        for data            \n \
+        checker             \n \
+        {                   \n \
+          type hierarchical \n \
+        }                \n \
+      }                  \n \
+    }", "initial-rule");
   identityManager_ = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage_));
   keyChain_.reset(new KeyChain(identityManager_, policyManager_));
   defaultCertificateName_ = Name();
@@ -64,20 +77,26 @@ Bootstrap::setupDefaultIdentityAndRoot
   certificateContentCache_.add(*myCertificate);
   Name actualSignerName = (KeyLocator::getFromSignature(myCertificate->getSignature())).getKeyName();
 
-  if (actualSignerName != signerName) {
+  if (signerName.size() != 0 && actualSignerName != signerName) {
     cout << "Signer name mismatch" << endl;
     throw std::runtime_error("Signer name mismatch\n");
   }
 
-  controllerName_ = getIdentityNameFromCertName(signerName);
+  controllerName_ = getIdentityNameFromCertName(actualSignerName);
   try {
-    controllerCertificate_.reset(keyChain_->getCertificate(identityManager_->getDefaultCertificateNameForIdentity(controllerName_)).get());
+    controllerCertificate_ = keyChain_->getCertificate(identityManager_->getDefaultCertificateNameForIdentity(controllerName_));
     certificateCache_->insertCertificate(*controllerCertificate_);
   } catch (const SecurityException& e) {
     cout << "Default certificate for controller identity does not exist " << e.what() << endl;
     throw std::runtime_error("Default certificate for controller identity does not exist\n");
   }
   return keyChain_;
+}
+
+Name
+Bootstrap::getDefaultCertificateName()
+{
+  return defaultCertificateName_;
 }
 
 Name
@@ -108,18 +127,19 @@ Bootstrap::sendAppRequest
     message.mutable_command()->mutable_idname()->add_components(certificateName.get(i).toEscapedString());
   }
       
-  for (i = 0; i < dataPrefix_.size(); i++) {
+  for (i = 0; i < dataPrefix.size(); i++) {
     message.mutable_command()->mutable_dataprefix()->add_components(dataPrefix.get(i).toEscapedString());
   }
   
   message.mutable_command()->set_appname(appName);
   
   Name requestInterestName(Name(controllerName_).append("requests").append(Name::Component(ProtobufTlv::encode(message))));
+  
   Interest requestInterest(requestInterestName);
   // TODO: change this. (for now, make this request long lived (100s), if the controller operator took some time to respond)
   requestInterest.setInterestLifetimeMilliseconds(4000);
-  keyChain_->sign(requestInterest, defaultCertificateName_);
-  // keyChain.sign vs face.makeCommandInterest(requestInterest) ?
+  // don't use keyChain.sign(interest), since it's of a different format from commandInterest
+  face_.makeCommandInterest(requestInterest);
 
   face_.expressInterest
     (requestInterest, 
@@ -161,6 +181,11 @@ void
 Bootstrap::onAppRequestData
 (const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
 {
+  string content = "";
+  for (size_t i = 0; i < data->getContent().size(); ++i) {
+    content += (*data->getContent())[i];
+  }
+
   keyChain_->verifyData(data, 
     bind(&Bootstrap::onAppRequestDataVerified, this, _1, onRequestSuccess, onRequestFailed), 
     bind(&Bootstrap::onAppRequestDataVerifyFailed, this, _1, onRequestSuccess, onRequestFailed));
