@@ -137,6 +137,9 @@ private:
   
   void
   onSchemaVerificationFailed(const ndn::ptr_lib::shared_ptr<const ndn::Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
+
+  void
+  reexpressSchemaInterest(ndn::Interest newInterest, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
   
   void
   onSchemaVerified(const ndn::ptr_lib::shared_ptr<const ndn::Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);

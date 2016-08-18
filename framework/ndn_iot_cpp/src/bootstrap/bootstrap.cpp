@@ -298,7 +298,35 @@ void
 Bootstrap::onSchemaVerificationFailed
 (const ptr_lib::shared_ptr<const Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
 {
+  cout << "trust schema verification failed" << endl;
+  std::string appNamespace = data->getName().getPrefix(-2).toUri();
 
+  std::map<std::string, ptr_lib::shared_ptr<AppTrustSchema>>::iterator it = trustSchemas_.find(appNamespace);
+  if (it == trustSchemas_.end()) {
+    cout << "unexpected: received trust schema for application namespace that's not being followed; malformed data name?" << endl;
+    return;
+  }    
+  
+  // Don't immediately ask for potentially the same content again if verification fails
+  Interest newInterest(Name(data->getName()).getPrefix(-1));
+  newInterest.setChildSelector(1);
+  Exclude exclude;
+  exclude.appendAny();
+  exclude.appendComponent(Name::Component::fromVersion(it->second->getVersion()));
+  newInterest.setExclude(exclude);
+
+  face_.callLater(4000, bind(&Bootstrap::reexpressSchemaInterest, this, newInterest, onUpdateSuccess, onUpdateFailed));
+
+  return;
+}
+
+void
+Bootstrap::reexpressSchemaInterest(Interest newInterest, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+{
+  face_.expressInterest(newInterest, 
+    bind(&Bootstrap::onTrustSchemaData, this, _1, _2, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onTrustSchemaTimeout, this, _1, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onNetworkNackSchema, this, _1, _2, onUpdateSuccess, onUpdateFailed));
 }
 
 void
@@ -309,6 +337,9 @@ Bootstrap::onNetworkNackSchema
   return;
 }
 
+/**
+ * Helper functions
+ */
 void 
 Bootstrap::onRegisterFailed
 (const ptr_lib::shared_ptr<const Name>& prefix)
