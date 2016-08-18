@@ -155,6 +155,7 @@ const int AppRequestMessage_Name::kComponentsFieldNumber;
 AppRequestMessage_Name::AppRequestMessage_Name()
   : ::google::protobuf::Message() {
   SharedCtor();
+  // @@protoc_insertion_point(constructor:AppRequestMessage.Name)
 }
 
 void AppRequestMessage_Name::InitAsDefaultInstance() {
@@ -164,14 +165,17 @@ AppRequestMessage_Name::AppRequestMessage_Name(const AppRequestMessage_Name& fro
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:AppRequestMessage.Name)
 }
 
 void AppRequestMessage_Name::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
 AppRequestMessage_Name::~AppRequestMessage_Name() {
+  // @@protoc_insertion_point(destructor:AppRequestMessage.Name)
   SharedDtor();
 }
 
@@ -209,30 +213,34 @@ void AppRequestMessage_Name::Clear() {
 
 bool AppRequestMessage_Name::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
+  // @@protoc_insertion_point(parse_start:AppRequestMessage.Name)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // repeated bytes components = 8;
       case 8: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 66) {
          parse_components:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->add_components()));
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(66)) goto parse_components;
-        if (input->ExpectAtEnd()) return true;
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
       default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
+          goto success;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -240,12 +248,18 @@ bool AppRequestMessage_Name::MergePartialFromCodedStream(
       }
     }
   }
+success:
+  // @@protoc_insertion_point(parse_success:AppRequestMessage.Name)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:AppRequestMessage.Name)
+  return false;
 #undef DO_
 }
 
 void AppRequestMessage_Name::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:AppRequestMessage.Name)
   // repeated bytes components = 8;
   for (int i = 0; i < this->components_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
@@ -256,10 +270,12 @@ void AppRequestMessage_Name::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
+  // @@protoc_insertion_point(serialize_end:AppRequestMessage.Name)
 }
 
 ::google::protobuf::uint8* AppRequestMessage_Name::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:AppRequestMessage.Name)
   // repeated bytes components = 8;
   for (int i = 0; i < this->components_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -270,6 +286,7 @@ void AppRequestMessage_Name::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
+  // @@protoc_insertion_point(serialize_to_array_end:AppRequestMessage.Name)
   return target;
 }
 
@@ -358,6 +375,7 @@ const int AppRequestMessage_AppRequest::kAppNameFieldNumber;
 AppRequestMessage_AppRequest::AppRequestMessage_AppRequest()
   : ::google::protobuf::Message() {
   SharedCtor();
+  // @@protoc_insertion_point(constructor:AppRequestMessage.AppRequest)
 }
 
 void AppRequestMessage_AppRequest::InitAsDefaultInstance() {
@@ -369,22 +387,25 @@ AppRequestMessage_AppRequest::AppRequestMessage_AppRequest(const AppRequestMessa
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:AppRequestMessage.AppRequest)
 }
 
 void AppRequestMessage_AppRequest::SharedCtor() {
+  ::google::protobuf::internal::GetEmptyString();
   _cached_size_ = 0;
   idname_ = NULL;
   dataprefix_ = NULL;
-  appname_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  appname_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
 AppRequestMessage_AppRequest::~AppRequestMessage_AppRequest() {
+  // @@protoc_insertion_point(destructor:AppRequestMessage.AppRequest)
   SharedDtor();
 }
 
 void AppRequestMessage_AppRequest::SharedDtor() {
-  if (appname_ != &::google::protobuf::internal::kEmptyString) {
+  if (appname_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
     delete appname_;
   }
   if (this != default_instance_) {
@@ -415,7 +436,7 @@ AppRequestMessage_AppRequest* AppRequestMessage_AppRequest::New() const {
 }
 
 void AppRequestMessage_AppRequest::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+  if (_has_bits_[0 / 32] & 7) {
     if (has_idname()) {
       if (idname_ != NULL) idname_->::AppRequestMessage_Name::Clear();
     }
@@ -423,7 +444,7 @@ void AppRequestMessage_AppRequest::Clear() {
       if (dataprefix_ != NULL) dataprefix_->::AppRequestMessage_Name::Clear();
     }
     if (has_appname()) {
-      if (appname_ != &::google::protobuf::internal::kEmptyString) {
+      if (appname_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
         appname_->clear();
       }
     }
@@ -434,18 +455,21 @@ void AppRequestMessage_AppRequest::Clear() {
 
 bool AppRequestMessage_AppRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
+  // @@protoc_insertion_point(parse_start:AppRequestMessage.AppRequest)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(16383);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required .AppRequestMessage.Name idName = 220;
       case 220: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 1762) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_idname()));
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(1770)) goto parse_dataPrefix;
         break;
@@ -453,13 +477,12 @@ bool AppRequestMessage_AppRequest::MergePartialFromCodedStream(
 
       // required .AppRequestMessage.Name dataPrefix = 221;
       case 221: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 1770) {
          parse_dataPrefix:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_dataprefix()));
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
         if (input->ExpectTag(1778)) goto parse_appName;
         break;
@@ -467,26 +490,27 @@ bool AppRequestMessage_AppRequest::MergePartialFromCodedStream(
 
       // required string appName = 222;
       case 222: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 1778) {
          parse_appName:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_appname()));
-          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+          ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
             this->appname().data(), this->appname().length(),
-            ::google::protobuf::internal::WireFormat::PARSE);
+            ::google::protobuf::internal::WireFormat::PARSE,
+            "appname");
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
-        if (input->ExpectAtEnd()) return true;
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
       default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
+          goto success;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -494,12 +518,18 @@ bool AppRequestMessage_AppRequest::MergePartialFromCodedStream(
       }
     }
   }
+success:
+  // @@protoc_insertion_point(parse_success:AppRequestMessage.AppRequest)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:AppRequestMessage.AppRequest)
+  return false;
 #undef DO_
 }
 
 void AppRequestMessage_AppRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:AppRequestMessage.AppRequest)
   // required .AppRequestMessage.Name idName = 220;
   if (has_idname()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -514,10 +544,11 @@ void AppRequestMessage_AppRequest::SerializeWithCachedSizes(
 
   // required string appName = 222;
   if (has_appname()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->appname().data(), this->appname().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
-    ::google::protobuf::internal::WireFormatLite::WriteString(
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "appname");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       222, this->appname(), output);
   }
 
@@ -525,10 +556,12 @@ void AppRequestMessage_AppRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
+  // @@protoc_insertion_point(serialize_end:AppRequestMessage.AppRequest)
 }
 
 ::google::protobuf::uint8* AppRequestMessage_AppRequest::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:AppRequestMessage.AppRequest)
   // required .AppRequestMessage.Name idName = 220;
   if (has_idname()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -545,9 +578,10 @@ void AppRequestMessage_AppRequest::SerializeWithCachedSizes(
 
   // required string appName = 222;
   if (has_appname()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->appname().data(), this->appname().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
+      ::google::protobuf::internal::WireFormat::SERIALIZE,
+      "appname");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         222, this->appname(), target);
@@ -557,6 +591,7 @@ void AppRequestMessage_AppRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
+  // @@protoc_insertion_point(serialize_to_array_end:AppRequestMessage.AppRequest)
   return target;
 }
 
@@ -672,6 +707,7 @@ const int AppRequestMessage::kCommandFieldNumber;
 AppRequestMessage::AppRequestMessage()
   : ::google::protobuf::Message() {
   SharedCtor();
+  // @@protoc_insertion_point(constructor:AppRequestMessage)
 }
 
 void AppRequestMessage::InitAsDefaultInstance() {
@@ -682,6 +718,7 @@ AppRequestMessage::AppRequestMessage(const AppRequestMessage& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:AppRequestMessage)
 }
 
 void AppRequestMessage::SharedCtor() {
@@ -691,6 +728,7 @@ void AppRequestMessage::SharedCtor() {
 }
 
 AppRequestMessage::~AppRequestMessage() {
+  // @@protoc_insertion_point(destructor:AppRequestMessage)
   SharedDtor();
 }
 
@@ -722,10 +760,8 @@ AppRequestMessage* AppRequestMessage::New() const {
 }
 
 void AppRequestMessage::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (has_command()) {
-      if (command_ != NULL) command_->::AppRequestMessage_AppRequest::Clear();
-    }
+  if (has_command()) {
+    if (command_ != NULL) command_->::AppRequestMessage_AppRequest::Clear();
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -733,28 +769,32 @@ void AppRequestMessage::Clear() {
 
 bool AppRequestMessage::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  while ((tag = input->ReadTag()) != 0) {
+  // @@protoc_insertion_point(parse_start:AppRequestMessage)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(16383);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
       // required .AppRequestMessage.AppRequest command = 223;
       case 223: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+        if (tag == 1786) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
                input, mutable_command()));
         } else {
-          goto handle_uninterpreted;
+          goto handle_unusual;
         }
-        if (input->ExpectAtEnd()) return true;
+        if (input->ExpectAtEnd()) goto success;
         break;
       }
 
       default: {
-      handle_uninterpreted:
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
-          return true;
+          goto success;
         }
         DO_(::google::protobuf::internal::WireFormat::SkipField(
               input, tag, mutable_unknown_fields()));
@@ -762,12 +802,18 @@ bool AppRequestMessage::MergePartialFromCodedStream(
       }
     }
   }
+success:
+  // @@protoc_insertion_point(parse_success:AppRequestMessage)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:AppRequestMessage)
+  return false;
 #undef DO_
 }
 
 void AppRequestMessage::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:AppRequestMessage)
   // required .AppRequestMessage.AppRequest command = 223;
   if (has_command()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
@@ -778,10 +824,12 @@ void AppRequestMessage::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
+  // @@protoc_insertion_point(serialize_end:AppRequestMessage)
 }
 
 ::google::protobuf::uint8* AppRequestMessage::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:AppRequestMessage)
   // required .AppRequestMessage.AppRequest command = 223;
   if (has_command()) {
     target = ::google::protobuf::internal::WireFormatLite::
@@ -793,6 +841,7 @@ void AppRequestMessage::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
+  // @@protoc_insertion_point(serialize_to_array_end:AppRequestMessage)
   return target;
 }
 

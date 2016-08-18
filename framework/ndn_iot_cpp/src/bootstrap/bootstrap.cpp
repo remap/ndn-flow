@@ -260,11 +260,38 @@ Bootstrap::onSchemaVerified
     return;
   }
 
-/*
-  if (version.toVersion() < it->second) {
-
+  if (version.toVersion() < it->second->getVersion()) {
+    cout << "Got out of date schema" << endl;
+    onUpdateFailed("Got out of date schema");
+    return;
   }
-*/
+
+  it->second->setVersion(version.toVersion());
+  string trustSchema = "";
+  for (size_t i = 0; i < data->getContent().size(); ++i) {
+    trustSchema += (*data->getContent())[i];
+  }
+  it->second->setSchema(trustSchema);
+
+  Interest newInterest(Name(data->getName()).getPrefix(-1));
+  newInterest.setChildSelector(1);
+  Exclude exclude;
+  exclude.appendAny();
+  exclude.appendComponent(version);
+  newInterest.setExclude(exclude);
+
+  face_.expressInterest(newInterest, 
+    bind(&Bootstrap::onTrustSchemaData, this, _1, _2, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onTrustSchemaTimeout, this, _1, onUpdateSuccess, onUpdateFailed),
+    bind(&Bootstrap::onNetworkNackSchema, this, _1, _2, onUpdateSuccess, onUpdateFailed));
+
+  // Note: this changes the verification rules for root cert, future trust schemas as well; ideally from the outside this doesn't have an impact, but do we want to avoid this?
+  // Per reset function in ConfigPolicyManager; For now we don't call reset as we still want root cert in our certCache, instead of asking for it again (when we want to verify) each time we update the trust schema
+  // TODO: we keep a list of trust schemas for different application namespaces, but always update the one policyManager; this does not sound right
+  // so even though we keep a dict of applications in this client, we can only use them as one.
+  policyManager_->load(trustSchema, "updated-schema");
+  onUpdateSuccess(trustSchema, it->second->getIsInitial());
+  it->second->setIsInitial(false);
 }
 
 void

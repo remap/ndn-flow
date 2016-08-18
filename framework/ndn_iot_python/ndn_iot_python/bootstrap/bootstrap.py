@@ -210,7 +210,6 @@ class Bootstrap(object):
         # TODO: what about trust schema for discovery, is discovery its own application?
         newInterest = Interest(Name(data.getName()).getPrefix(-1))
         newInterest.setChildSelector(1)
-        excludeComponent = data.getName().get(-1)
         exclude = Exclude()
         exclude.appendAny()
         exclude.appendComponent(version)
@@ -238,7 +237,6 @@ class Bootstrap(object):
         
         newInterest = Interest(Name(data.getName()).getPrefix(-1))
         newInterest.setChildSelector(1)
-        excludeComponent = data.getName().get(-1)
         exclude = Exclude()
         exclude.appendAny()
         exclude.appendComponent(Name.Component.fromVersion(self._trustSchemas[namespace]["version"]))
