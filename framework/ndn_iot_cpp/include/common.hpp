@@ -12,3 +12,6 @@
 #include <ndn-cpp/security/identity/basic-identity-storage.hpp>
 #include <ndn-cpp/security/identity/file-private-key-storage.hpp>
 #include <ndn-cpp/security/policy/config-policy-manager.hpp>
+#include <ndn-cpp/security/policy/certificate-cache.hpp>
+
+#include <ndn-cpp/util/memory-content-cache.hpp>

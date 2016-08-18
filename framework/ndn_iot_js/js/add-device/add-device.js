@@ -268,7 +268,7 @@ IotNode.prototype.processValidCertificate = function(data)
 
                 self.identityManager.addCertificateAsDefault(rootCert, function () {
                     // we already inserted into certificate cache, so could pass this verification for the received self signed cert
-                    console.log("Verifying new cert!");
+                    console.log("Root cert added! Verifying new cert!");
                     self.keyChain.verifyData(newCert, self.finalizeCertificateDownload.bind(self), function (error) {
                         console.log("New certificate verification failed.");
                     });
@@ -281,6 +281,7 @@ IotNode.prototype.processValidCertificate = function(data)
                 }, function (error) {
                     console.log(error);
                     // assuming certificate already exist, set it as default then
+                    // TODO: this handling of gateway cert already exists seems incomplete
                     self.identityManager.setDefaultCertificateForKey(rootCert);
                     var publicKeyName = rootCert.getPublicKeyName();
                     self.identityManager.setDefaultKeyForIdentity(publicKeyName, function () {

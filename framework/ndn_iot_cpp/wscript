@@ -30,20 +30,20 @@ def configure(conf):
 
 
 
-def build (bld):
-    version(bld)
+def build (ctx):
+    version(ctx)
     # Build the library
     libndn_iot = dict(
         target = "ndn_iot_cpp",
         name = "ndn_iot_cpp",
         
-        source = bld.path.ant_glob(['src/*.cpp', 'commands/*.cc']),
+        source = ctx.path.ant_glob(['src/**/*.cpp', 'src/**/*.cc']),
         use = 'BOOST NDNCPP PROTOBUF',
-        includes = '. src include commands',
+        includes = '. src include src/commands',
         export_includes = "src",
         install_path = '${LIBDIR}',
     )
-    bld(
+    ctx(
         features = ["cxx", "cxxshlib"],
         VNUM = VERSION_BASE,
         CNUM = VERSION_BASE,
@@ -52,19 +52,19 @@ def build (bld):
 
     # Build the test    
     # TODO: for now need to make install and export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
-    for i in bld.path.ant_glob(['examples/*.cpp']):
+    for i in ctx.path.ant_glob(['examples/*.cpp']):
         name = str(i)[:-len(".cpp")]
-        bld(
+        ctx(
             features = ["cxx", "cxxprogram"],
             target = name,
             source = [i],
-            use = 'ndn_iot_cpp',
+            use = 'ndn_iot_cpp BOOST NDNCPP',
             includes = 'include',
             install_path = None
         )
 
     # Copy the configuration file
-    bld( 
+    ctx( 
         rule = "cp ${SRC} ${TGT}", 
         source = "producer.conf.sample", 
         target = "app.conf",

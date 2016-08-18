@@ -1,4 +1,4 @@
-#include "app-bootstrap.hpp"
+#include "bootstrap.hpp"
 #include "common.hpp"
 #include "boost/asio.hpp"
 
@@ -18,7 +18,7 @@ public:
 
   void run() {
     cout << "Running test" << endl;
-    AppBootstrap bootstrap(*(face_.get()));
+    Bootstrap bootstrap(*(face_.get()));
 
     // Keep ioService running until the Counter calls stop().
     boost::asio::io_service::work work(ioService_);
