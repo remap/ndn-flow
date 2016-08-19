@@ -32,6 +32,14 @@ def configure(conf):
 
 def build (ctx):
     version(ctx)
+    # Generate protobuf file, being debugged
+    # ctx( 
+    #     rule = "protoc --cpp_out=. --proto_path=src/commands ${SRC}", 
+    #     source = "src/commands/app-request.proto", 
+    
+    #     install_path = None
+    # )
+
     # Build the library
     libndn_iot = dict(
         target = "ndn_iot_cpp",

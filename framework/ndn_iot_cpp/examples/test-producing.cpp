@@ -4,6 +4,7 @@
 
 using namespace ndn;
 using namespace std;
+using namespace ndn::func_lib;
 
 namespace ndn_iot {
 
