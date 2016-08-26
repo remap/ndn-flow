@@ -18,9 +18,25 @@ namespace ndn_iot.bootstrap {
     public class Bootstrap {
         public Bootstrap(Face face) {
             applicationName_ = "";
-            identityManager_ = new IdentityManager(new BasicIdentityStorage());
+            identityManager_ = new IdentityManager(new MemoryIdentityStorage(), new FilePrivateKeyStorage());
+            
             policyManager_ = new ConfigPolicyManager();
+            policyManager_.load(@"
+              validator            
+              {                    
+                rule               
+                {                  
+                  id ""initial rule""
+                  for data           
+                  checker            
+                  {                  
+                    type hierarchical
+                  }                
+                }                  
+              }", "initial-rule");
+
             keyChain_ = new KeyChain(identityManager_, policyManager_);
+            
             face_ = face;
             keyChain_.setFace(face_);
 
@@ -28,7 +44,19 @@ namespace ndn_iot.bootstrap {
         }
 
         public void setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
-
+            if (defaultIdentityName.size() == 0) {
+                try {
+                    defaultIdentity_ = identityManager_.getDefaultIdentity();
+                } catch (SecurityException ex) {
+                    // Default identity does not exist
+                    throw new SystemException("Default identity does not exist\n");
+                }
+            }
+            try {
+                defaultIdentity_ = new Name(defaultIdentity);
+                // Load the certificate from file directly?
+                //defaultCertificateName_ = identityManager_.getDefaultCertificateNameForIdentity(defaultIdentity_);
+            }
         }
 
         public void sendAppRequest(Name certificateName, Name dataPrefix, string applicationName) {
