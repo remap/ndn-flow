@@ -12,6 +12,7 @@ NDNoT (Named data networking of things) is an IoT framework running on top on ND
 
 ###### Naming
 
+
 ###### Trust and bootstrapping
 
 ###### Discovery
