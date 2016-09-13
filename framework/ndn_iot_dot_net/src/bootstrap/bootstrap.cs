@@ -5,6 +5,9 @@ namespace ndn_iot.bootstrap {
     using System.IO;
     //using Google.Protobuf;
 
+    // For callbacks
+    using System.Runtime.InteropServices;
+
     using net.named_data.jndn.security.policy;    
     using net.named_data.jndn;
     using net.named_data.jndn.encoding;
@@ -12,14 +15,21 @@ namespace ndn_iot.bootstrap {
     using net.named_data.jndn.security;
     using net.named_data.jndn.security.identity;
     using net.named_data.jndn.security.certificate;
+    using net.named_data.jndn.encoding.tlv;
 
-    // TODO: to be removed
+    // TODO: to be removed after inline testing's done
     using net.named_data.jndn.transport;
 
     // TODO: abandoned protobuf-C# for now, not wise to investigate given we don't have enough time, hack controller instead
     //using ndn_iot.bootstrap.command;
 
-    public class Bootstrap : OnRegisterFailed {
+    public delegate void OnRequestSuccess();
+    public delegate void OnRequestFailed(string msg);
+    
+    public delegate void OnUpdateSuccess(string schema, bool isInitial);
+    public delegate void OnUpdateFailed(string msg);
+
+    public class Bootstrap : OnRegisterFailed {        
 
         public Bootstrap(Face face) {
             applicationName_ = "";
@@ -96,17 +106,133 @@ namespace ndn_iot.bootstrap {
             if (signerName.size() > 0 && !(actualSignerName.equals(signerName))) {
                 throw new SystemException("Security exception: expected signer name does not match with actual signer name: " + signerName.toUri() + " " + actualSignerName.toUri());
             }
+            controllerName_ = getIdentityNameFromCertName(actualSignerName);
 
             face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
             certificateContentCache_.registerPrefix(new Name(defaultCertificateName_).getPrefix(-1), this);
         }
 
-        public void sendAppRequest(Name certificateName, Name dataPrefix, string applicationName) {
+        /**
+         * Publishing authorization
+         */
+        public void sendAppRequest(Name certificateName, Name dataPrefix, string applicationName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
+            Blob encoding = AppRequestEncoder.encodeAppRequest(certificateName, dataPrefix, applicationName);
+            //Console.Out.WriteLine("Encoding: " + encoding.toHex());
+            Name requestInterestName = new Name(controllerName_);
+            requestInterestName.append("requests").append(new Name.Component(encoding));
+
+            Interest requestInterest = new Interest(requestInterestName);
+            requestInterest.setInterestLifetimeMilliseconds(4000);
+            // don't use keyChain.sign(interest), since it's of a different format from commandInterest
+            face_.makeCommandInterest(requestInterest);
+
+            AppRequestHandler appRequestHandler = new AppRequestHandler(keyChain_, onRequestSuccess, onRequestFailed);
+            face_.expressInterest(requestInterest, appRequestHandler, appRequestHandler);
             
+            Console.Out.WriteLine("Sent interest: " + requestInterest.getName().toUri());
+
+            return ;
         }
 
-        public void onRegisterFailed(Name prefix) {
-            Console.Out.WriteLine("Registration failed for prefix: " + prefix.toUri());
+        public class AppRequestHandler : OnData, OnTimeout {
+            public AppRequestHandler(KeyChain keyChain, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
+                onRequestSuccess_ = onRequestSuccess;
+                onRequestFailed_ = onRequestFailed;
+                keyChain_ = keyChain;
+            }
+
+            public void onData(Interest interest, Data data) {
+                AppRequestVerifyHandler verifyHandler = new AppRequestVerifyHandler(onRequestSuccess_, onRequestFailed_);
+                keyChain_.verifyData(data, verifyHandler, verifyHandler);
+                Console.Out.WriteLine("Got data: " + data.getName().toUri());
+            }
+
+            public void onTimeout(Interest interest) {
+                Console.Out.WriteLine("Interest times out: " + interest.getName().toUri());
+            }
+
+            OnRequestSuccess onRequestSuccess_;
+            OnRequestFailed onRequestFailed_;
+            KeyChain keyChain_;
+        }
+
+        public class AppRequestVerifyHandler: OnVerified, OnVerifyFailed {
+            public AppRequestVerifyHandler(OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
+                onRequestSuccess_ = onRequestSuccess;
+                onRequestFailed_ = onRequestFailed;
+            }
+
+            public void onVerified(Data data) {
+                // TODO: JSON parsing of controller reply
+            }
+
+            public void onVerifyFailed(Data data) {
+
+            }
+
+            OnRequestSuccess onRequestSuccess_;
+            OnRequestFailed onRequestFailed_;
+        }
+
+        /**
+         * Handling application consumption (trust schema update)
+         */
+        public void startTrustSchemaUpdate(Name appPrefix, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed) {
+            string appNamespace = appPrefix.toUri();
+            if (trustSchemas_.ContainsKey(appNamespace)) {
+                if (trustSchemas_[appNamespace].getFollowing()) {
+                    return;
+                }
+                trustSchemas_[appNamespace].setFollowing(true);
+            } else {
+                trustSchemas_[appNamespace] = new AppTrustSchema(true, "", 0, true);
+            }
+        }
+
+        class AppTrustSchema {
+            public AppTrustSchema(bool following, string schema, long version, bool isInitial) {
+                following_ = following;
+                schema_ = schema;
+                version_ = version;
+                isInitial_ = isInitial;
+            }
+
+            public bool getFollowing() {
+                return following_;
+            }
+
+            public void setFollowing(bool following) {
+                following_ = following;
+            }
+
+            public string getSchema() {
+                return schema_;
+            }
+
+            public void setSchema(string schema) {
+                schema_ = schema;
+            }
+
+            public long getVersion() {
+                return version_;
+            }
+
+            public void setVersion(long version) {
+                version_ = version;
+            }
+
+            public bool getIsInitial() {
+                return isInitial_;
+            }
+
+            public void setIsInitial(bool isInitial) {
+                isInitial_ = isInitial;
+            }
+
+            bool following_; 
+            string schema_; 
+            long version_; 
+            bool isInitial_;
         }
 
 
@@ -142,6 +268,28 @@ namespace ndn_iot.bootstrap {
             return digest + extension;
         }
 
+        private Name getIdentityNameFromCertName(Name certName)
+        {
+            int i = certName.size() - 1;
+
+            string idString = "KEY";
+            while (i >= 0) {
+                if (certName.get(i).toEscapedString() == idString)
+                    break;
+                i -= 1;
+            }
+              
+            if (i < 0) {
+                return new Name();
+            }
+
+            return certName.getPrefix(i);
+        }
+
+        public void onRegisterFailed(Name prefix) {
+            Console.Out.WriteLine("Registration failed for prefix: " + prefix.toUri());
+        }
+
 
         static string defaultCertFileName_ = "my.cert";
 
@@ -163,15 +311,84 @@ namespace ndn_iot.bootstrap {
         KeyChain keyChain_;
         Face face_;
         MemoryContentCache certificateContentCache_;
-        Dictionary<string, string> trustSchemas_;
+        Dictionary<string, AppTrustSchema> trustSchemas_;
     }
 
-    class TestEchoConsumer {
+    class TestBootstrap {
+        static void onRequestSuccess() {
+            Console.Out.WriteLine("Request granted!");
+        }
+
+        static void onRequestFailed(string msg) {
+            Console.Out.WriteLine(msg);
+        }
+
         static void Main(string[] args)
         {
-            var face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
+            Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
             bootstrap.setupDefaultIdentityAndRoot(new Name("/org/openmhealth/zhehaowang"), new Name());
+
+            // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
+            bootstrap.sendAppRequest(new Name("/org/openmhealth/zhehaowang"), 
+              new Name("/org/openmhealth/zhehaowang"), 
+              "flow", 
+              new OnRequestSuccess(onRequestSuccess), 
+              new OnRequestFailed(onRequestFailed));
+
+            while (true) {
+                face.processEvents();
+                // We need to sleep for a few milliseconds so we don't use 100% of the CPU.
+                System.Threading.Thread.Sleep(5);
+            }
+        }
+    }
+
+    // TestEncodeAppRequest: credit to Jeff T
+    class AppRequestEncoder {
+        /// <summary>
+        /// Encode the name as NDN-TLV to the encoder, using the given TLV type.
+        /// </summary>
+        ///
+        /// <param name="name">The name to encode.</param>
+        /// <param name="type">The TLV type</param>
+        /// <param name="encoder">The TlvEncoder to receive the encoding.</param>
+        private static void encodeName(Name name, int type, TlvEncoder encoder) 
+        {
+            int saveLength = encoder.getLength();
+
+            // Encode the components backwards.
+            for (int i = name.size() - 1; i >= 0; --i)
+                encoder.writeBlobTlv(Tlv.NameComponent, name.get(i).getValue().buf());
+
+            encoder.writeTypeAndLength(type, encoder.getLength() - saveLength);
+        }
+
+        /// <summary>
+        /// Encode the value as NDN-TLV AppRequest, according to this Protobuf definition:
+        /// </summary>
+        ///
+        /// <param name="idName">The idName.</param>
+        /// <param name="dataPrefix">The dataPrefix</param>
+        /// <param name="appName">The appName.</param>
+        /// <returns>A Blob containing the encoding.</returns>
+        static public Blob encodeAppRequest(Name idName, Name dataPrefix, string appName)
+        {
+            TlvEncoder encoder = new TlvEncoder();
+            int saveLength = encoder.getLength();
+
+            const int Tlv_idName = 220;
+            const int Tlv_dataPrefix = 221;
+            const int Tlv_appName = 222;
+            const int Tlv_AppRequest = 223;
+
+            // Encode backwards.
+            encoder.writeBlobTlv(Tlv_appName, new Blob(appName).buf());
+            encodeName(dataPrefix, Tlv_dataPrefix, encoder);
+            encodeName(idName, Tlv_idName, encoder);
+
+            encoder.writeTypeAndLength(Tlv_AppRequest, encoder.getLength() - saveLength);
+            return new Blob(encoder.getOutput(), false);
         }
     }
 }
