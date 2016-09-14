@@ -187,6 +187,52 @@ namespace ndn_iot.bootstrap {
             } else {
                 trustSchemas_[appNamespace] = new AppTrustSchema(true, "", 0, true);
             }
+
+            Interest initialInterest = new Interest(new Name(appNamespace).append("_schema"));
+            initialInterest.setChildSelector(1);
+
+            TrustSchemaUpdateHandler trustSchemaUpdateHandler = new TrustSchemaUpdateHandler(keyChain_, onUpdateSuccess, onUpdateFailed);
+            face_.expressInterest(initialInterest, trustSchemaUpdateHandler, trustSchemaUpdateHandler);
+        }
+
+        class TrustSchemaUpdateHandler : OnData, OnTimeout {
+            public TrustSchemaUpdateHandler(KeyChain keyChain, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed) {
+                onUpdateSuccess_ = onUpdateSuccess;
+                onUpdateFailed_ = onUpdateFailed;
+                keyChain_ = keyChain;
+            }
+
+            public void onData(Interest interest, Data data) {
+                Console.Out.WriteLine("Received trust schema update data");
+                TrustSchemaVerifyHandler trustSchemaVerifyHandler = new TrustSchemaVerifyHandler(onUpdateSuccess_, onUpdateFailed_);
+                keyChain_.verifyData(data, trustSchemaVerifyHandler, trustSchemaVerifyHandler);
+            }
+
+            public void onTimeout(Interest interest) {
+                Console.Out.WriteLine("Trust schema update times out");
+            }
+
+            KeyChain keyChain_;
+            OnUpdateSuccess onUpdateSuccess_;
+            OnUpdateFailed onUpdateFailed_;
+        }
+
+        class TrustSchemaVerifyHandler : OnVerified, OnVerifyFailed {
+            public TrustSchemaVerifyHandler(OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed) {
+                onUpdateSuccess_ = onUpdateSuccess;
+                onUpdateFailed_ = onUpdateFailed;
+            }
+
+            public void onVerified(Data data) {
+                //onUpdateSuccess_();
+            }
+
+            public void onVerifyFailed(Data data) {
+                onUpdateFailed_("Trust schema verification failed.");
+            }
+
+            OnUpdateSuccess onUpdateSuccess_;
+            OnUpdateFailed onUpdateFailed_;
         }
 
         class AppTrustSchema {
@@ -268,6 +314,7 @@ namespace ndn_iot.bootstrap {
             return digest + extension;
         }
 
+        // get identity name from certificate name
         private Name getIdentityNameFromCertName(Name certName)
         {
             int i = certName.size() - 1;
@@ -284,6 +331,16 @@ namespace ndn_iot.bootstrap {
             }
 
             return certName.getPrefix(i);
+        }
+
+        // generate identity and certificate
+        public void createIdentityAndCertificate(Name identityName) {
+            Console.Out.WriteLine("Creating identity and certificate");
+            Name certificateName = identityManager_.createIdentityAndCertificate(identityName, new RsaKeyParams());
+            IdentityCertificate certificate = memoryIdentityStorage_.getCertificate(certificateName);
+            Console.Out.WriteLine("Certificate name: " + certificateName.toUri());
+            string certString = Convert.ToBase64String(certificate.wireEncode().getImmutableArray());
+            Console.Out.WriteLine(certString);
         }
 
         public void onRegisterFailed(Name prefix) {
@@ -325,9 +382,13 @@ namespace ndn_iot.bootstrap {
 
         static void Main(string[] args)
         {
+
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
             bootstrap.setupDefaultIdentityAndRoot(new Name("/org/openmhealth/zhehaowang"), new Name());
+            
+            // separate debug function for creating ID and cert
+            //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
 
             // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
             bootstrap.sendAppRequest(new Name("/org/openmhealth/zhehaowang"), 
