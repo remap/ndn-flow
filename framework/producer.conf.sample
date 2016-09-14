@@ -1,5 +1,5 @@
 application 
 {
-  identity "/home/mygooddevice"
+  identity "/home/python-publisher-1"
   signer   default
 }

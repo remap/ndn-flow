@@ -92,6 +92,8 @@ namespace ndn_iot.bootstrap {
                 if (IdentityCertificate.certificateNameToPublicKeyName(certData.getName()).equals(defaultKeyName_)) {
                     defaultCertificateName_ = certData.getName();
                 } else {
+                    Console.Out.WriteLine(IdentityCertificate.certificateNameToPublicKeyName(certData.getName()));
+                    Console.Out.WriteLine(defaultKeyName_);
                     throw new SystemException("Given certificate file does not match with the default key for the configured identity!");
                 }
 
@@ -115,6 +117,13 @@ namespace ndn_iot.bootstrap {
         /**
          * Publishing authorization
          */
+        public void requestProducerAuthorization(Name dataPrefix, string applicationName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
+            if (defaultCertificateName_.size() == 0) {
+                return;
+            }
+            sendAppRequest(defaultCertificateName_, dataPrefix, applicationName, onRequestSuccess, onRequestFailed);
+        }
+
         public void sendAppRequest(Name certificateName, Name dataPrefix, string applicationName, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
             Blob encoding = AppRequestEncoder.encodeAppRequest(certificateName, dataPrefix, applicationName);
             //Console.Out.WriteLine("Encoding: " + encoding.toHex());
@@ -385,14 +394,14 @@ namespace ndn_iot.bootstrap {
 
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
-            bootstrap.setupDefaultIdentityAndRoot(new Name("/org/openmhealth/zhehaowang"), new Name());
+            bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
             
             // separate debug function for creating ID and cert
             //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
 
             // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
-            bootstrap.sendAppRequest(new Name("/org/openmhealth/zhehaowang"), 
-              new Name("/org/openmhealth/zhehaowang"), 
+            bootstrap.requestProducerAuthorization(
+              new Name("/home/flow/csharp-publisher-1"), 
               "flow", 
               new OnRequestSuccess(onRequestSuccess), 
               new OnRequestFailed(onRequestFailed));

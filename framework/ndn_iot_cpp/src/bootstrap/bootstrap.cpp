@@ -20,6 +20,8 @@ Bootstrap::Bootstrap
  : face_(face), certificateContentCache_(&face)
 {
   identityStorage_ = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
+  filePrivateKeyStorage_ = ptr_lib::shared_ptr<FilePrivateKeyStorage>(new FilePrivateKeyStorage());
+
   certificateCache_ = ptr_lib::shared_ptr<CertificateCache>(new CertificateCache());
   policyManager_ = ptr_lib::shared_ptr<ConfigPolicyManager>(new ConfigPolicyManager("", certificateCache_));
   policyManager_->load(" \n \
@@ -35,7 +37,7 @@ Bootstrap::Bootstrap
         }                \n \
       }                  \n \
     }", "initial-rule");
-  identityManager_ = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage_));
+  identityManager_ = ptr_lib::shared_ptr<IdentityManager>(new IdentityManager(identityStorage_, filePrivateKeyStorage_));
   keyChain_.reset(new KeyChain(identityManager_, policyManager_));
   keyChain_->setFace(&face_);
   defaultCertificateName_ = Name();

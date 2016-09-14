@@ -347,6 +347,7 @@ class IotController(BaseNode):
                 self.sendData(response)
                 return
             def onVerificationFailedAppRequest(interest):
+                print("application request verify failed!")
                 response = Data(interest.getName())
                 response.setContent("{\"status\": 401, \"message\": \"command interest verification failed\" }")
                 self.sendData(response)

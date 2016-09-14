@@ -167,6 +167,7 @@ private:
   ndn::MemoryContentCache certificateContentCache_;
 
   ndn::ptr_lib::shared_ptr<ndn::BasicIdentityStorage> identityStorage_;
+  ndn::ptr_lib::shared_ptr<ndn::FilePrivateKeyStorage> filePrivateKeyStorage_;
   ndn::ptr_lib::shared_ptr<ndn::ConfigPolicyManager> policyManager_;
   ndn::ptr_lib::shared_ptr<ndn::IdentityManager> identityManager_;
   ndn::ptr_lib::shared_ptr<ndn::CertificateCache> certificateCache_;

@@ -56,7 +56,7 @@ class BaseNode(object):
         
         self._identityStorage = BasicIdentityStorage()
 
-        self._identityManager = IdentityManager(self._identityStorage)
+        self._identityManager = IdentityManager(self._identityStorage, FilePrivateKeyStorage())
         self._policyManager = IotPolicyManager(self._identityStorage)
 
         # hopefully there is some private/public key pair available
@@ -105,15 +105,15 @@ class BaseNode(object):
         """
         pass
 
-    # TODO: this does not return the default certificate name of the keyChain if a controller identity is configured in iot.controller.conf 
     def getDefaultCertificateName(self):
         try:
             certName = self._identityStorage.getDefaultCertificateNameForIdentity( 
                 self._policyManager.getDeviceIdentity())
         except SecurityException as e:
             # zhehao: in the case of producer's /localhop prefixes, the default key is not defined in ndnsec-public-info.db
-            #print(e)
-            certName = self._keyChain.getDefaultCertificateName()
+            certName = self._keyChain.createIdentityAndCertificate(self._policyManager.getDeviceIdentity())
+            #certName = self._keyChain.getDefaultCertificateName()
+            #print(certName.toUri())
         return certName
 
     def start(self):

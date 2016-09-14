@@ -35,7 +35,7 @@ class Bootstrap(object):
 
         self._applicationName = ""
 
-        self._identityManager = IdentityManager(BasicIdentityStorage())
+        self._identityManager = IdentityManager(BasicIdentityStorage(), FilePrivateKeyStorage())
         __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
         self._policyManager = ConfigPolicyManager(os.path.join(__location__, ".default.conf"))
