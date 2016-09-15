@@ -18,6 +18,9 @@ try:
 except ImportError:
     import trollius as asyncio
 
+# TODO: debug, always seems to need to restart iot_controller for the command to be handled correctly
+# Follow-up: it seems to be timestamp related
+
 class AppProducer():
     def __init__(self, face, certificateName, keyChain, dataPrefix):
         self._keyChain = keyChain

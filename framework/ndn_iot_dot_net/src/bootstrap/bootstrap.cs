@@ -105,6 +105,7 @@ namespace ndn_iot.bootstrap {
             }
 
             Name actualSignerName = KeyLocator.getFromSignature(certData.getSignature()).getKeyName();
+            Console.Out.WriteLine("Cert is signed by " + actualSignerName.toUri());
             if (signerName.size() > 0 && !(actualSignerName.equals(signerName))) {
                 throw new SystemException("Security exception: expected signer name does not match with actual signer name: " + signerName.toUri() + " " + actualSignerName.toUri());
             }
@@ -112,6 +113,7 @@ namespace ndn_iot.bootstrap {
 
             face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
             certificateContentCache_.registerPrefix(new Name(defaultCertificateName_).getPrefix(-1), this);
+            certificateContentCache_.add(certData);
         }
 
         /**
@@ -151,9 +153,9 @@ namespace ndn_iot.bootstrap {
             }
 
             public void onData(Interest interest, Data data) {
+                Console.Out.WriteLine("Got data: " + data.getName().toUri());
                 AppRequestVerifyHandler verifyHandler = new AppRequestVerifyHandler(onRequestSuccess_, onRequestFailed_);
                 keyChain_.verifyData(data, verifyHandler, verifyHandler);
-                Console.Out.WriteLine("Got data: " + data.getName().toUri());
             }
 
             public void onTimeout(Interest interest) {
@@ -391,10 +393,11 @@ namespace ndn_iot.bootstrap {
 
         static void Main(string[] args)
         {
-
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
             bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
+
+            Console.Out.WriteLine((double) (DateTime.Now - new DateTime(1970, 1, 1)).TotalMilliseconds);
             
             // separate debug function for creating ID and cert
             //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
