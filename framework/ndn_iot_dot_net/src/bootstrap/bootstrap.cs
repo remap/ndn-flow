@@ -66,11 +66,11 @@ namespace ndn_iot.bootstrap {
             certificateContentCache_ = new MemoryContentCache(face_);
         }
 
-        public void setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
-            setupDefaultIdentityAndRoot(defaultIdentityName, defaultCertFileName_, signerName);
+        public KeyChain setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
+            return setupDefaultIdentityAndRoot(defaultIdentityName, defaultCertFileName_, signerName);
         }
 
-        public void setupDefaultIdentityAndRoot(Name defaultIdentityName, string certFilePath, Name signerName) {
+        public KeyChain setupDefaultIdentityAndRoot(Name defaultIdentityName, string certFilePath, Name signerName) {
             if (defaultIdentityName.size() == 0) {
                 // Default identity does not exist
                 throw new SystemException("Using system default identity is not supported!\n");
@@ -105,6 +105,7 @@ namespace ndn_iot.bootstrap {
             }
 
             Name actualSignerName = KeyLocator.getFromSignature(certData.getSignature()).getKeyName();
+            Console.Out.WriteLine("Cert name is " + certData.getName().toUri());
             Console.Out.WriteLine("Cert is signed by " + actualSignerName.toUri());
             if (signerName.size() > 0 && !(actualSignerName.equals(signerName))) {
                 throw new SystemException("Security exception: expected signer name does not match with actual signer name: " + signerName.toUri() + " " + actualSignerName.toUri());
@@ -114,6 +115,7 @@ namespace ndn_iot.bootstrap {
             face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
             certificateContentCache_.registerPrefix(new Name(defaultCertificateName_).getPrefix(-1), this);
             certificateContentCache_.add(certData);
+            return keyChain_;
         }
 
         /**
@@ -358,6 +360,10 @@ namespace ndn_iot.bootstrap {
             Console.Out.WriteLine("Registration failed for prefix: " + prefix.toUri());
         }
 
+        public Name getDefaultCertificateName() {
+            return defaultCertificateName_;
+        }
+
 
         static string defaultCertFileName_ = "my.cert";
 
@@ -395,7 +401,7 @@ namespace ndn_iot.bootstrap {
         {
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
-            bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
+            KeyChain keyChain = bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
 
             Console.Out.WriteLine((double) (DateTime.Now - new DateTime(1970, 1, 1)).TotalMilliseconds);
             
@@ -408,6 +414,10 @@ namespace ndn_iot.bootstrap {
               "flow", 
               new OnRequestSuccess(onRequestSuccess), 
               new OnRequestFailed(onRequestFailed));
+
+            Interest interest = new Interest(new Name("/abc"));
+            keyChain.sign(interest, bootstrap.getDefaultCertificateName());
+            Console.Out.WriteLine(interest.getName().toUri());
 
             while (true) {
                 face.processEvents();

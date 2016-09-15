@@ -76,7 +76,7 @@ class Bootstrap(object):
             if not signerName:
                 print "Deriving from " + actualSignerName.toUri() + " for controller name"
             else:
-                if actualSignerName.toUri() != signerName.toUri():
+                if signerName and actualSignerName.toUri() != signerName.toUri():
                     msg = "Configuration signer names mismatch: expected " + signerName.toUri() + "; got " + actualSignerName.toUri()
                     print msg
                     if onSetupFailed:
@@ -125,7 +125,7 @@ class Bootstrap(object):
 
             helper(defaultIdentity, signerName)
         else:
-            if signerName and isinstance(defaultIdentityOrFileName, Name):
+            if isinstance(defaultIdentityOrFileName, Name):
                 helper(defaultIdentityOrFileName, signerName)
             else:
                 raise RuntimeError("Please call setupDefaultIdentityAndRoot with identity name and root key name")
