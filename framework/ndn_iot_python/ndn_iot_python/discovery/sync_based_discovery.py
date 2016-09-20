@@ -77,6 +77,8 @@ class SyncBasedDiscovery(object):
         if self.addObject(name):
             self._hostedObjects[name] = entityInfo
             self.contentCacheAddEntityData(name, entityInfo)
+            # TODO: should the user configure this prefix as well?
+            self._memoryContentCache.registerPrefix(Name(name), self.onRegisterFailed, self.onEntityDataNotFound)
         else:
             if __debug__:
                 print("Item with this name already added")
@@ -134,14 +136,22 @@ class SyncBasedDiscovery(object):
             # Consider this statement: we are always doing ChronoSync recovery
             # TODO: this has the problem of potentially answering with wrong data, there will be more interest exchanges needed for the lifetime duration of one wrong answer
             # Consider appending "answerer" as the last component of data name?
-            dummyInterest = Interest(Name("/local/timeout1"))
-            dummyInterest.setInterestLifetimeMilliseconds(random.randint(self._minResponseWaitPeriod, self._maxResponseWaitPeriod))
-            self._face.expressInterest(dummyInterest, self.onDummyData, lambda a : self.replySyncInterest(a, digest))
+            # TODO2: don't see why we should wait here
+
+            self.replySyncInterest(interest, digest)
+            #dummyInterest = Interest(Name("/local/timeout1"))
+            #dummyInterest.setInterestLifetimeMilliseconds(random.randint(self._minResponseWaitPeriod, self._maxResponseWaitPeriod))
+            #self._face.expressInterest(dummyInterest, self.onDummyData, lambda a : self.replySyncInterest(a, digest))
         return
 
     def replySyncInterest(self, interest, receivedDigest):
         self.updateDigest()
         if receivedDigest != self._currentDigest:
+            # TODO: one participant may be answering with wrong info: scenario: 1 has {a}, 2 has {b}
+            # 2 gets 1's {a} and asks again before 1 gets 2's {b}, 2 asks 1 with the digest of {a, b}, 1 will 
+            # create a data with the content {a} for the digest of {a, b}, and this data will be able to answer
+            # later steady state interests from 2 until it expires (and by which time 1 should be updated with
+            # {a, b} as well)
             self.contentCacheAddSyncData(Name(self._syncPrefix).append(receivedDigest))
         return
 
@@ -154,10 +164,10 @@ class SyncBasedDiscovery(object):
             if itemName not in self._objects:
                 self.onReceivedSyncData(itemName)
 
-        # Hack for re-expressing sync interest
+        # Hack for re-expressing sync interest after a short interval
         dummyInterest = Interest(Name("/local/timeout"))
         dummyInterest.setInterestLifetimeMilliseconds(self._syncInterestMinInterval)
-        self._face.expressInterest(dummyInterest, self.onDummyData, self.reexpressSyncInterest)
+        self._face.expressInterest(dummyInterest, self.onDummyData, self.expressSyncInterest)
         return
 
     def onSyncTimeout(self, interest):
@@ -221,7 +231,7 @@ class SyncBasedDiscovery(object):
             print("Unexpected reply to dummy interest: " + data.getContent().toRawStr())
         return
 
-    def reexpressSyncInterest(self, interest):
+    def expressSyncInterest(self, interest):
         newInterest = Interest(Name(self._syncPrefix).append(self._currentDigest))
         newInterest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
         newInterest.setMustBeFresh(True)
@@ -258,6 +268,7 @@ class SyncBasedDiscovery(object):
             for item in sorted(self._objects.keys()):
                 m.update(item)
             self._currentDigest = str(m.hexdigest())
+            print "** current digest is " + self._currentDigest
         else:
             self._currentDigest = self._initialDigest
         return
@@ -286,4 +297,7 @@ class SyncBasedDiscovery(object):
     def onRegisterFailed(self, prefix):
         if __debug__:
             print("Prefix registration failed: " + prefix.toUri())
+        return
+
+    def onEntityDataNotFound(self, prefix, interest, face, interestFilterId, filter):
         return
