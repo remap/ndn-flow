@@ -15,7 +15,8 @@ class AppConsumerTimestamp(AppConsumer):
         self._pipelineSize = defaultPipelineSize
         self._emptySlot = defaultPipelineSize
         self._currentTimestamp = currentTimestamp
-
+        
+        self._verifyFailedRetransInterval = 4000
         self._defaultInterestLifetime = 4000
         return
 
