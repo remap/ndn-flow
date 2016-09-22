@@ -8,34 +8,34 @@ from ndn_iot_python.consumer.app_consumer import AppConsumer
 
 # TODO: test case and example for this code
 
-class AppConsumerSequenceNumber(AppConsumer):
-    def __init__(self, face, keyChain, certificateName, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0):
+class AppConsumerTimestamp(AppConsumer):
+    def __init__(self, face, keyChain, certificateName, doVerify, currentTimestamp = None):
         super(AppConsumerSequenceNumber, self).__init__(face, keyChain, certificateName, doVerify)
 
         self._pipelineSize = defaultPipelineSize
         self._emptySlot = defaultPipelineSize
-        self._currentSeqNumber = startingSeqNumber
+        self._currentTimestamp = currentTimestamp
 
-        self._verifyFailedRetransInterval = 4000
         self._defaultInterestLifetime = 4000
-
         return
 
     """
     public interface
     """
     def consume(self, prefix, onVerified, onVerificationFailed, onTimeout):
-        num = self._emptySlot
-        for i in range(0, num):
-            name = Name(prefix).append(str(self._currentSeqNumber))
-            interest = Interest(name)
-            # interest configuration / template?
-            interest.setInterestLifetimeMilliseconds(self._defaultInterestLifetime)
-            self._face.expressInterest(interest, 
-              lambda i, d : self.onData(i, d, onVerified, onVerificationFailed, onTimeout), 
-              lambda i: self.beforeReplyTimeout(i, onVerified, onVerificationFailed, onTimeout))
-            self._currentSeqNumber += 1
-            self._emptySlot -= 1
+        name = Name(prefix)
+        interest = Interest(name)
+        interest.setInterestLifetimeMilliseconds(self._defaultInterestLifetime)
+
+        if self._currentTimestamp:
+            exclude = Exclude()
+            exclude.appendAny()
+            exclude.appendComponent(Name.Component.fromVersion(self._currentTimestamp))
+            interest.setExclude(exclude)
+
+        self._face.expressInterest(interest, 
+          lambda i, d : self.onData(i, d, onVerified, onVerificationFailed, onTimeout), 
+          lambda i: self.beforeReplyTimeout(i, onVerified, onVerificationFailed, onTimeout)))
         return
 
     """
@@ -51,9 +51,8 @@ class AppConsumerSequenceNumber(AppConsumer):
         return
 
     def beforeReplyDataVerified(self, data, onVerified, onVerificationFailed, onTimeout):
-        # fill the pipeline
-        self._currentSeqNumber += 1
-        self._emptySlot += 1
+        # express next interest
+        self._currentTimestamp = data.getName().get(-1).toVersion()
         self.consume(data.getName().getPrefix(-1), onVerified, onVerificationFailed, onTimeout)
         onVerified(data)
         return

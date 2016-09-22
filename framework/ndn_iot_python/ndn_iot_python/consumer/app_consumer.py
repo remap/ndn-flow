@@ -1,7 +1,11 @@
-
 class AppConsumer():
-	def __init__(self, face, keyChain, doVerify):
+	def __init__(self, face, keyChain, certificateName, doVerify):
+		self._face = face
+		self._keyChain = keyChain
+		self._certificateName = certificateName
+		self._doVerify = doVerify
+
 		return
 
-	def consume(self, name, onSuccess, onVerificationFailed, onTimeout):
+	def consume(self, name, onData, onVerificationFailed, onTimeout):
 		return
