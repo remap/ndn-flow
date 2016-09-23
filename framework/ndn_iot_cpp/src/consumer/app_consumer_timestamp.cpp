@@ -8,7 +8,7 @@ using namespace ndn::func_lib;
 namespace ndn_iot {
 
 AppConsumerTimestamp::AppConsumerTimestamp
-  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, Name certificateName, bool doVerify, uint64_t currentTimestamp) 
+  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, Name certificateName, bool doVerify, int64_t currentTimestamp) 
  : AppConsumer(face, keyChain, certificateName, doVerify)
 {
     currentTimestamp_ = currentTimestamp;
@@ -24,7 +24,7 @@ void AppConsumerTimestamp::consume
     Interest interest(name);
     interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
     
-    if (currentTimestamp_ == 0) {
+    if (currentTimestamp_ >= 0) {
         Exclude exclude;
         exclude.appendAny();
         exclude.appendComponent(Name::Component::fromVersion(currentTimestamp_));

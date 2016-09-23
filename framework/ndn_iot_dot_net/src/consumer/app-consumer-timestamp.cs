@@ -10,7 +10,7 @@ namespace ndn_iot.consumer {
 
     public class AppConsumerTimestamp : AppConsumer {
         public AppConsumerTimestamp
-          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, long currentTimestamp = 0) {
+          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, long currentTimestamp = -1) {
             face_ = face;
             keyChain_ = keyChain;
             certificateName_ = certificateName;
@@ -26,7 +26,7 @@ namespace ndn_iot.consumer {
             Interest interest = new Interest(name);
             interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
 
-            if (currentTimestamp_ == 0) {
+            if (currentTimestamp_ >= 0) {
                 Exclude exclude = new Exclude();
                 exclude.appendAny();
                 exclude.appendComponent(Name.Component.fromVersion(currentTimestamp_));

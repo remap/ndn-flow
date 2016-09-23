@@ -8,7 +8,7 @@ namespace ndn_iot {
 
 class AppConsumerTimestamp : public AppConsumer {
 public:
-    AppConsumerTimestamp(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, ndn::Name certificateName, bool doVerify, uint64_t currentTimestamp = 0);
+    AppConsumerTimestamp(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, ndn::Name certificateName, bool doVerify, int64_t currentTimestamp = -1);
 
     ~AppConsumerTimestamp() {};
 
@@ -32,7 +32,7 @@ private:
     void onDummyData
     (const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::Data>& data);
 
-    uint64_t currentTimestamp_;
+    int64_t currentTimestamp_;
 
     int verifyFailedRetransInterval_;
     int defaultInterestLifetime_;
