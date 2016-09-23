@@ -39,8 +39,8 @@ class SyncBasedDiscovery(object):
         self._entityDataFreshnessPeriod = entityDataFreshnessPeriod
         # TODO: policy manager etc setup
 
-        self._maxResponseWaitPeriod = maxResponseWaitPeriod
-        self._minResponseWaitPeriod = minResponseWaitPeriod
+        #self._maxResponseWaitPeriod = maxResponseWaitPeriod
+        #self._minResponseWaitPeriod = minResponseWaitPeriod
 
         self._observer = observer
         self._serializer = serializer
