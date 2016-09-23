@@ -9,6 +9,21 @@ from ndn_iot_python.consumer.app_consumer import AppConsumer
 # TODO: test case and example for this code
 
 class AppConsumerTimestamp(AppConsumer):
+    """
+    Timestamp based consumer with exclusion filters
+
+    :param face: the face to consume data with
+    :type face: Face
+    :param keyChain: the keyChain to verify received data with
+    :type keyChain: KeyChain
+    :param certificateName: the certificate name to sign data with
+      (not used by default for consumers)
+    :type certificateName: Name
+    :param doVerify: flag for whether the consumer should skip verification
+    :type doVerify: bool
+    :param currentTimestamp: the timestamp to start excluding with
+    :type currentTimestamp: int
+    """
     def __init__(self, face, keyChain, certificateName, doVerify, currentTimestamp = None):
         super(AppConsumerSequenceNumber, self).__init__(face, keyChain, certificateName, doVerify)
 
@@ -24,6 +39,20 @@ class AppConsumerTimestamp(AppConsumer):
     public interface
     """
     def consume(self, prefix, onVerified, onVerifyFailed, onTimeout):
+        """
+        Consume data continuously under a given prefix, each time sending interest with
+        the last timestamp excluded
+
+        :param name: prefix to consume data under
+        :type name: Name
+        :param onData: onData(data) gets called after received data's onVerifyFailed
+        :type onData: function object
+        :param onVerifyFailed: onVerifyFailed(data) gets called if received data 
+          cannot be verified
+        :type onVerifyFailed: function object
+        :param onTimeout: onTimeout(interest) gets called if a consumer interest times out
+        :type onTimeout: function object
+        """
         name = Name(prefix)
         interest = Interest(name)
         interest.setInterestLifetimeMilliseconds(self._defaultInterestLifetime)

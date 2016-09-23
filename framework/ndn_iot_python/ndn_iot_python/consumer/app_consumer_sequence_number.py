@@ -9,6 +9,23 @@ from ndn_iot_python.consumer.app_consumer import AppConsumer
 # TODO: test case and example for this code
 
 class AppConsumerSequenceNumber(AppConsumer):
+    """
+    Sequence number based consumer with interest pipelining
+
+    :param face: the face to consume data with
+    :type face: Face
+    :param keyChain: the keyChain to verify received data with
+    :type keyChain: KeyChain
+    :param certificateName: the certificate name to sign data with
+      (not used by default for consumers)
+    :type certificateName: Name
+    :param doVerify: flag for whether the consumer should skip verification
+    :type doVerify: bool
+    :param defaultPipelineSize: interest pipeline size
+    :type defaultPipelineSize: int
+    :param startingSeqNumber: the starting sequence number to ask for
+    :type startingSeqNumber: int
+    """
     def __init__(self, face, keyChain, certificateName, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0):
         super(AppConsumerSequenceNumber, self).__init__(face, keyChain, certificateName, doVerify)
 
@@ -25,6 +42,20 @@ class AppConsumerSequenceNumber(AppConsumer):
     public interface
     """
     def consume(self, prefix, onVerified, onVerifyFailed, onTimeout):
+        """
+        Consume data continuously under a given prefix, maintaining pipelineSize number of
+        interest in the pipeline
+
+        :param name: prefix to consume data under
+        :type name: Name
+        :param onData: onData(data) gets called after received data's onVerifyFailed
+        :type onData: function object
+        :param onVerifyFailed: onVerifyFailed(data) gets called if received data 
+          cannot be verified
+        :type onVerifyFailed: function object
+        :param onTimeout: onTimeout(interest) gets called if a consumer interest times out
+        :type onTimeout: function object
+        """
         num = self._emptySlot
         for i in range(0, num):
             name = Name(prefix).append(str(self._currentSeqNumber))
@@ -37,6 +68,8 @@ class AppConsumerSequenceNumber(AppConsumer):
             self._currentSeqNumber += 1
             self._emptySlot -= 1
         return
+
+    # TODO: add start/stop functions
 
     """
     internal functions
