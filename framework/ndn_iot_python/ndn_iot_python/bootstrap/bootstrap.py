@@ -26,6 +26,15 @@ except ImportError:
     import trollius as asyncio
 
 class Bootstrap(object):
+    """
+    Create a Bootstrap object. Bootstrap object provides interface for setting up KeyChain, default certificate name;
+    (as a producer) requesting publishing authorization from controller; and (as a consumer) keeping track of changes
+
+    :param face: the face for communicating with a local / remote forwarder
+    :type face: ThreadsafeFace
+
+    TODO: support Face as well as ThreadsafeFace
+    """
     def __init__(self, face):
         self._defaultIdentity = None
         self._defaultCertificateName = None
@@ -54,6 +63,23 @@ class Bootstrap(object):
 # Initial keyChain and defaultCertificate setup
 ###############################################
     def setupDefaultIdentityAndRoot(self, defaultIdentityOrFileName, signerName = None, onSetupComplete = None, onSetupFailed = None):
+        """
+        Sets up the keyChain, default key name and certificate name according to given 
+        configuration. If successful, this KeyChain and default certificate name will be 
+        returned to the application, which can be passed to instances like Consumer, Discovery, etc
+
+        :param defaultIdentityOrFileName: if str, the name of the configuration file; if Name, 
+          the default identity name of this IoT node. The node will use the default keys and 
+          certificate of that identity name.
+        :type defaultIdentityOrFileName: Name or str
+        :param signerName: (optional) the expected signing identity of the certificate
+        :type signerName: Name
+        :param onSetupComplete: (optional) onSetupComplete(Name, KeyChain) will be called if 
+          set up's successful
+        :type onSetupComplete: function object
+        :param onSetupFailed: (optional) onSetupFailed(msg) will be called if setup fails
+        :type onSetupFailed: function object
+        """
         def helper(identityName, signerName):
             try:
                 self._defaultIdentity = identityName
@@ -163,6 +189,24 @@ class Bootstrap(object):
 #########################################################
     # TODO: if trust schema gets over packet size limit, segmentation
     def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
+        """
+        Starts trust schema update for under an application prefix: initial 
+        interest asks for the rightMostChild, and later interests are sent 
+        with previous version excluded. Each verified trust schema will trigger
+        onUpdateSuccess and update the ConfigPolicyManager for the keyChain
+        in this instance, and unverified ones will trigger onUpdateFailed.
+
+        The keyChain and trust anchor should be set up using setupDefaultIdentityAndRoot
+        before calling this method. 
+
+        :param appPrefix: the prefix to ask trust schema for. (interest name: /<prefix>/_schema)
+        :type appPrefix: Name
+        :param onUpdateSuccess: (optional) onUpdateSuccess(trustSchemaStr, isInitial) is 
+          called when update succeeds
+        :type onUpdateSuccess: function object
+        :param onUpdateFailed: (optional) onUpdateFailed(msg) is called when update fails
+        :type onUpdateFailed: function object
+        """
         namespace = appPrefix.toUri()
         if namespace in self._trustSchemas:
             if self._trustSchemas[namespace]["following"] == True:
@@ -278,6 +322,25 @@ class Bootstrap(object):
 ###############################################
     # Wrapper for sendAppRequest, fills in already configured defaultCertificateName
     def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
+        """
+        Requests producing authorization for a data prefix: commandInterest is sent out 
+        to the controller, using /<controller identity>/requests/<encoded-application-parameters>/<signed-interest-suffix>
+        where encoded-application-parameters is a ProtobufTlv encoding of 
+        {appPrefix, certificateName, appName}
+
+        The keyChain, trust anchor and controller name should be set up using 
+        setupDefaultIdentityAndRoot before calling this method.
+
+        :param dataPrefix: the prefix to request publishing for
+        :type dataPrefix: Name
+        :param appName: the application name to request publishing for
+        :type appName: str
+        :param onRequestSuccess: (optional) onRequestSuccess() is called when a valid response
+          if received for the request
+        :type onRequestSuccess: function object
+        :param onRequestFailed: (optional) onRequestFailed(msg) is called when request fails
+        :type onRequestFailed: function object
+        """
         # TODO: update logic on this part, should the presence of default certificate name be mandatory? 
         # And allow application developer to send app request to a configured root/controller?
         if not self._defaultCertificateName:
