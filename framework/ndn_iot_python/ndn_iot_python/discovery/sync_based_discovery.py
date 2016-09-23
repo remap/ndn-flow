@@ -16,6 +16,25 @@ except ImportError:
 
 # Generic sync-based discovery implementation
 class SyncBasedDiscovery(object):
+    """
+    Sync (digest exchange) based name discovery.
+    Discovery maintains a list of discovered, and a list of hosted objects.
+    Calls observer.onStateChanged(name, msgType, msg) when an entity is discovered or removed.
+    Uses serializer.serialize(entityObject) to serialize a hosted entity's entityInfo into string.
+
+    :param face:
+    :type face: Face
+    :param keyChain: 
+    :type keyChain: KeyChain
+    :param certificateName:
+    :type certificateName: Name
+    :param syncPrefix:
+    :type syncPrefix: Name
+    :param observer:
+    :type observer: ExternalObserver
+    :param serializer:
+    :type serializer: EntitySerializer
+    """
     def __init__(self, face, keyChain, certificateName, syncPrefix, observer, serializer, 
       syncDataFreshnessPeriod = 4000, initialDigest = "00", syncInterestLifetime = 4000, syncInterestMinInterval = 500,
       timeoutCntThreshold = 3, maxResponseWaitPeriod = 2000, minResponseWaitPeriod = 400, entityDataFreshnessPeriod = 10000):
@@ -50,6 +69,9 @@ class SyncBasedDiscovery(object):
     Public facing interface
     """
     def start(self):
+        """
+        Starts the discovery
+        """
         self.updateDigest()
         interest = Interest(Name(self._syncPrefix).append(self._currentDigest))
         interest.setMustBeFresh(True)
@@ -60,6 +82,10 @@ class SyncBasedDiscovery(object):
         return
 
     def stop(self):
+        """
+        Stops the discovery
+        """
+        # TODO: interest expression and data response flag
         self._memoryContentCache.unregisterAll()
         return
 
@@ -70,6 +96,14 @@ class SyncBasedDiscovery(object):
         return self._objects
 
     def addHostedObject(self, name, entityInfo):
+        """
+        Adds another object and registers prefix for that object's name
+
+        :param name: the object's name string
+        :type name: str
+        :param entityInfo: the application given entity info to describe this object name with
+        :type entityInfo: EntityInfo
+        """
         # If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 
         #   is only "listening" for sync, and will not help in the sync process
         if len(self._hostedObjects.keys()) == 0:
@@ -85,6 +119,14 @@ class SyncBasedDiscovery(object):
         return
 
     def removeHostedObject(self, name):
+        """
+        Removes a locally hosted object
+
+        :param name: the object's name string
+        :type name: str
+        :return: whether removal's successful or not
+        :rtype: bool
+        """
         if name in self._hostedObjects:
             del self._hostedObjects[name]
             if len(self._hostedObjects) == 0:
