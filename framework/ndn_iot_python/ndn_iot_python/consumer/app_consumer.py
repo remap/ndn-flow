@@ -7,5 +7,5 @@ class AppConsumer():
 
         return
 
-    def consume(self, name, onData, onVerificationFailed, onTimeout):
+    def consume(self, name, onData, onVerifyFailed, onTimeout):
         return

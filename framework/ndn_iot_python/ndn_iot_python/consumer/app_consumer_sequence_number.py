@@ -24,7 +24,7 @@ class AppConsumerSequenceNumber(AppConsumer):
     """
     public interface
     """
-    def consume(self, prefix, onVerified, onVerificationFailed, onTimeout):
+    def consume(self, prefix, onVerified, onVerifyFailed, onTimeout):
         num = self._emptySlot
         for i in range(0, num):
             name = Name(prefix).append(str(self._currentSeqNumber))
@@ -32,8 +32,8 @@ class AppConsumerSequenceNumber(AppConsumer):
             # interest configuration / template?
             interest.setInterestLifetimeMilliseconds(self._defaultInterestLifetime)
             self._face.expressInterest(interest, 
-              lambda i, d : self.onData(i, d, onVerified, onVerificationFailed, onTimeout), 
-              lambda i: self.beforeReplyTimeout(i, onVerified, onVerificationFailed, onTimeout))
+              lambda i, d : self.onData(i, d, onVerified, onVerifyFailed, onTimeout), 
+              lambda i: self.beforeReplyTimeout(i, onVerified, onVerifyFailed, onTimeout))
             self._currentSeqNumber += 1
             self._emptySlot -= 1
         return
@@ -41,49 +41,49 @@ class AppConsumerSequenceNumber(AppConsumer):
     """
     internal functions
     """
-    def onData(self, interest, data, onVerified, onVerificationFailed, onTimeout):
+    def onData(self, interest, data, onVerified, onVerifyFailed, onTimeout):
         if self._doVerify:
             self._keyChain.verifyData(data, 
-              lambda d : self.beforeReplyDataVerified(d, onVerified, onVerificationFailed, onTimeout), 
-              lambda d : self.beforeReplyVerificationFailed(d, interest, onVerified, onVerificationFailed, onTimeout))
+              lambda d : self.beforeReplyDataVerified(d, onVerified, onVerifyFailed, onTimeout), 
+              lambda d : self.beforeReplyVerificationFailed(d, interest, onVerified, onVerifyFailed, onTimeout))
         else:
-            self.beforeReplyDataVerified(data, onVerified, onVerificationFailed, onTimeout)
+            self.beforeReplyDataVerified(data, onVerified, onVerifyFailed, onTimeout)
         return
 
-    def beforeReplyDataVerified(self, data, onVerified, onVerificationFailed, onTimeout):
+    def beforeReplyDataVerified(self, data, onVerified, onVerifyFailed, onTimeout):
         # fill the pipeline
         self._currentSeqNumber += 1
         self._emptySlot += 1
-        self.consume(data.getName().getPrefix(-1), onVerified, onVerificationFailed, onTimeout)
+        self.consume(data.getName().getPrefix(-1), onVerified, onVerifyFailed, onTimeout)
         onVerified(data)
         return
 
-    def beforeReplyVerificationFailed(self, data, interest, onVerified, onVerificationFailed, onTimeout):
+    def beforeReplyVerificationFailed(self, data, interest, onVerified, onVerifyFailed, onTimeout):
         # for now internal to the library: verification failed cause the library to retransmit the interest after some time
         newInterest = Interest(interest)
         newInterest.refreshNonce()
 
         dummyInterest = Interest(Name("/local/timeout"))
         dummyInterest.setInterestLifetimeMilliseconds(self._verifyFailedRetransInterval)
-        self.expressInterest(dummyInterest, 
+        self._face.expressInterest(dummyInterest, 
           self.onDummyData, 
-          lambda i: self.retransmitInterest(newInterest, onVerified, onVerificationFailed, onTimeout))
-        onVerificationFailed(data)
+          lambda i: self.retransmitInterest(newInterest, onVerified, onVerifyFailed, onTimeout))
+        onVerifyFailed(data)
         return
 
-    def beforeReplyTimeout(self, interest, onVerified, onVerificationFailed, onTimeout):
+    def beforeReplyTimeout(self, interest, onVerified, onVerifyFailed, onTimeout):
         newInterest = Interest(interest)
         newInterest.refreshNonce()
-        self.expressInterest(newInterest, 
-          lambda i, d : self.onData(i, d, onVerified, onVerificationFailed, onTimeout), 
-          lambda i: self.beforeReplyTimeout(i, onVerified, onVerificationFailed, onTimeout))
+        self._face.expressInterest(newInterest, 
+          lambda i, d : self.onData(i, d, onVerified, onVerifyFailed, onTimeout), 
+          lambda i: self.beforeReplyTimeout(i, onVerified, onVerifyFailed, onTimeout))
         onTimeout(interest)
         return
 
-    def retransmitInterest(self, interest, onVerified, onVerificationFailed, onTimeout):
+    def retransmitInterest(self, interest, onVerified, onVerifyFailed, onTimeout):
         self._face.expressInterest(interest, 
-          lambda i, d : self.onData(i, d, onVerified, onVerificationFailed, onTimeout), 
-          lambda i: self.beforeReplyTimeout(i, onVerified, onVerificationFailed, onTimeout))
+          lambda i, d : self.onData(i, d, onVerified, onVerifyFailed, onTimeout), 
+          lambda i: self.beforeReplyTimeout(i, onVerified, onVerifyFailed, onTimeout))
 
     def onDummyData(self, interest, data):
         print "Unexpected: got dummy data!"
