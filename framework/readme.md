@@ -7,7 +7,7 @@ NDNoT Framework implementation
 * **ndn-iot-js**: add_device, bootstrap, discovery and consumer in JavaScript (browser only, include assembled js)
 * **ndn-iot-dot-net**: add_device, bootstrap, discovery and consumer in C# (compile: custom script)
 
-***** Worflow
+##### Worflow
 
 1. Add a device to the network (ndn-pi)
 
