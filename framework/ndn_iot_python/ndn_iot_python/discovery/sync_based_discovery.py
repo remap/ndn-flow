@@ -251,7 +251,7 @@ class SyncBasedDiscovery(object):
     def expressHeartbeatInterest(self, dummyInterest, entityInterest):
         newInterest = Interest(entityInterest)
         newInterest.refreshNonce()
-        self._face.expressInterest(entityInterest, self.onHeartbeatData, self.onHeartbeatTimeout)
+        self._face.expressInterest(newInterest, self.onHeartbeatData, self.onHeartbeatTimeout)
 
     def onHeartbeatData(self, interest, data):
         self.resetTimeoutCnt(interest.getName().toUri())
