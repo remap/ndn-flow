@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html>
+<head>
+<title>Simulator of Gyroscope data</title>
+
+<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/long.min.js"></script>
+<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/bytebuffer-ab.min.js"></script>
+<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/protobuf.min.js"></script>
+
+<script type="text/javascript" src="../../framework/ndn_iot_js/js/ndn.js"></script>
+<script type="text/javascript" src="../../framework/ndn_iot_js/js/bootstrap/bootstrap.js"></script>
+
+<script type="text/javascript">
+
+// Configurable parameters
+var prefix = new Name("/home/flow1/gyro-sim1");
+
+// gyro data generation interval
+var dataInterval = 500;
+
+// seqNoNamespace vs timestamp namespace
+var seqNoNamespace = true;
+var startingSeqNo = 0;
+
+// starting Pitch, Yaw and Roll values
+var startingP = 0;
+var startingY = 0;
+var startingR = 0;
+
+var step = 0.01;
+
+// default data freshness period
+var defaultFreshnessPeriod = 1000000;
+
+// Interval parameters
+var face = undefined;
+var memoryContentCache = undefined;
+var keyChain = undefined;
+
+var currentP = startingP;
+var currentY = startingY;
+var currentR = startingR;
+
+var currentSeqNo = startingSeqNo;
+
+function start()
+{    
+    face = new Face({"host": "127.0.0.1"});
+    memoryContentCache = new MemoryContentCache(face);
+    // commented so that we don't have to worry about no default keys exist in browser IndexedDbStorage 
+    keyChain = new KeyChain(new IdentityManager(new IndexedDbIdentityStorage(), new IndexedDbPrivateKeyStorage()));
+    keyChain.createIdentityAndCertificate(new Name(prefix), function (name) {
+        face.setCommandSigningInfo(keyChain, name);
+
+        memoryContentCache.registerPrefix(prefix, function (prefix) {
+            console.log("Prefix registration failed.");
+        }, function (prefix, interest, face, interestFilterId, filter) {
+            console.log("Data not found: " + interest.getName().toUri());
+        });
+        setInterval(function () {
+            var data;
+            var currentTime;
+            if (seqNoNamespace) {
+                data = new Data((new Name(prefix)).append(currentSeqNo.toString()));
+                currentSeqNo += 1;
+            } else {
+                currentTime = (new Date).getTime();
+                data = new Data((new Name(prefix)).appendVersion(currentTime));
+            }
+            var content = JSON.stringify({"p": currentP, "y": currentY, "r": currentR});
+            data.setContent(content);
+            data.getMetaInfo().setFreshnessPeriod(defaultFreshnessPeriod);
+            keyChain.sign(data, function () {
+
+            }, function () {
+
+            });
+            memoryContentCache.add(data);
+            console.log("Content cache add: " + data.getName().toUri());
+            if (seqNoNamespace) {
+                document.getElementById("current-seq").innerText = currentSeqNo.toString();
+            } else {
+                document.getElementById("current-seq").innerText = currentTime;
+            }
+            document.getElementById("last-pub").innerText = content;
+        }, dataInterval);
+    });
+}
+
+document.onkeydown = function (e) {
+    e = e || window.event;
+    if (e.keyCode == '87') {
+        // w arrow
+        currentP += step;
+    }
+    else if (e.keyCode == '83') {
+        // s arrow
+        currentP -= step;
+    }
+    else if (e.keyCode == '37') {
+        // left arrow
+        currentY -= step;
+    }
+    else if (e.keyCode == '39') {
+        // right arrow
+        currentY += step;
+    }
+    else if (e.keyCode == '38') {
+        // up arrow
+        currentR += step;
+    }
+    else if (e.keyCode == '40') {
+        // down arrow
+        currentR -= step;
+    }
+    console.log(JSON.stringify({"p": currentP, "y": currentY, "r": currentR}));
+}
+
+
+</script>
+
+</head>
+
+<body>
+<p><button onclick="start()">start simulating</button></p>
+<p>Current seq number: </p><span id="current-seq">-1</span>
+<p>Last published: </p><span id="last-pub">{}</span>
+</body>
+
+</html>
