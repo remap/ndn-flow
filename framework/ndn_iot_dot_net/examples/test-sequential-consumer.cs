@@ -19,14 +19,23 @@ namespace ndn_iot.tests {
     using net.named_data.jndn.transport;
 
     using ndn_iot.bootstrap;
+    using ndn_iot.consumer;
 
-    class TestBootstrap {
-        static void onRequestSuccess() {
-            Console.Out.WriteLine("Request granted!");
-        }
+    class TestSequentialConsumer {
+        class ConsumerDataHandler : OnVerified, OnVerifyFailed, OnTimeout {
+            public void onVerified(Data data) {
+                Console.Out.WriteLine("Data received: " + data.getName().toUri());
+            }
 
-        static void onRequestFailed(string msg) {
-            Console.Out.WriteLine(msg);
+            public void onVerifyFailed(Data data) {
+                Console.Out.WriteLine("Data verify failed: " + data.getName().toUri());
+
+            }
+
+            public void onTimeout(Interest interest) {
+                Console.Out.WriteLine("Interest times out: " + interest.getName().toUri());
+                return;
+            }
         }
 
         static void Main(string[] args)
@@ -34,27 +43,26 @@ namespace ndn_iot.tests {
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
             KeyChain keyChain = bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
+            Name certificateName = bootstrap.getDefaultCertificateName();
 
-            Console.Out.WriteLine((double) (DateTime.Now - new DateTime(1970, 1, 1)).TotalMilliseconds);
-            
             // separate debug function for creating ID and cert
             //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
 
             // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
-            bootstrap.requestProducerAuthorization(
-              new Name("/home/flow/csharp-publisher-1"), 
-              "flow", 
-              new OnRequestSuccess(onRequestSuccess), 
-              new OnRequestFailed(onRequestFailed));
+            AppConsumerSequenceNumber consumer = new AppConsumerSequenceNumber(face, keyChain, certificateName, false);
+            ConsumerDataHandler cdh = new ConsumerDataHandler();
 
-            Interest interest = new Interest(new Name("/abc"));
-            keyChain.sign(interest, bootstrap.getDefaultCertificateName());
-            Console.Out.WriteLine(interest.getName().toUri());
+            // todo: fill in simulator prefix
+            consumer.consume(new Name("/home/flow1/gyro-sim1"), cdh, cdh, cdh);
+
+            //Interest interest = new Interest(new Name("/abc"));
+            //keyChain.sign(interest, bootstrap.getDefaultCertificateName());
+            //Console.Out.WriteLine(interest.getName().toUri());
 
             while (true) {
                 face.processEvents();
                 // We need to sleep for a few milliseconds so we don't use 100% of the CPU.
-                System.Threading.Thread.Sleep(5);
+                System.Threading.Thread.Sleep(1);
             }
         }
     }

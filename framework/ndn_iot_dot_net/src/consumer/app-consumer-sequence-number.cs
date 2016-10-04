@@ -26,7 +26,6 @@ namespace ndn_iot.consumer {
 
         public void consume(Name prefix, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
             int num = emptySlot_;
-            DataHandler dh = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
 
             for (int i = 0; i < num; i++) {
                 Name name = new Name(prefix);
@@ -35,10 +34,13 @@ namespace ndn_iot.consumer {
                 
                 // interest configuration / template?
                 interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
+
+                DataHandler dh = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
                 face_.expressInterest(interest, dh, dh);
+                Console.Out.WriteLine("interest expressed: " + interest.getName().toUri());
 
                 currentSeqNumber_ += 1;
-                emptySlot_ += 1;
+                emptySlot_ -= 1;
             }
         }
 
@@ -70,11 +72,12 @@ namespace ndn_iot.consumer {
 
                 face_.expressInterest(newInterest, this, this);
                 onTimeout_.onTimeout(interest);
+                Console.Out.WriteLine("interest expressed: " + newInterest.getName().toUri());
             }
 
             public void onVerified(Data data) {
-                aps_.incrementCurrentSeqNumber();
-                aps_.decrementEmptySlot();
+                //aps_.incrementCurrentSeqNumber();
+                aps_.incrementEmptySlot();
 
                 aps_.consume(data.getName().getPrefix(-1), onVerified_, onVerifyFailed_, onTimeout_);
                 onVerified_.onVerified(data);
@@ -130,7 +133,7 @@ namespace ndn_iot.consumer {
 
         public void setEmptySlot(int emptySlot) { emptySlot_ = emptySlot; return; }
 
-        public void decrementEmptySlot() { emptySlot_ -= 1; }
+        public void incrementEmptySlot() { emptySlot_ += 1; }
 
         public int getCurrentSeqNumber() { return currentSeqNumber_; }
 

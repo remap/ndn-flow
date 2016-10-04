@@ -58,6 +58,7 @@ function start()
             console.log("Prefix registration failed.");
         }, function (prefix, interest, face, interestFilterId, filter) {
             console.log("Data not found: " + interest.getName().toUri());
+            memoryContentCache.storePendingInterest(interest, face);
         });
         setInterval(function () {
             var data;
