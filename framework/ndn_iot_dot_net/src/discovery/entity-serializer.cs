@@ -1,7 +1,9 @@
 namespace ndn_iot.discovery {
 	using System;
 
-	public interface EntitySerializer {
-		string serialize(EntityInfoBase info);
+	public class EntitySerializer {
+		public string serialize(EntityInfoBase info) {
+			return "";
+		}
 	}
 }

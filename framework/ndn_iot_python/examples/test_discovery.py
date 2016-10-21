@@ -15,38 +15,38 @@ from ndn_iot_python.discovery.entity_serializer import EntitySerializer
 from ndn_iot_python.discovery.external_observer import ExternalObserver
 
 class MyEntityInfo(EntityInfo):
-	def __init__(self, content):
-		self._content = content
+    def __init__(self, content):
+        self._content = content
 
-	def getContent(self):
-		return self._content
+    def getContent(self):
+        return self._content
 
 class MySerializer(EntitySerializer):
-	def serialize(self, entityInfo):
-		return entityInfo.getContent()
+    def serialize(self, entityInfo):
+        return entityInfo.getContent()
 
 class MyObserver(ExternalObserver):
-	def onStateChanged(self, name, msgType, msg):
-		print "Got message: " + str(name) + " : " + str(msgType) + " : " + str(msg)
+    def onStateChanged(self, name, msgType, msg):
+        print "Got message: " + str(name) + " : " + str(msgType) + " : " + str(msg)
 
 class DiscoveryTest(object):
-	def __init__(self, face, keyChain, certificateName):
-		self._face = face
-		self._keyChain = keyChain
-		self._certificateName = certificateName
+    def __init__(self, face, keyChain, certificateName):
+        self._face = face
+        self._keyChain = keyChain
+        self._certificateName = certificateName
 
-		self._serializer = MySerializer()
-		self._syncPrefix = Name("/home/discovery")
-		self._observer = MyObserver()
+        self._serializer = MySerializer()
+        self._syncPrefix = Name("/home/discovery")
+        self._observer = MyObserver()
 
-		self._discovery = SyncBasedDiscovery(face, keyChain, certificateName, self._syncPrefix, self._observer, self._serializer)
-		return
+        self._discovery = SyncBasedDiscovery(face, keyChain, certificateName, self._syncPrefix, self._observer, self._serializer)
+        return
 
-	def start(self):
-	    testObjectName = Name("home").append("python-publisher-" + str(random.randint(1, 100)))
-	    self._discovery.addHostedObject(testObjectName.toUri(), MyEntityInfo("good"))
-	    print "hosting object " + testObjectName.toUri()
-	    self._discovery.start()
+    def start(self):
+        testObjectName = Name("home").append("python-publisher-" + str(random.randint(1, 100)))
+        self._discovery.addHostedObject(testObjectName.toUri(), MyEntityInfo("good"))
+        print "hosting object " + testObjectName.toUri()
+        self._discovery.start()
 
 def usage():
     print("Usage")
