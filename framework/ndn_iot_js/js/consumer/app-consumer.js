@@ -4,4 +4,4 @@ var AppConsumer = function AppConsumer(face, keyChain, certificateName, doVerify
     this.keyChain = keyChain;
     this.certificateName = certificateName;
     this.doVerify = doVerify;
-}
+};

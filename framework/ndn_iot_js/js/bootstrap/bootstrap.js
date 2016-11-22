@@ -454,4 +454,4 @@ Bootstrap.prototype.getIdentityNameFromCertName = function (certName)
 Bootstrap.prototype.getKeyChain = function()
 {
     return this.keyChain;
-}
+};

@@ -72,7 +72,7 @@ AppConsumerTimestamp.prototype.beforeReplyVerificationFailed = function
     dummyInterest.setInterestLifetimeMilliseconds(this._verifyFailedRetransInterval)
     this.face.expressInterest(dummyInterest, this.onDummyData, function (i) {
         self.retransmitInterest(newInterest, onVerified, onVerifyFailed, onTimeout);
-    };
+    });
     this.onVerifyFailed(data);
     return;
 }

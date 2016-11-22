@@ -1,9 +1,34 @@
 // Generic sync-based discovery implementation
 var SyncBasedDiscovery = function SyncBasedDiscovery
   (face, keyChain, certificateName, syncPrefix, observer, serializer, 
-   syncDataFreshnessPeriod = 4000, initialDigest = "00", syncInterestLifetime = 4000, syncInterestMinInterval = 500,
-   timeoutCntThreshold = 3, maxResponseWaitPeriod = 2000, minResponseWaitPeriod = 400, entityDataFreshnessPeriod = 10000)
+   syncDataFreshnessPeriod, initialDigest, syncInterestLifetime, syncInterestMinInterval,
+   timeoutCntThreshold, maxResponseWaitPeriod, minResponseWaitPeriod, entityDataFreshnessPeriod)
 {
+    if (syncDataFreshnessPeriod === undefined) {
+        syncDataFreshnessPeriod = 4000;
+    }
+    if (initialDigest === undefined) {
+        initialDigest = "00";
+    }
+    if (syncInterestLifetime === undefined) {
+        syncInterestLifetime = 4000;
+    }
+    if (syncInterestMinInterval === undefined) {
+        syncInterestMinInterval = 500;
+    }
+    if (timeoutCntThreshold === undefined) {
+        timeoutCntThreshold = 3;
+    }
+    if (maxResponseWaitPeriod === undefined) {
+        maxResponseWaitPeriod = 2000;
+    }
+    if (minResponseWaitPeriod === undefined) {
+        minResponseWaitPeriod = 400;
+    }
+    if (entityDataFreshnessPeriod === undefined) {
+        entityDataFreshnessPeriod = 10000;
+    }
+
     this.face = face;
     this.keyChain = keyChain;
     this.syncPrefix = syncPrefix;
@@ -55,7 +80,7 @@ SyncBasedDiscovery.prototype.getHostedObjects = function ()
     return this.hostedObjects;
 }
 
-SyncBasedDiscovery.prototype.getObjects = function ():
+SyncBasedDiscovery.prototype.getObjects = function ()
 {
     return this.objects;
 }
@@ -178,6 +203,7 @@ SyncBasedDiscovery.prototype.replySyncInterest = function
 
 SyncBasedDiscovery.prototype.onSyncData = function
   (interest, data)
+{
     //TODO: do verification first
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
     var content = JSON.parse(data.getContent().buf());
@@ -186,13 +212,14 @@ SyncBasedDiscovery.prototype.onSyncData = function
             this.onReceivedSyncData(itemName);
         }
     }
-        
+    
     // Hack for re-expressing sync interest after a short interval
     var dummyInterest = new Interest(new Name("/local/timeout"));
     dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestMinInterval);
     this.face.expressInterest(dummyInterest, this.onDummyData, this.expressSyncInterest);
-    return
-
+    return;
+}
+    
 SyncBasedDiscovery.prototype.onSyncTimeout = function
   (interest)
 {
@@ -237,7 +264,8 @@ SyncBasedDiscovery.prototype.onEntityData = function
     var dummyInterest = new Interest(new Name("/local/timeout"));
     dummyInterest.setInterestLifetimeMilliseconds(4000);
     this.face.expressInterest(dummyInterest, this.onDummyData, function (a) {
-        self.expressHeartbeatInterest(a, interest));
+        self.expressHeartbeatInterest(a, interest)
+    });
     return;
 }
 
@@ -263,7 +291,7 @@ SyncBasedDiscovery.prototype.onHeartbeatData = function
 }
 
 SyncBasedDiscovery.prototype.onHeartbeatTimeout = function 
-  (interest):
+  (interest)
 {
     if (this.incrementTimeoutCnt(interest.getName().toUri())) {
         console.log("Remove: " + interest.getName().toUri() + " because of consecutive timeout cnt exceeded");

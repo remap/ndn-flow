@@ -1,6 +1,12 @@
 var AppConsumerSequenceNumber = function AppConsumerSequenceNumber
-  (face, keyChain, certificateName, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0)
+  (face, keyChain, certificateName, doVerify, defaultPipelineSize, startingSeqNumber)
 {
+    if (defaultPipelineSize === undefined) {
+        defaultPipelineSize = 5;
+    }
+    if (startingSeqNumber === undefined) {
+        startingSeqNumber = 0;
+    }
     AppConsumer.call(this, face, keyChain, certificateName, doVerify);
 
     this.pipelineSize = defaultPipelineSize;
@@ -72,7 +78,7 @@ AppConsumerSequenceNumber.prototype.beforeReplyVerificationFailed = function
     dummyInterest.setInterestLifetimeMilliseconds(this._verifyFailedRetransInterval)
     this.face.expressInterest(dummyInterest, this.onDummyData, function (i) {
         self.retransmitInterest(newInterest, onVerified, onVerifyFailed, onTimeout);
-    };
+    });
     this.onVerifyFailed(data);
     return;
 }

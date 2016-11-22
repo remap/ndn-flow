@@ -1,0 +1,13 @@
+# project ndn-iot-js (0.8.1) configured on Tue Nov 22 13:15:13 2016 by
+# waf 1.7.9 (abi 98, python 2070cf0 on darwin)
+# using ./waf configure
+#
+----------------------------------------
+Setting top to
+/Users/zhehaowang/projects/ndn/flow/ndn-flow/framework/ndn_iot_js
+----------------------------------------
+Setting out to
+/Users/zhehaowang/projects/ndn/flow/ndn-flow/framework/ndn_iot_js/build
+----------------------------------------
+Checking for closure-compiler
+tools/compiler.jar
