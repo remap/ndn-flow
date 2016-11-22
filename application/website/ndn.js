@@ -1,0 +1,1 @@
+../../framework/ndn_iot_js/js/ndn.js

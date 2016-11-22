@@ -3,6 +3,7 @@ namespace ndn_iot.tests {
     using System.Collections;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
 
     // TODO: to be finished up with consumer functions as in other languages
     using System.Runtime.InteropServices;
@@ -62,11 +63,21 @@ namespace ndn_iot.tests {
             }
         }
 
+        private static Random random = new Random();
+        public static string randomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
         static void Main(string[] args)
         {
             Face face = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo("localhost"));
             Bootstrap bootstrap = new Bootstrap(face);
-            KeyChain keyChain = bootstrap.setupDefaultIdentityAndRoot(new Name("/home/flow-csharp"), new Name());
+            string objectPrefix = "/home/flow-csharp";
+
+            KeyChain keyChain = bootstrap.setupDefaultIdentityAndRoot(new Name(objectPrefix), new Name());
             Name certificateName = bootstrap.getDefaultCertificateName();
 
             // separate debug function for creating ID and cert
@@ -77,6 +88,13 @@ namespace ndn_iot.tests {
             EntitySerializer serializer = new EntitySerializer();
 
             SyncBasedDiscovery discovery = new SyncBasedDiscovery(face, keyChain, certificateName, syncPrefix, observer, serializer);
+            discovery.start();
+
+            Name entityName = new Name(objectPrefix).append(randomString(3));
+            EntityInfo ei = new EntityInfo();
+            ei.setDescription(entityName.toUri());
+
+            discovery.addHostedObject(entityName.toUri(), ei);
 
             while (true) {
                 face.processEvents();

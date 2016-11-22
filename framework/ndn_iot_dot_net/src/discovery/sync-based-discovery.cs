@@ -43,6 +43,11 @@ namespace ndn_iot.discovery {
             cih_ = new CacheInterestHandler(this);
             dsdh_ = new DummySyncDataHandler(this);
             hdh_ = new HeartbeatDataHandler(this);
+
+            objects_ = new SortedDictionary<string, EntityInfoBase>();
+            hostedObjects_ = new SortedDictionary<string, EntityInfoBase>();
+
+            memoryContentCache_ = new MemoryContentCache(face_);
         }
 
         // public facing interface
@@ -117,6 +122,7 @@ namespace ndn_iot.discovery {
             var contentString = "";
             for (int i = content.position(); i < content.limit(); ++i)
                 contentString += (char)content.get(i);
+                Console.Out.WriteLine(contentString);
             return contentString;
         }
 
@@ -128,6 +134,7 @@ namespace ndn_iot.discovery {
         }
 
         public void onReceivedSyncData(string itemName) {
+            Console.Out.WriteLine("Sync data received: " + itemName);
             Interest interest = new Interest(new Name(itemName));
             interest.setInterestLifetimeMilliseconds(4000);
             interest.setMustBeFresh(false);
@@ -157,6 +164,7 @@ namespace ndn_iot.discovery {
                     jsonString += ", " + keys[i];
             }
             jsonString = "{[" + jsonString + "]}";
+            Console.Out.WriteLine("added sync data: " + jsonString);
             
             Data data = new Data(new Name(name));
             data.setContent(new Blob(jsonString));
@@ -225,6 +233,7 @@ namespace ndn_iot.discovery {
 
             public void onData(Interest interest, Data data) {
                 var content = JSON.Parse(sbd_.contentToString(data)).AsArray;
+                Console.Out.WriteLine(content);
 
                 for (int i = 0; i < content.Count; i++) {
                     if (!(sbd_.getObjects().ContainsKey(content[i]))) {
