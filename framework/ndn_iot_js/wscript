@@ -65,6 +65,8 @@ def configure (conf):
 def build (bld):
     if bld.env['JS']:
         ndn_iot_js = [
+                 "js/add-device/hmac-helper.js",
+                 "js/add-device/add-device.js",
                  "js/bootstrap/bootstrap.js",
                  "js/consumer/app-consumer.js",
                  "js/consumer/app-consumer-timestamp.js",

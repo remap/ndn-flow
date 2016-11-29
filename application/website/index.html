@@ -7,13 +7,27 @@
 <head>
   <title>Flow webpage component</title>
   <script type="text/javascript" src="ndn.js"></script>
-  
+  <script type="text/javascript" src="ndn-iot.js"></script>
+
+  <script type="text/javascript" src="js/track-matcher.js"></script>
   <script type="text/javascript" src="js/page.js"></script>
 
   <!-- Associating opt trackID with mobile ID in certain areas -->
-  
+  <button onclick="testMatch()">Match</button>
 
   <!-- Other webpage functionalities -->
+  <script>
+    face = new Face({"host": "127.0.0.1"});
+    bootstrap = new Bootstrap(face);
+    var deviceId = new Name("/home/browser1");
+
+    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined, onSetupComplete, onSetupFailed);
+
+    function testMatch() {
+    	var matcher = new TrackMatcher(new Name("/home/flow/unity1/"), deviceId, face);
+        matcher.sendTrackMatchCommand();
+    }
+  </script>
 </head>
 
 <body>
