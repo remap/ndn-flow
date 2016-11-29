@@ -38,10 +38,9 @@ namespace ndn_iot.bootstrap {
                                 ? Environment.GetEnvironmentVariable("HOME")
                                 : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
             keyPath_ = System.IO.Path.Combine(homePath, ".ndn/ndnsec-tpm-file/");
-            filePrivateKeyStorage_ = new FilePrivateKeyStorage(keyPath_);
-            memoryIdentityStorage_ = new MemoryIdentityStorage();
+            string idStorgePath = System.IO.Path.Combine(homePath, ".ndn/ndnsec-public-info.db");
 
-            identityManager_ = new IdentityManager(memoryIdentityStorage_, filePrivateKeyStorage_);
+            identityManager_ = new IdentityManager(new BasicIdentityStorage(idStorgePath), new FilePrivateKeyStorage(keyPath_));
             
             policyManager_ = new ConfigPolicyManager();
             policyManager_.load(@"
@@ -67,46 +66,30 @@ namespace ndn_iot.bootstrap {
         }
 
         public KeyChain setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
-            return setupDefaultIdentityAndRoot(defaultIdentityName, defaultCertFileName_, signerName);
-        }
-
-        public KeyChain setupDefaultIdentityAndRoot(Name defaultIdentityName, string certFilePath, Name signerName) {
             if (defaultIdentityName.size() == 0) {
                 // Default identity does not exist
-                throw new SystemException("Using system default identity is not supported!\n");
+                try {
+                    defaultIdentityName = identityManager_.getDefaultIdentity();
+                } catch (SecurityException ex) {
+                    throw new SystemException("Default identity does not exist\n");
+                }
             }
 
             Data certData = new Data();
             try {
                 defaultIdentity_ = new Name(defaultIdentityName);
                 // Hack for getting the key names
-                defaultKeyName_ = getDefaultKeyNameForIdentity(defaultIdentity_);
+                defaultKeyName_ = identityManager_.getDefaultKeyNameForIdentity(defaultIdentity_);
                 if (defaultKeyName_.size() == 0) {
                     throw new SystemException("Cannot find a key name for identity: " + defaultIdentity_.toUri() + "\n");
                 }
-                string certBase64 = System.IO.File.ReadAllText(certFilePath);
-                byte[] certBytes = Convert.FromBase64String(certBase64);
-                
-                certData.wireDecode(new Blob(certBytes, true));
-
-                if (IdentityCertificate.certificateNameToPublicKeyName(certData.getName()).equals(defaultKeyName_)) {
-                    defaultCertificateName_ = certData.getName();
-                } else {
-                    Console.Out.WriteLine(IdentityCertificate.certificateNameToPublicKeyName(certData.getName()));
-                    Console.Out.WriteLine(defaultKeyName_);
-                    throw new SystemException("Given certificate file does not match with the default key for the configured identity!");
-                }
-
-                PublicKey publicKey = filePrivateKeyStorage_.getPublicKey(defaultKeyName_);
-                memoryIdentityStorage_.addKey(defaultKeyName_, publicKey.getKeyType(), new Blob(publicKey.getKeyDer()));
             } catch (SecurityException ex) {
                 Console.Out.WriteLine(ex.Message);
                 throw new SystemException("Security exception: " + ex.Message + " (default identity: " + defaultIdentity_.toUri() + ")");
             }
 
             Name actualSignerName = KeyLocator.getFromSignature(certData.getSignature()).getKeyName();
-            Console.Out.WriteLine("Cert name is " + certData.getName().toUri());
-            Console.Out.WriteLine("Cert is signed by " + actualSignerName.toUri());
+
             if (signerName.size() > 0 && !(actualSignerName.equals(signerName))) {
                 throw new SystemException("Security exception: expected signer name does not match with actual signer name: " + signerName.toUri() + " " + actualSignerName.toUri());
             }
@@ -298,19 +281,6 @@ namespace ndn_iot.bootstrap {
         /**
          * Helper functions
          */
-        // Hack: find the first key name according to the identity name, and think of that as default
-        private Name getDefaultKeyNameForIdentity(Name defaultIdentity) {
-            string[] lines = System.IO.File.ReadAllLines(keyPath_ + "mapping.txt");
-            foreach (string line in lines) {
-                // Use a tab to indent each line of the file.
-                string[] components = line.Split(' ');
-                string defaultIdentityString = defaultIdentity.toUri();
-                if (components[0].Contains(defaultIdentityString)) {
-                    return new Name(components[0]);
-                }
-            }
-            return new Name();
-        }
 
         // debug function: same extracted from ndn-dot-net library
         private string nameTransform(string keyName, string extension) {
@@ -347,6 +317,7 @@ namespace ndn_iot.bootstrap {
         }
 
         // generate identity and certificate
+        /*
         public void createIdentityAndCertificate(Name identityName) {
             Console.Out.WriteLine("Creating identity and certificate");
             Name certificateName = identityManager_.createIdentityAndCertificate(identityName, new RsaKeyParams());
@@ -355,6 +326,7 @@ namespace ndn_iot.bootstrap {
             string certString = Convert.ToBase64String(certificate.wireEncode().getImmutableArray());
             Console.Out.WriteLine(certString);
         }
+        */
 
         public void onRegisterFailed(Name prefix) {
             Console.Out.WriteLine("Registration failed for prefix: " + prefix.toUri());
@@ -363,9 +335,6 @@ namespace ndn_iot.bootstrap {
         public Name getDefaultCertificateName() {
             return defaultCertificateName_;
         }
-
-
-        static string defaultCertFileName_ = "my.cert";
 
         Name defaultIdentity_;
         Name defaultKeyName_;
@@ -378,8 +347,6 @@ namespace ndn_iot.bootstrap {
         IdentityManager identityManager_;
         ConfigPolicyManager policyManager_;
 
-        FilePrivateKeyStorage filePrivateKeyStorage_;
-        IdentityStorage memoryIdentityStorage_;
         string keyPath_;
 
         KeyChain keyChain_;

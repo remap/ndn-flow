@@ -1,0 +1,86 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+VERSION='0.8.1'
+APPNAME='ndn-iot-dot-net'
+
+YUICOMPRESSOR_URL="http://github.com/downloads/yui/yuicompressor/"
+YUICOMPRESSOR_NAME="yuicompressor-2.4.7"
+
+CLOSURE_COMPILER="http://dl.google.com/closure-compiler/compiler-20140407.zip"
+
+from waflib import Task, TaskGen, Utils, Logs
+import urllib, subprocess, os, shutil
+
+def options (opt):
+    dotnet = opt.add_option_group ("ndn-iot-dot-net compilation options")
+
+    dotnet.add_option('--no-dll',action='store_false',default=True,dest='dotnet',
+              help='''Disable ndn-iot-dot-net compilation and installation''')
+    dotnet.add_option('--dll-dir',action='store',dest='dlldir',
+              help='''Directory where .js files will be installed (Default: ${PREFIX}/share/ndn-iot-dot-net)''')
+
+def configure (conf):
+    if conf.options.dotnet:
+        conf.env.dotnet = 1
+        if not conf.env.DLLDIR:
+            if conf.options.dlldir or Utils.is_win32:
+                conf.env.DLLDIR=os.path.abspath (os.path.expanduser (conf.options.dlldir))
+            else:
+                conf.env.DLLDIR=Utils.subst_vars ('${PREFIX}/bin',conf.env)
+
+def build (bld):
+    if bld.env['dotnet']:
+        ndn_iot_dot_net = [
+                 "src/bootstrap/bootstrap.cs",
+                 "src/consumer/app-consumer.cs",
+                 "src/consumer/app-consumer-timestamp.cs",
+                 "src/consumer/app-consumer-sequence-number.cs",
+                 "src/discovery/sync-based-discovery.cs",
+                 "src/discovery/external-observer.cs",
+                 "src/discovery/entity-serializer.cs",
+                 "src/discovery/entity-info.cs",
+                 "contrib/SimpleJSON.cs"
+                ]
+
+        # TODO: allow options for ndn-dot-net.dll path
+        ndn_iot_dot_net = bld (features='seq',
+                     rule="mcs /target:library /out:${TGT} /r:../bin/ndn-dot-net.dll ${SRC}",
+                     target="ndn-iot-dot-net.dll",
+                     source=ndn_iot_dot_net,
+                     install_path="${DLLDIR}",
+                     update_outputs=True)
+
+        ndn_iot_dot_net_tests = [
+                  "examples/test-consumer.cs",
+                  "examples/test-discovery.cs",
+                  "examples/test-sequential-consumer.cs"
+                  #"examples/test-producer.cs"
+                ]
+
+        for test in ndn_iot_dot_net_tests:
+            if test.endswith(".cs"):
+                test_out = test[:-2] + "exe"
+            if test_out.startswith("examples/"):
+                test_out = test_out[8:]
+            test_build = bld (features='seq',
+                     rule="mcs /out:${TGT} /r:../bin/ndn-dot-net.dll /r:ndn-iot-dot-net.dll ${SRC}",
+                     source=[test],
+                     use="ndn-iot-dot-net",
+                     target=test_out,
+                     update_outputs=True)
+
+# @TaskGen.feature('mcs')
+# @TaskGen.after_method('process_source')
+# def apply_mcs(self):
+#     out = "%s.dll" % self.target
+#     tasks = []
+#     task = self.create_task ('mcs', self.source)
+#     task.set_outputs (task.generator.path.find_or_declare (out))
+#     tasks.append (task)
+
+# class mcs (Task.Task):
+#     def run(self):
+#         outFile = self.outputs[0]
+#         self.outputs[0].write ("", "w") # make file empty
+#         for inFile in self.inputs:
+#             self.outputs[0].write (inFile.read (), 'a')

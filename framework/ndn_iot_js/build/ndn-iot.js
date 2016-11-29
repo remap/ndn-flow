@@ -137,7 +137,7 @@ var IotNode = function IotNode(host, dbName)
     this.keyChain.setFace(this.face);
     
     // Use this hack so that by the time loop starts we should already have filled in the serial number from IndexedDB
-    setTimeout(this.beforeLoopStart.bind(this), 200);
+    setTimeout(this.beforeLoopStart.bind(this), 400);
 };
 
 IotNode.prototype.getSerial = function()
