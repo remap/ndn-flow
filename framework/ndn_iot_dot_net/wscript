@@ -65,8 +65,13 @@ def build (bld):
             test_build = bld (features='seq',
                      rule="mcs /out:${TGT} /r:../bin/ndn-dot-net.dll /r:ndn-iot-dot-net.dll ${SRC}",
                      source=[test],
-                     use="ndn-iot-dot-net",
                      target=test_out,
+                     update_outputs=True)
+
+        cp_lib = bld (features='seq',
+                     rule="ln -s ${SRC} ${TGT}",
+                     source=["bin/ndn-dot-net.dll"],
+                     target="ndn-dot-net.dll",
                      update_outputs=True)
 
 # @TaskGen.feature('mcs')
