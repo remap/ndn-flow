@@ -41,8 +41,8 @@ namespace ndn_iot.bootstrap {
             string idStorgePath = System.IO.Path.Combine(homePath, ".ndn/ndnsec-public-info.db");
 
             identityManager_ = new IdentityManager(new BasicIdentityStorage(idStorgePath), new FilePrivateKeyStorage(keyPath_));
-            
-            policyManager_ = new ConfigPolicyManager();
+            certificateCache_ = new CertificateCache();
+            policyManager_ = new ConfigPolicyManager("", certificateCache_);
             policyManager_.load(@"
               validator            
               {                    
@@ -75,10 +75,9 @@ namespace ndn_iot.bootstrap {
                 }
             }
 
-            Data certData = new Data();
             try {
                 defaultIdentity_ = new Name(defaultIdentityName);
-                // Hack for getting the key names
+                defaultCertificateName_ = identityManager_.getDefaultCertificateNameForIdentity(defaultIdentity_);
                 defaultKeyName_ = identityManager_.getDefaultKeyNameForIdentity(defaultIdentity_);
                 if (defaultKeyName_.size() == 0) {
                     throw new SystemException("Cannot find a key name for identity: " + defaultIdentity_.toUri() + "\n");
@@ -88,16 +87,26 @@ namespace ndn_iot.bootstrap {
                 throw new SystemException("Security exception: " + ex.Message + " (default identity: " + defaultIdentity_.toUri() + ")");
             }
 
-            Name actualSignerName = KeyLocator.getFromSignature(certData.getSignature()).getKeyName();
+            IdentityCertificate myCertificate = keyChain_.getCertificate(defaultCertificateName_);
+            Name actualSignerName = KeyLocator.getFromSignature(myCertificate.getSignature()).getKeyName();
 
             if (signerName.size() > 0 && !(actualSignerName.equals(signerName))) {
                 throw new SystemException("Security exception: expected signer name does not match with actual signer name: " + signerName.toUri() + " " + actualSignerName.toUri());
             }
             controllerName_ = getIdentityNameFromCertName(actualSignerName);
 
+            Console.Out.WriteLine("Controller name is: " + controllerName_.toUri());
+            try {
+                controllerCertificate_ = keyChain_.getCertificate(identityManager_.getDefaultCertificateNameForIdentity(controllerName_));
+                certificateCache_.insertCertificate(controllerCertificate_);
+            } catch (SecurityException e) {
+                throw new SystemException("Default certificate for controller identity does not exist");
+            }
+
             face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
             certificateContentCache_.registerPrefix(new Name(defaultCertificateName_).getPrefix(-1), this);
-            certificateContentCache_.add(certData);
+            certificateContentCache_.add(myCertificate);
+
             return keyChain_;
         }
 
@@ -346,6 +355,7 @@ namespace ndn_iot.bootstrap {
         string applicationName_;
         IdentityManager identityManager_;
         ConfigPolicyManager policyManager_;
+        CertificateCache certificateCache_;
 
         string keyPath_;
 

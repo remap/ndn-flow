@@ -57,13 +57,14 @@ def build (bld):
                   #"examples/test-producer.cs"
                 ]
 
+        # this expects Mono.Data.Sqlite.dll to be available globally
         for test in ndn_iot_dot_net_tests:
             if test.endswith(".cs"):
                 test_out = test[:-2] + "exe"
             if test_out.startswith("examples/"):
                 test_out = test_out[8:]
             test_build = bld (features='seq',
-                     rule="mcs /out:${TGT} /r:../bin/ndn-dot-net.dll /r:ndn-iot-dot-net.dll ${SRC}",
+                     rule="mcs /out:${TGT} /r:Mono.Data.Sqlite.dll /r:../bin/ndn-dot-net.dll /r:ndn-iot-dot-net.dll ${SRC}",
                      source=[test],
                      target=test_out,
                      update_outputs=True)
@@ -72,6 +73,12 @@ def build (bld):
                      rule="ln -s ${SRC} ${TGT}",
                      source=["bin/ndn-dot-net.dll"],
                      target="ndn-dot-net.dll",
+                     update_outputs=True)
+
+        cp_sqlite_lib = bld (features='seq',
+                     rule="ln -s ${SRC} ${TGT}",
+                     source=["bin/Mono.Data.Sqlite.dll"],
+                     target="Mono.Data.Sqlite.dll",
                      update_outputs=True)
 
 # @TaskGen.feature('mcs')
