@@ -11,6 +11,8 @@
 #include NDN_CPP_ROOT(pp/src/lite/util/blob-lite.cpp)
 #include NDN_CPP_ROOT(pp/src/lite/util/crypto-lite.cpp)
 #include NDN_CPP_ROOT(pp/src/lite/encoding/tlv-0_2-wire-format-lite.cpp)
+// added per signAndSendData function
+#include NDN_CPP_ROOT(pp/src/lite/util/dynamic-uint8-array-lite.cpp)
 
 #include NDN_CPP_ROOT(pp/contrib/cryptosuite/sha256.cpp)
 

@@ -13,6 +13,10 @@
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-signature-info.c)
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-structure-decoder.c)
 #include NDN_CPP_ROOT(pp/src/c/encoding/tlv/tlv-interest.c)
+
+// added per signAndSendData function
+#include NDN_CPP_ROOT(pp/src/c/util/dynamic-uint8-array.c)
+
 // Note: Don't include src/c/util/crypto.c . Instead use rsaref-crypto.c and contrib/cryptosuite/sha256.cpp.
 
 #include NDN_CPP_ROOT(pp/contrib/rsaref/source/digit.c)

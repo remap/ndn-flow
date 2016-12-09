@@ -26,6 +26,7 @@
 #include <ndn-cpp/lite/data-lite.hpp>
 #include <ndn-cpp/lite/interest-lite.hpp>
 #include <ndn-cpp/lite/encoding/tlv-0_2-wire-format-lite.hpp>
+#include <ndn-cpp/lite/util/dynamic-uint8-array-lite.hpp>
 #include <ndn-cpp/lite/util/crypto-lite.hpp>
 #include "rsaref-crypto.h"
 #include "rsaref-rsa-public-key-lite.hpp"
@@ -298,6 +299,10 @@ uint8_t HmacKey[64];
 uint8_t HmacKeyDigest[ndn_SHA256_DIGEST_SIZE];
 R_RANDOM_STRUCT RandomStruct;
 
+// Connected or no
+bool connected = false;
+uint64_t currentIdx = 0;
+
 static void printHex(const uint8_t* buffer, size_t bufferLength)
 {
   for (size_t i = 0; i < bufferLength; ++i) {
@@ -497,6 +502,7 @@ void setup()
 void
 loop()
 {
+  // disable ultra low power delay or gyro publisher won't work
   //RFduino_ULPDelay(INFINITE);
   updateGyro();
 }
@@ -517,6 +523,7 @@ RFduinoBLE_onConnect()
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(GREEN_LED_PIN, HIGH);
   digitalWrite(BLUE_LED_PIN, LOW);
+  connected = true;
 }
 
 void
@@ -526,6 +533,7 @@ RFduinoBLE_onDisconnect()
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(GREEN_LED_PIN, LOW);
   digitalWrite(BLUE_LED_PIN, LOW);
+  connected = false;
 }
 
 static void
@@ -1175,9 +1183,20 @@ void sendQuat(){
     }
     q[i] = ((float) q[i]) / 16384.0f;
   }
-  
-  serialPrintFloatArr(q, 4);
-  Serial.print("\n");
+
+  char buffer[20] = "";
+  serializeQuatData(q, 4, buffer);
+
+  // make and send data packet
+  ndn_NameComponent dataNameComponents[2];
+  DataLite data(dataNameComponents, sizeof(dataNameComponents) / sizeof(dataNameComponents[0]), 0, 0);
+  data.getName().append("gyro1");
+  char sequence[20] = "";
+  sprintf(sequence, "%" PRIu64, currentIdx);
+  data.getName().append(sequence);
+  data.setContent(BlobLite((const uint8_t*)buffer, strlen(buffer)));
+  signAndSendData(data);
+  currentIdx++;
 }
 
 void sendPacket(){
@@ -1201,16 +1220,19 @@ void bank_sel(byte bank){
   Wire.endTransmission();
 }
 
-void serialPrintFloatArr(float * arr, int length) {
+void serializeQuatData(float * arr, int length, char * result) {
   float euler[3]; 
   quaternionToEuler(arr, euler);
     
   for(int i=0; i<3; i++) {
     //serialFloatPrint(arr[i]);
     Serial.print(euler[i]);
-    
     Serial.print(",");
   }
+  Serial.print("\n");
+  // for this to work, we need to enable "-u _printf_float" in ~/Library/Arduino15/packages/RFduino/hardware/RFduino/2.3.2/platform.txt
+  // per the thread here: http://forum.rfduino.com/index.php?topic=782.0
+  sprintf(result, "%.2f,%.2f,%.2f", euler[0], euler[1], euler[2]);
 }
 
 
