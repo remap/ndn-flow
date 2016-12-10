@@ -41,6 +41,9 @@ using namespace ndn;
 #define MEM_START_ADDR 0x6E
 #define MEM_R_W 0x6F
 
+#define BUFFER_SIZE 50
+#define GYRO_UPDATE_INTERVAL 10
+
 long lastRead = 0;
 byte processed_packet[8];
 byte received_packet[50];
@@ -302,6 +305,10 @@ R_RANDOM_STRUCT RandomStruct;
 // Connected or no: for now connected seems to break updateGyro, left as true for initial value
 bool connected = true;
 uint64_t currentIdx = 0;
+char sendBuffer[BUFFER_SIZE][20] = {};
+int bufferHead = 0;
+int bufferTail = 0;
+int currentCycle = 0;
 
 static void printHex(const uint8_t* buffer, size_t bufferLength)
 {
@@ -504,9 +511,17 @@ loop()
 {
   // disable ultra low power delay or gyro publisher won't work
   //RFduino_ULPDelay(INFINITE);
-  if (connected) {
-    updateGyro();    
+  //if (connected) {
+  updateGyro();  
+  if (bufferHead != bufferTail) {
+    //Serial.println(sendBuffer[bufferHead][0], HEX);
+    Serial.println(bufferHead, HEX);
+    RFduinoBLE.send((const char *)(sendBuffer + bufferHead), strlen((const char *)(sendBuffer + bufferHead)));
+    bufferHead = (bufferHead + 1) % BUFFER_SIZE;
+  } else {
+    Serial.println("buffer empty!");
   }
+  //}
 }
 
 void
@@ -598,6 +613,7 @@ RFduinoBLE_onReceive(char *buffer, int bufferLength)
     Serial.println("Error: Exceeded sizeof(receiveBuffer)");
     return;
   }
+  memset(receiveBuffer + receiveBufferLength, 0, 20);
   memcpy(receiveBuffer + receiveBufferLength, buffer + iFragment, nFragmentBytes);
   receiveBufferLength += nFragmentBytes;
 
@@ -702,9 +718,25 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
       if (i + nFragmentBytes > bufferLength)
           nFragmentBytes = bufferLength - i;
       memcpy(packet + iFragment, buffer + i, nFragmentBytes);
-
+//
+//      Serial.println(iFragment + nFragmentBytes);
+//      for (int j = 0; j < iFragment + nFragmentBytes; j ++) {
+//        Serial.print(packet[j], HEX);
+//        Serial.print(" ");
+//      }
+//      Serial.print("\n");
+      
       // Connect the device before calling this function
-      RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes);
+      //RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes);
+
+      // we implemented the circular buffer since rfduino does not seem to handle looped send here too well
+      int newTail = (bufferTail + 1) % BUFFER_SIZE;
+      if (newTail == bufferHead) {
+        Serial.println("Send buffer full!");
+      } else {
+        memcpy(sendBuffer + bufferTail, packet, iFragment + nFragmentBytes);
+        bufferTail = newTail;
+      }
       
       // Increment the fragment index in the packet.
       ++packet[iFragmentIndex];
@@ -1056,19 +1088,9 @@ void resetFifo(){
   regWrite(0x6A, ctrl);
 }
 
-void updateGyro(){
-
-  if(millis() >= lastRead + 10){
+void updateGyro(){  
+  if(millis() >= lastRead + GYRO_UPDATE_INTERVAL){
     lastRead = millis();
-// byte int_status = read_interrupt();
-// if(int_status & 0b00010000 != 0){
-// resetFifo();
-// Serial.println("FIFO Overflow");
-// }
-// if(int_status & 0b00000011 != 0){
-// getPacket();
-// sendPacket();
-// }
     if(fifoReady()){
       getPacket();
       temp = regRead(0x3A);
@@ -1095,32 +1117,15 @@ void updateGyro(){
         fifoReady();
       }
 
- // resetFifo();
- 
       if(fifoCountL == 42){
-        processQuat();
-        sendQuat();
+        if (currentCycle == 5) {
+          processQuat();
+          sendQuat();
+          currentCycle = 0;
+        } else {
+          currentCycle += 1;
+        }
       }
-
-      /*
-      int receivedInts[10] = {(((int)received_packet[0] << 8) | received_packet[1]),
-        (((int)received_packet[4] << 8) | received_packet[5]),
-        (((int)received_packet[8] << 8) | received_packet[9]),
-        (((int)received_packet[12] << 8) | received_packet[13]),
-        (((int)received_packet[16] << 8) | received_packet[17]),
-        (((int)received_packet[20] << 8) | received_packet[21]),
-        (((int)received_packet[24] << 8) | received_packet[25]),
-        (((int)received_packet[28] << 8) | received_packet[29]),
-        (((int)received_packet[32] << 8) | received_packet[33]),
-        (((int)received_packet[36] << 8) | received_packet[37])
-      };
-
-      for(int i = 0; i<10; i++){
-        Serial.print(receivedInts[i], DEC); Serial.print(" ");
-      }
-      Serial.println();
-      */
-  // sendPacket();
     }
   }
 
