@@ -299,8 +299,8 @@ uint8_t HmacKey[64];
 uint8_t HmacKeyDigest[ndn_SHA256_DIGEST_SIZE];
 R_RANDOM_STRUCT RandomStruct;
 
-// Connected or no
-bool connected = false;
+// Connected or no: for now connected seems to break updateGyro, left as true for initial value
+bool connected = true;
 uint64_t currentIdx = 0;
 
 static void printHex(const uint8_t* buffer, size_t bufferLength)
@@ -407,7 +407,7 @@ setupGyroProducer()
 // regWrite(0x6A, 0x02);
 
   mem_init();
-delay(20);
+  delay(20);
 }
 
 void setup()
@@ -504,7 +504,9 @@ loop()
 {
   // disable ultra low power delay or gyro publisher won't work
   //RFduino_ULPDelay(INFINITE);
-  updateGyro();
+  if (connected) {
+    updateGyro();    
+  }
 }
 
 void
@@ -523,7 +525,7 @@ RFduinoBLE_onConnect()
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(GREEN_LED_PIN, HIGH);
   digitalWrite(BLUE_LED_PIN, LOW);
-  connected = true;
+  //connected = true;
 }
 
 void
@@ -533,7 +535,7 @@ RFduinoBLE_onDisconnect()
   digitalWrite(RED_LED_PIN, LOW);
   digitalWrite(GREEN_LED_PIN, LOW);
   digitalWrite(BLUE_LED_PIN, LOW);
-  connected = false;
+  //connected = false;
 }
 
 static void
@@ -701,7 +703,8 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
           nFragmentBytes = bufferLength - i;
       memcpy(packet + iFragment, buffer + i, nFragmentBytes);
 
-      // TODO: send(packet, iFragment + nFragmentBytes);
+      // Connect the device before calling this function
+      RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes);
       
       // Increment the fragment index in the packet.
       ++packet[iFragmentIndex];
