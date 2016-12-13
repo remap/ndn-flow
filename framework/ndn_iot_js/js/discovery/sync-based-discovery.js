@@ -213,8 +213,8 @@ SyncBasedDiscovery.prototype.onSyncData = function
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
     var content = JSON.parse(data.getContent().buf());
     for (var itemName in content) {
-        if (!(itemName in this.objects)) {
-            this.onReceivedSyncData(itemName);
+        if (!(content[itemName] in this.objects)) {
+            this.onReceivedSyncData(content[itemName]);
         }
     }
     
