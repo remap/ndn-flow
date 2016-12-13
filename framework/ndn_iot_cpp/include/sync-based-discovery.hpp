@@ -1,8 +1,8 @@
 // ConferenceDiscovery works with SyncBasedDiscovery, handling traffic under user prefix, 
 // Similar with the  relationship between chrono-sync and chrono-chat
 
-#ifndef __ndnrtc__addon__object__discovery__
-#define __ndnrtc__addon__object__discovery__
+#ifndef __ndn_iot__sync__based__discovery__
+#define __ndn_iot__sync__based__discovery__
 
 #include <ndn-cpp/ndn-cpp-config.h>
 
@@ -21,7 +21,9 @@
 
 #include "external-observer.hpp"
 
-namespace entity_discovery
+namespace ndn_iot 
+{
+namespace discovery
 {
   typedef ndn::func_lib::function<void
     (const std::vector<std::string>& syncData)>
@@ -254,6 +256,7 @@ namespace entity_discovery
     // PendingInterestTable for holding outstanding interests.
     std::vector<ndn::ptr_lib::shared_ptr<PendingInterest> > pendingInterestTable_;
   };
+}
 }
 
 #endif

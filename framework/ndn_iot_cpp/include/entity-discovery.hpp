@@ -1,10 +1,9 @@
-// Authored by Zhehao on Aug 19, 2014
 // This sync based discovery works similarly as ChronoSync, 
 // however, it does not have a built-in sequence number or digest tree
 // And the user does not have to be part of a digest tree to synchronize the root digest with others
 
-#ifndef __ndnrtc__addon__entity__discovery__
-#define __ndnrtc__addon__entity__discovery__
+#ifndef __ndn_iot__entity__discovery__
+#define __ndn_iot__entity__discovery__
 
 #include <ndn-cpp/ndn-cpp-config.h>
 
@@ -32,7 +31,9 @@
 // Updates 2016
 // TODO: digest interest length check; the unexpected prefix chrono-chat0.3 of ndncon's and flooding of local nfd issue
 
-namespace entity_discovery
+namespace ndn_iot
+{
+namespace discovery
 {
   class EntityDiscovery : public ndn::ptr_lib::enable_shared_from_this<EntityDiscovery>
   {
@@ -47,9 +48,9 @@ namespace entity_discovery
      * @param certificateName The certificate name for locating the certificate.
      */
     EntityDiscovery
-      (std::string broadcastPrefix, IDiscoveryObserver *observer, 
-       ndn::ptr_lib::shared_ptr<IEntitySerializer> serializer, ndn::Face& face, ndn::KeyChain& keyChain, 
-       ndn::Name certificateName)
+      (ndn::Face& face, ndn::KeyChain& keyChain, 
+       ndn::Name certificateName, ndn::Name broadcastPrefix, ExternalObserver *observer, 
+       ndn::ptr_lib::shared_ptr<EntitySerializer> serializer)
     :  defaultDataFreshnessPeriod_(2000), defaultKeepPeriod_(3000), 
        defaultHeartbeatInterval_(2000), defaultTimeoutReexpressInterval_(300), 
        broadcastPrefix_(broadcastPrefix), observer_(observer), serializer_(serializer), 
@@ -66,13 +67,12 @@ namespace entity_discovery
      * the constructor.
      * It registers prefix for the intended entity name, 
      * if local peer's not publishing before
-     * @param entityName string name of the entity.
-     * @param localPrefix name prefix of the entity. (localPrefix + entityName) is the full name of the entity
-     * @param entityInfo the info of this entity.
+     * @param entityName ndn Name of the entity.
+     * @param entityInfo the info of the entity.
      * @return true, if entity name is not already published by this instance; false if otherwise.
      */
     bool 
-    publishEntity(std::string entityName, ndn::Name localPrefix, ndn::ptr_lib::shared_ptr<EntityInfoBase> entityInfo);
+    publishEntity(ndn::Name entityName, ndn::ptr_lib::shared_ptr<EntityInfoBase> entityInfo);
   
     /**
      * Stop publishing the entity of this instance. 
@@ -207,7 +207,7 @@ namespace entity_discovery
     ndn::KeyChain& keyChain_;
     
     ndn::Name certificateName_;
-    std::string broadcastPrefix_;
+    ndn::Name broadcastPrefix_;
     
     int hostedEntitiesNum_;
     bool enabled_;
@@ -227,10 +227,11 @@ namespace entity_discovery
     std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>> hostedEntityList_;
     
     ndn::ptr_lib::shared_ptr<SyncBasedDiscovery> syncBasedDiscovery_;
-    IDiscoveryObserver *observer_;
+    ExternalObserver *observer_;
     
-    ndn::ptr_lib::shared_ptr<IEntitySerializer> serializer_;
+    ndn::ptr_lib::shared_ptr<EntitySerializer> serializer_;
   };
+}
 }
 
 #endif

@@ -20,7 +20,7 @@ public:
   void run() {
     cout << "Running test consumer" << endl;
     Bootstrap bootstrap(*(face_.get()));
-    keyChain_ = bootstrap.setupDefaultIdentityAndRoot(Name("/home/mygooddevice"));
+    keyChain_ = bootstrap.setupDefaultIdentityAndRoot(Name("/home/my-cpp-device"));
     Name defaultCertificate = bootstrap.getDefaultCertificateName();
     bootstrap.startTrustSchemaUpdate(Name("/home/gateway/flow"), 
       bind(&AppConsumer::onUpdateSuccess, this, _1, _2), 
@@ -33,6 +33,7 @@ private:
   void onUpdateSuccess(string schema, bool isInitial) {
     cout << "trust schema update success" << endl;
     if (isInitial) {
+      cout << "about to issue interest" << endl;
       face_->expressInterest(Name("/home/flow/cpp-publisher-1"), 
         bind(&AppConsumer::onData, this, _1, _2),
         bind(&AppConsumer::onTimeout, this, _1));
@@ -52,6 +53,8 @@ private:
   }
 
   void onData(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data) {
+    cout << "about to verify data" << endl;
+    cout << "default cert name of keychain: " << keyChain_->getDefaultCertificateName() << endl;
     keyChain_->verifyData(data, 
       bind(&AppConsumer::onVerified, this, _1),
       (const OnVerifyFailed)bind(&AppConsumer::onVerifyFailed, this, _1));

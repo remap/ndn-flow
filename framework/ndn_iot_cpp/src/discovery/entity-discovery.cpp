@@ -1,7 +1,6 @@
 #include "entity-discovery.hpp"
 #include "sync-based-discovery.hpp"
 #include <sys/time.h>
-#include <openssl/rand.h>
 #include <iostream>
 
 #include <algorithm>
@@ -9,10 +8,10 @@
 using namespace std;
 using namespace ndn;
 using namespace ndn::func_lib;
-using namespace entity_discovery;
+using namespace ndn_iot::discovery;
 
 #if NDN_CPP_HAVE_STD_FUNCTION && NDN_CPP_WITH_STD_FUNCTION
-using namespace func_lib::placeholders;
+  using namespace func_lib::placeholders;
 #endif
 
 void
@@ -31,9 +30,17 @@ EntityDiscovery::start()
 {
   enabled_ = true;
   
-  syncBasedDiscovery_.reset(new SyncBasedDiscovery
+  try {  
+    syncBasedDiscovery_.reset(new SyncBasedDiscovery
     (broadcastPrefix_, bind(&EntityDiscovery::onReceivedSyncData, shared_from_this(), _1), 
      faceProcessor_, keyChain_, certificateName_));
+  } catch(const std::bad_weak_ptr& e) {
+    // no shared_ptr reference to EntityDiscovery yet, so shared_from_this() will complain about bad weak ptr
+    cout << e.what() << '\n';
+    syncBasedDiscovery_.reset(new SyncBasedDiscovery
+    (broadcastPrefix_, bind(&EntityDiscovery::onReceivedSyncData, this, _1), 
+     faceProcessor_, keyChain_, certificateName_));
+  }
   syncBasedDiscovery_->start();
 }
 
@@ -59,9 +66,9 @@ EntityDiscovery::getEntity(std::string entityName)
 
 bool 
 EntityDiscovery::publishEntity
-  (std::string entityName, Name localPrefix, ptr_lib::shared_ptr<EntityInfoBase> entityInfo) 
+  (Name entityName, ptr_lib::shared_ptr<EntityInfoBase> entityInfo) 
 {
-  Name entityFullName = Name(localPrefix).append(entityName);
+  Name entityFullName(entityName);
     
   std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator item = hostedEntityList_.find(entityFullName.toUri());
   if (item == hostedEntityList_.end()) {

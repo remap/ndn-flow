@@ -1,10 +1,12 @@
-#ifndef __ndnrtc__addon__conference__info__
-#define __ndnrtc__addon__conference__info__
+#ifndef __ndn_iot__entity__info__
+#define __ndn_iot__entity__info__
 
 #include <ndn-cpp/util/blob.hpp>
 #include <ndn-cpp/ndn-cpp-config.h>
 
-namespace entity_discovery
+namespace ndn_iot
+{
+namespace discovery
 {
   // (TIMEOUTCOUNT + 1) timeouts in a row signifies conference dropped
   const int TIMEOUTCOUNT = 4;
@@ -43,6 +45,7 @@ namespace entity_discovery
     uint64_t prefixId_;
     bool beingRemoved_;
   };
+}
 }
 
 #endif

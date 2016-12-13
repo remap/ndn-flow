@@ -64,7 +64,7 @@ namespace ndn_iot.tests {
         }
 
         private static Random random = new Random();
-        public static string randomString(int length)
+        public static string getRandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
@@ -90,7 +90,7 @@ namespace ndn_iot.tests {
             SyncBasedDiscovery discovery = new SyncBasedDiscovery(face, keyChain, certificateName, syncPrefix, observer, serializer);
             discovery.start();
 
-            Name entityName = new Name(objectPrefix).append(randomString(3));
+            Name entityName = new Name(objectPrefix).append(getRandomString(3));
             EntityInfo ei = new EntityInfo();
             ei.setDescription(entityName.toUri());
 

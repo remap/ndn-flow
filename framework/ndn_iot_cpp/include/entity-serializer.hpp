@@ -1,5 +1,5 @@
-#ifndef __ndnrtc__addon__conference__info__factory__
-#define __ndnrtc__addon__conference__info__factory__
+#ifndef __ndn_iot__entity__serializer__
+#define __ndn_iot__entity__serializer__
 
 #include <ndn-cpp/ndn-cpp-config.h>
 #include <ndn-cpp/util/blob.hpp>
@@ -7,9 +7,11 @@
 
 #include "entity-info.hpp"
 
-namespace entity_discovery
+namespace ndn_iot
 {
-  class IEntitySerializer
+namespace discovery
+{
+  class EntitySerializer
   {
   public:
     virtual ndn::Blob 
@@ -18,6 +20,7 @@ namespace entity_discovery
     virtual ndn::ptr_lib::shared_ptr<EntityInfoBase> 
     deserialize(ndn::Blob srcBlob) = 0;
   };
+}
 }
 
 #endif

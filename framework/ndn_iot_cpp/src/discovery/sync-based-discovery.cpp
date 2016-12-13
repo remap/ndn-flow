@@ -1,15 +1,16 @@
 #include "sync-based-discovery.hpp"
 #include <sys/time.h>
+// include openssl for sha256 hash
 #include <openssl/ssl.h>
 #include <iostream>
 
 using namespace std;
 using namespace ndn;
 using namespace ndn::func_lib;
-using namespace entity_discovery;
+using namespace ndn_iot::discovery;
 
 #if NDN_CPP_HAVE_STD_FUNCTION && NDN_CPP_WITH_STD_FUNCTION
-using namespace func_lib::placeholders;
+  using namespace func_lib::placeholders;
 #endif
 
 void
@@ -22,9 +23,10 @@ SyncBasedDiscovery::start()
      (const ndn::OnInterestCallback&)bind(&SyncBasedDiscovery::onInterestCallback, shared_from_this(), _1, _2, _3, _4, _5));
   ndn::Interest interest(broadcastPrefix_);
   interest.getName().append(newComerDigest_);
+
   interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
   interest.setMustBeFresh(true);
-  
+
   face_.expressInterest
     (interest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2),
      bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));    

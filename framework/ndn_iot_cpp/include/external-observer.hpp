@@ -1,28 +1,11 @@
 // interface for external observer class
 
-#ifndef __ndnrtc__addon__external__observer__
-#define __ndnrtc__addon__external__observer__
+#ifndef __ndn_iot__external__observer__
+#define __ndn_iot__external__observer__
 
-namespace chrono_chat
+namespace ndn_iot
 {
-  enum class MessageTypes
-  {
-    JOIN,
-    LEAVE,
-    CHAT
-  };
-  
-  class ChatObserver
-  {
-  public:
-    /**
-     * The timestamp is considered as a double, which is the base type for ndn_Milliseconds in common.h
-     */
-    virtual void onStateChanged(MessageTypes type, const char *prefix, const char *userName, const char *msg, double timestamp) = 0;
-  };
-}
-
-namespace entity_discovery
+namespace discovery
 {
   // enum class won't compile with C++03
   enum class MessageTypes
@@ -34,7 +17,7 @@ namespace entity_discovery
     STOP        // Received when hosted conference stops
   };
   
-  class IDiscoveryObserver
+  class ExternalObserver
   {
   public:
     /**
@@ -42,6 +25,7 @@ namespace entity_discovery
      */
     virtual void onStateChanged(MessageTypes type, const char *msg, double timestamp) = 0;
   };
+}
 }
 
 #endif
