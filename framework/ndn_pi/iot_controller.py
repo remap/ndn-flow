@@ -509,9 +509,9 @@ class IotController(BaseNode):
 
             # Discovery rule: anything that multicasts under my home prefix should be signed, and the signer should have been authorized by root
             # TODO: This rule as of right now is over-general
-            discoveryRuleNode = validatorNode.createSubtree("rule")
-            discoveryRuleNode.createSubtree("id", "sync-data")
-            discoveryRuleNode.createSubtree("for", "data")
+            #discoveryRuleNode = validatorNode.createSubtree("rule")
+            #discoveryRuleNode.createSubtree("id", "sync-data")
+            #discoveryRuleNode.createSubtree("for", "data")
 
             filterNode = certRuleNode.createSubtree("filter")
             filterNode.createSubtree("type", "regex")
