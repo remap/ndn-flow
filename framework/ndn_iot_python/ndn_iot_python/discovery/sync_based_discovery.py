@@ -2,7 +2,6 @@ import time
 import sys
 import logging
 import random
-import json
 import hashlib
 
 from pyndn import Name, Data, Interest, Face
@@ -156,7 +155,12 @@ class SyncBasedDiscovery(object):
             print("* added data: " + data.getName().toUri() + "; content: " + content)
 
     def contentCacheAddSyncData(self, dataName):
-        content = json.dumps(sorted(self._objects.keys()))
+        sortedKeys = sorted(self._objects.keys())
+        content = ""
+        for key in sortedKeys:
+            content += key + "\n"
+        content.strip()
+
         data = Data(Name(dataName))
         
         data.setContent(content)
@@ -201,10 +205,11 @@ class SyncBasedDiscovery(object):
         # TODO: do verification first
         if __debug__:
             print("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().toRawStr())
-        content = json.loads(data.getContent().toRawStr())
+        content = data.getContent().toRawStr().split('\n')
         for itemName in content:
             if itemName not in self._objects:
-                self.onReceivedSyncData(itemName)
+                if itemName != "":
+                    self.onReceivedSyncData(itemName)
 
         # Hack for re-expressing sync interest after a short interval
         dummyInterest = Interest(Name("/local/timeout"))

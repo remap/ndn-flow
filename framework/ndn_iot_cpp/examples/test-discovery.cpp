@@ -96,9 +96,7 @@ public:
     Serializer serializer;
     
     ptr_lib::shared_ptr<EntityDiscovery> discovery = ptr_lib::make_shared<EntityDiscovery>(EntityDiscovery(*(face_.get()), *(keyChain_.get()), defaultCertificateName_, syncPrefix, &observer, ptr_lib::make_shared<Serializer>(serializer)));
-    cout << "default cert name" << defaultCertificateName_.toUri() << endl;
     discovery->start();
-    cout << "good so far" << endl;
 
     Name entityName(objectPrefix);
     entityName.append(getRandomString(3));
@@ -136,6 +134,9 @@ private:
 
 int main()
 {
+  /* initialize random seed: */
+  srand (time(NULL));
+
   ndn_iot::examples::DiscoveryTest discoveryTest;
   discoveryTest.run();
   return 1;

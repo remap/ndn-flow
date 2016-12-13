@@ -433,5 +433,10 @@ EntityDiscovery::entitiesToString()
     result += (" * " + it->first);
     result += "\n";
   }
-  return result;
+  if (result.size() > 0) {
+    return result.substr(0, result.size() - 1);
+  } else {
+    // don't expect this to happen
+    return "";
+  }
 }

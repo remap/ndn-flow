@@ -6,8 +6,6 @@ namespace ndn_iot.discovery {
     using System.IO;
     using System.Linq;
 
-    using SimpleJSON;
-
     // Sha256 for digest computation    
     using System.Security.Cryptography;
 
@@ -153,21 +151,19 @@ namespace ndn_iot.discovery {
         }
 
         public void contentCacheAddSyncData(Name name) {
-            // naive JSON builder
-            string jsonString = "";
+            string content = "";
             if (objects_.Count == 0) {
-                jsonString = "";
+                content = "";
             } else {
                 List<string> keys = objects_.Keys.ToList();
-                jsonString = keys[0];
+                content = keys[0];
                 for (int i = 1; i < objects_.Keys.Count; i++)
-                    jsonString += "\", \"" + keys[i];
+                    content += "\n" + keys[i];
             }
-            jsonString = "[\"" + jsonString + "\"]";
-            Console.Out.WriteLine("added sync data: " + jsonString);
+            Console.Out.WriteLine("added sync data: " + content);
             
             Data data = new Data(new Name(name));
-            data.setContent(new Blob(jsonString));
+            data.setContent(new Blob(content));
             data.getMetaInfo().setFreshnessPeriod(syncDataFreshnessPeriod_);
             keyChain_.sign(data, certificateName_);
             // adding this data to memoryContentCache should satisfy the pending interest
@@ -232,12 +228,13 @@ namespace ndn_iot.discovery {
             }
 
             public void onData(Interest interest, Data data) {
-                var content = JSON.Parse(sbd_.contentToString(data)).AsArray;
-                Console.Out.WriteLine(content);
+                string[] content = sbd_.contentToString(data).Split('\n');
 
-                for (int i = 0; i < content.Count; i++) {
+                for (int i = 0; i < content.Length; i++) {
                     if (!(sbd_.getObjects().ContainsKey(content[i]))) {
-                        sbd_.onReceivedSyncData(content[i]);
+                        if (content[i] != "") {
+                            sbd_.onReceivedSyncData(content[i]);
+                        }
                     }
                 }
 
