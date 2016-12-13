@@ -351,18 +351,7 @@ static R_RSA_PUBLIC_KEY CONSUMER_E_KEY = {
 
 void 
 setupGyroProducer()
-{  
-  /*
-  while(!Serial.available()){
-    if(Serial.available()){
-      byte hereWeGo = Serial.read();
-      if( hereWeGo == 't'){
-        break;
-      }
-    }
-  }
-  */
-  
+{ 
   Wire.begin();
   delay(1);
   check_MPU();
@@ -476,21 +465,7 @@ int count = 0;
 void
 loop()
 {
-  // disable ultra low power delay or gyro publisher won't work
-  //RFduino_ULPDelay(INFINITE);
-  //if (connected) {
   updateGyro();  
-  
-//  if (bufferHead != bufferTail) {
-//    //Serial.println(sendBuffer[bufferHead][0], HEX);
-//    Serial.println(bufferHead, HEX);
-//    RFduinoBLE.send((const char *)(sendBuffer + bufferHead), strlen((const char *)(sendBuffer + bufferHead)));
-//    bufferHead = (bufferHead + 1) % BUFFER_SIZE;
-//  } else {
-//    Serial.println("buffer empty!");
-//  }
-//  
-  //}
 }
 
 void
@@ -678,25 +653,8 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
       if (i + nFragmentBytes > bufferLength)
           nFragmentBytes = bufferLength - i;
       memcpy(packet + iFragment, buffer + i, nFragmentBytes);
-//
-//      Serial.println(iFragment + nFragmentBytes);
-//      for (int j = 0; j < iFragment + nFragmentBytes; j ++) {
-//        Serial.print(packet[j], HEX);
-//        Serial.print(" ");
-//      }
-//      Serial.print("\n");
-      
       // send as suggested by the BulkDataTransfer example: https://github.com/RFduino/RFduino/blob/master/libraries/RFduinoBLE/examples/BulkDataTransfer/BulkDataTransfer.ino
       while (!RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes))
-
-//      // we implemented the circular buffer since rfduino does not seem to handle looped send here too well
-//      int newTail = (bufferTail + 1) % BUFFER_SIZE;
-//      if (newTail == bufferHead) {
-//        Serial.println("Send buffer full!");
-//      } else {
-//        memcpy(sendBuffer + bufferTail, packet, iFragment + nFragmentBytes);
-//        bufferTail = newTail;
-//      }
       
       // Increment the fragment index in the packet.
       ++packet[iFragmentIndex];
@@ -706,7 +664,6 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
 /*******
  * Functions related with gyro publishing
  */
-
 
 void dmp_init(){
   
@@ -729,19 +686,6 @@ void dmp_init(){
       }
       Wire.endTransmission();
     }
-    
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.write(MEM_R_W);
-// Wire.endTransmission();
-// Wire.requestFrom(MPU_ADDR, 16);
-// byte echoback[16];
-// for(int j = 0; j < 16; j++){
-// echoback[j] = Wire.read();
-// }
-// for(int j = 0; j < 16; j++){
-// Serial.print(echoback[j], HEX);
-// }
-    
   }
   
   bank_sel(7);
@@ -787,23 +731,6 @@ void dmp_init(){
   for(int i = 0; i < 9; i++){
     incoming[i] = Wire.read();
   }
-  
-// bank_sel(3);
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.write(MEM_START_ADDR);
-// Wire.write(0x10);
-// Wire.endTransmission();
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.write(MEM_R_W);
-// Wire.endTransmission();
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.requestFrom(MPU_ADDR,16);
-// Wire.endTransmission();
-// byte incoming[16];
-// for(int i = 0; i < 16; i++){
-// incoming[i] = Wire.read();
-// }
-
 }
   
 void mem_init(){
@@ -849,9 +776,6 @@ void mem_init(){
   
   regWrite(0x38, 0x02);
   regWrite(0x6B, 0x03);
-// regWrite(0x6B, 0x70);
-// regWrite(0x38, 0x38);
-// regWrite(0x6B, 0x73);
   regWrite(0x19, 0x04);
   regWrite(0x1B, 0x18);
   regWrite(0x1A, 0x0B);
@@ -929,23 +853,12 @@ void mem_init(){
     Wire.write(0x00);
   }
   Wire.endTransmission();
-  
-// bank_sel(0x01);
-// regWrite(0x6E, 0x60);
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.write(0x6F);
-// Wire.write(0x04); Wire.write(0x00); Wire.write(0x00); Wire.write(0x00);
-// Wire.endTransmission();
-  
   bank_sel(0x00);
   regWrite(0x6E, 0x60);
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x6F);
   Wire.write(0x40); Wire.write(0x00); Wire.write(0x00); Wire.write(0x00);
-  Wire.endTransmission();
-  
-  //resetFifo();
-  
+  Wire.endTransmission();  
 }
 
 void regWrite(byte addy, byte regUpdate){
@@ -961,7 +874,7 @@ byte regRead(byte addy){
   Wire.endTransmission();
   Wire.beginTransmission(MPU_ADDR);
   Wire.requestFrom(MPU_ADDR,1);
-// Wire.endTransmission();
+
   while(!Wire.available()){
   }
   byte incoming = Wire.read();
@@ -976,8 +889,6 @@ void getPacket(){
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x74);
   Wire.endTransmission();
-// Wire.requestFrom(MPU_ADDR, 42);
-// for(byte i = 0; i < fifoCountL; i++){
   if(longPacket){
     Wire.beginTransmission(MPU_ADDR);
     Wire.requestFrom(MPU_ADDR, 32);
@@ -993,8 +904,7 @@ void getPacket(){
       received_packet[i] = Wire.read();
     }
     longPacket = false;
-  }
-  else{
+  }else{
     Wire.beginTransmission(MPU_ADDR);
     Wire.requestFrom(MPU_ADDR, (unsigned int)fifoCountL);
     for(byte i = 0; i < fifoCountL; i++){
@@ -1014,30 +924,11 @@ boolean fifoReady(){
   Wire.endTransmission();
   Wire.beginTransmission(MPU_ADDR);
   Wire.requestFrom(MPU_ADDR,2);
-// Wire.endTransmission();
   byte fifoCountH = Wire.read();
   fifoCountL = Wire.read();
   if(fifoCountL == 42 || fifoCountL == 44){
     return 1;
   }
-// else if(fifoCountL != 0){
-// resetFifo();
-// }
-  
-  
-// else if(fifoCountL == 42){
-// getPacket();
-// bank_sel(0);
-// regWrite(0x6E, 0x60);
-// Wire.beginTransmission(MPU_ADDR);
-// Wire.write(0x40); Wire.write(0x00); Wire.write (0x00); Wire.write(0x00);
-// Wire.endTransmission();
-// resetFifo();
-// }
-  
-// if(Wire.read() == 0x2C){
-// return 1;
-// }
   else return 0;
 }
 
@@ -1060,7 +951,6 @@ void updateGyro(){
         Wire.beginTransmission(MPU_ADDR);
         Wire.write(0x6F);
         Wire.write(0x04); Wire.write(0x00); Wire.write(0x00); Wire.write(0x00);
-// Wire.write(0x00); Wire.write(0x80); Wire.write(0x00); Wire.write(0x00);
         Wire.endTransmission();
         bank_sel(1);
         regWrite(0x6E, 0x62);
@@ -1098,18 +988,11 @@ void check_MPU(){
   Wire.beginTransmission(MPU_ADDR);
   Wire.requestFrom(MPU_ADDR,1);
   byte aByte = Wire.read();
- // Wire.endTransmission();
- // while(Wire.available() == 0){
-    
- // }
- // byte temp = Wire.read();
-// Serial.println(temp);
 
   if(aByte == 0x68){
-  Serial.println("Found MPU6050");
-  }
-  else{
-   Serial.println("Didn't find MPU6050");
+    Serial.println("Found MPU6050");
+  } else {
+    Serial.println("Didn't find MPU6050");
   }
 }
 
@@ -1121,24 +1004,10 @@ void processQuat(){
     processed_packet[4] = received_packet[8];
     processed_packet[5] = received_packet[9];
     processed_packet[6] = received_packet[12];
-    processed_packet[7] = received_packet[13];
-    
+    processed_packet[7] = received_packet[13];   
 }
   
 void sendQuat(){
-  /*
-  byte packetType = 0x02;
-  byte button = 0x00;
-  Serial.print("$"); Serial.print(packetType);
-  for(byte i = 0; i < 8; i++){
-    Serial.print(processed_packet[i]);
-  }
-  Serial.print(button); Serial.print(packetCount);
-  Serial.print("\r\n");
-  if(packetCount < 0xFF){packetCount++;}
-  else{packetCount = 0x00;}
-  */
-  
   // following conversion adapted from Invensense's TeaPot example
   q[0] = (long) ((((unsigned long) processed_packet[0]) << 8) + ((unsigned long) processed_packet[1]));
   q[1] = (long) ((((unsigned long) processed_packet[2]) << 8) + ((unsigned long) processed_packet[3]));
