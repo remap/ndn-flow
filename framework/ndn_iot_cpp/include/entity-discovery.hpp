@@ -59,15 +59,7 @@ namespace entity_discovery
     };
   
     void
-    start()
-    {
-      enabled_ = true;
-      
-      syncBasedDiscovery_.reset(new SyncBasedDiscovery
-        (broadcastPrefix_, bind(&EntityDiscovery::onReceivedSyncData, shared_from_this(), _1), 
-         faceProcessor_, keyChain_, certificateName_));
-      syncBasedDiscovery_->start();
-    }
+    start();
   
     /**
      * Publish entity publishes entity to be discovered by the broadcastPrefix in 
@@ -111,25 +103,7 @@ namespace entity_discovery
      * The first entity with matching name will get returned.
      */
     ndn::ptr_lib::shared_ptr<EntityInfoBase>
-    getEntity(std::string entityName) 
-    {
-      std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator item = discoveredEntityList_.find
-        (entityName);
-      if (item != discoveredEntityList_.end()) {
-        return item->second;
-      }
-      else {
-        std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator hostedItem = hostedEntityList_.find
-          (entityName);
-        if (hostedItem != hostedEntityList_.end()) {
-          return hostedItem->second;
-        }
-        else {
-          return ndn::ptr_lib::shared_ptr<EntityInfoBase>();
-        }
-      }
-    };
-    
+    getEntity(std::string entityName); 
     
     ~EntityDiscovery() 
     {
@@ -141,15 +115,8 @@ namespace entity_discovery
      *
      * This accesses face, and should be called in the thread where face is accessed
      */
-    void shutdown()
-    {
-      syncBasedDiscovery_->shutdown();
-      enabled_ = false;
-      
-      for (std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator it = hostedEntityList_.begin(); it != hostedEntityList_.end(); it++) {
-        faceProcessor_.removeRegisteredPrefix(it->second->getRegisteredPrefixId());
-      }
-    }
+    void 
+    shutdown();
     
   private:
     /**

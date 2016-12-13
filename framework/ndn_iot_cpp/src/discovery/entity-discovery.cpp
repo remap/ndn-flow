@@ -15,6 +15,48 @@ using namespace entity_discovery;
 using namespace func_lib::placeholders;
 #endif
 
+void
+EntityDiscovery::shutdown()
+{
+  syncBasedDiscovery_->shutdown();
+  enabled_ = false;
+  
+  for (std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator it = hostedEntityList_.begin(); it != hostedEntityList_.end(); it++) {
+    faceProcessor_.removeRegisteredPrefix(it->second->getRegisteredPrefixId());
+  }
+}
+
+void
+EntityDiscovery::start()
+{
+  enabled_ = true;
+  
+  syncBasedDiscovery_.reset(new SyncBasedDiscovery
+    (broadcastPrefix_, bind(&EntityDiscovery::onReceivedSyncData, shared_from_this(), _1), 
+     faceProcessor_, keyChain_, certificateName_));
+  syncBasedDiscovery_->start();
+}
+
+ndn::ptr_lib::shared_ptr<EntityInfoBase>
+EntityDiscovery::getEntity(std::string entityName)
+{
+  std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator item = discoveredEntityList_.find
+    (entityName);
+  if (item != discoveredEntityList_.end()) {
+    return item->second;
+  }
+  else {
+    std::map<std::string, ndn::ptr_lib::shared_ptr<EntityInfoBase>>::iterator hostedItem = hostedEntityList_.find
+      (entityName);
+    if (hostedItem != hostedEntityList_.end()) {
+      return hostedItem->second;
+    }
+    else {
+      return ndn::ptr_lib::shared_ptr<EntityInfoBase>();
+    }
+  }
+}
+
 bool 
 EntityDiscovery::publishEntity
   (std::string entityName, Name localPrefix, ptr_lib::shared_ptr<EntityInfoBase> entityInfo) 

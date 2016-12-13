@@ -45,7 +45,7 @@ void AppConsumerSequenceNumber::onData
     if (doVerify_) {
         keyChain_->verifyData(data, 
           bind(&AppConsumerSequenceNumber::beforeReplyDataVerified, this, _1, onVerified, onVerifyFailed, onTimeout),
-          bind(&AppConsumerSequenceNumber::beforeReplyVerificationFailed, this, _1, interest, onVerified, onVerifyFailed, onTimeout));
+          (const OnVerifyFailed)bind(&AppConsumerSequenceNumber::beforeReplyVerificationFailed, this, _1, interest, onVerified, onVerifyFailed, onTimeout));
     } else {
         beforeReplyDataVerified(data, onVerified, onVerifyFailed, onTimeout);
     }

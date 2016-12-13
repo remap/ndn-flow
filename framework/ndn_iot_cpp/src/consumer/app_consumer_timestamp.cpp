@@ -44,7 +44,7 @@ void AppConsumerTimestamp::onData
     if (doVerify_) {
         keyChain_->verifyData(data, 
           bind(&AppConsumerTimestamp::beforeReplyDataVerified, this, _1, onVerified, onVerifyFailed, onTimeout),
-          bind(&AppConsumerTimestamp::beforeReplyVerificationFailed, this, _1, interest, onVerified, onVerifyFailed, onTimeout));
+          (const OnVerifyFailed)bind(&AppConsumerTimestamp::beforeReplyVerificationFailed, this, _1, interest, onVerified, onVerifyFailed, onTimeout));
     } else {
         beforeReplyDataVerified(data, onVerified, onVerifyFailed, onTimeout);
     }

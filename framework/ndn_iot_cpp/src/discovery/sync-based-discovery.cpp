@@ -12,6 +12,24 @@ using namespace entity_discovery;
 using namespace func_lib::placeholders;
 #endif
 
+void
+SyncBasedDiscovery::start()
+{
+  enabled_ = true;
+  
+  contentCache_.registerPrefix
+    (broadcastPrefix_, bind(&SyncBasedDiscovery::onRegisterFailed, shared_from_this(), _1), 
+     (const ndn::OnInterestCallback&)bind(&SyncBasedDiscovery::onInterestCallback, shared_from_this(), _1, _2, _3, _4, _5));
+  ndn::Interest interest(broadcastPrefix_);
+  interest.getName().append(newComerDigest_);
+  interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
+  interest.setMustBeFresh(true);
+  
+  face_.expressInterest
+    (interest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2),
+     bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));    
+}
+
 void 
 SyncBasedDiscovery::onData
   (const ptr_lib::shared_ptr<const Interest>& interest,
@@ -170,6 +188,68 @@ void
 SyncBasedDiscovery::stringHash()
 {
 
+}
+
+// addObject does not necessarily call updateHash
+int 
+SyncBasedDiscovery::addObject(std::string object, bool updateDigest) 
+{
+  std::vector<std::string>::iterator item = std::find(objects_.begin(), objects_.end(), object);
+  if (item == objects_.end() && object != "") {
+    objects_.push_back(object);
+    // Using default comparison '<' here
+    std::sort(objects_.begin(), objects_.end()); 
+    // Update the currentDigest_ 
+    if (updateDigest) {
+      recomputeDigest();
+    }
+    return 1;
+  }
+  else {
+    // The to be added string exists or is empty
+    return 0;
+  }
+}
+    
+// removeObject does not necessarily call updateHash
+int 
+SyncBasedDiscovery::removeObject(std::string object, bool updateDigest) 
+{
+  std::vector<std::string>::iterator item = std::find(objects_.begin(), objects_.end(), object);
+  if (item != objects_.end()) {
+    // I should not need to sort the thing again, if it's just erase. Remains to be tested
+    objects_.erase(item);
+    // Update the currentDigest_
+    if (updateDigest) {
+      recomputeDigest();
+    }
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+    
+// To and from string method using \n as splitter
+std::string 
+SyncBasedDiscovery::objectsToString() {
+  std::string result;
+  for(std::vector<std::string>::iterator it = objects_.begin(); it != objects_.end(); ++it) {
+    result += *it;
+    result += "\n";
+  }
+  return result;
+}
+
+std::vector<std::string> 
+SyncBasedDiscovery::stringToObjects(std::string str) {
+  std::vector<std::string> objects;
+  boost::split(objects, str, boost::is_any_of("\n"));
+  // According to the insertion process above, we may have an empty string at the end
+  if (objects.back() == "") {
+    objects.pop_back();
+  }
+  return objects;
 }
 
 int

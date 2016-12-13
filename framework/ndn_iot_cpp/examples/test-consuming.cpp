@@ -54,7 +54,7 @@ private:
   void onData(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data) {
     keyChain_->verifyData(data, 
       bind(&AppConsumer::onVerified, this, _1),
-      bind(&AppConsumer::onVerifyFailed, this, _1));
+      (const OnVerifyFailed)bind(&AppConsumer::onVerifyFailed, this, _1));
   }
 
   void onTimeout(const ptr_lib::shared_ptr<const Interest>& interest) {

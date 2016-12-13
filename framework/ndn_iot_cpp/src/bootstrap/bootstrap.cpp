@@ -191,7 +191,7 @@ Bootstrap::onAppRequestData
 
   keyChain_->verifyData(data, 
     bind(&Bootstrap::onAppRequestDataVerified, this, _1, onRequestSuccess, onRequestFailed), 
-    bind(&Bootstrap::onAppRequestDataVerifyFailed, this, _1, onRequestSuccess, onRequestFailed));
+    (const OnVerifyFailed)bind(&Bootstrap::onAppRequestDataVerifyFailed, this, _1, onRequestSuccess, onRequestFailed));
   return;
 }
 
@@ -260,7 +260,7 @@ Bootstrap::onTrustSchemaData
     cout << data->getName().toUri() << endl;
     keyChain_->verifyData(data, 
       bind(&Bootstrap::onSchemaVerified, this, _1, onUpdateSuccess, onUpdateFailed),
-      bind(&Bootstrap::onSchemaVerificationFailed, this, _1, onUpdateSuccess, onUpdateFailed));
+      (const OnVerifyFailed)bind(&Bootstrap::onSchemaVerificationFailed, this, _1, onUpdateSuccess, onUpdateFailed));
   }
   return;
 }
