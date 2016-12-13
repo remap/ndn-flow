@@ -43,6 +43,8 @@ using namespace ndn;
 
 #define BUFFER_SIZE 50
 #define GYRO_UPDATE_INTERVAL 10
+// turning this threshold too low may block send thus gyro data stops reporting in
+#define CYCLE_THRESHOLD 15
 
 long lastRead = 0;
 byte processed_packet[8];
@@ -967,7 +969,7 @@ void updateGyro(){
       }
 
       if(fifoCountL == 42){
-        if (currentCycle == 50) {
+        if (currentCycle == CYCLE_THRESHOLD) {
           processQuat();
           sendQuat();
           currentCycle = 0;
