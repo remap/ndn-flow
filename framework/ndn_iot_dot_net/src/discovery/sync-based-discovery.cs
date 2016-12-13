@@ -163,7 +163,7 @@ namespace ndn_iot.discovery {
                 for (int i = 1; i < objects_.Keys.Count; i++)
                     jsonString += ", " + keys[i];
             }
-            jsonString = "{[" + jsonString + "]}";
+            jsonString = "{[\"" + jsonString + "\"]}";
             Console.Out.WriteLine("added sync data: " + jsonString);
             
             Data data = new Data(new Name(name));

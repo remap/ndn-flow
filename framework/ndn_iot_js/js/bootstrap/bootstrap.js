@@ -302,7 +302,17 @@ Bootstrap.prototype.onTrustSchemaTimeout = function (interest, onUpdateSuccess, 
     }, function (interest) {
         self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
     });
-    return
+    return;
+}
+
+Bootstrap.prototype.getDefaultCertificateName = function()
+{
+    if (this.defaultCertificateName === undefined) {
+        console.log("Default certificate is missing! Try setupDefaultIdentityAndRoot first?");
+        return;
+    } else {
+        return this.defaultCertificateName;
+    }
 }
 
 /**

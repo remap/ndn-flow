@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html>
+<head>
+<title>IoT Discovery Test</title>
+
+<script type="text/javascript" src="../contrib/dcodeio/long.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/bytebuffer-ab.min.js"></script>
+<script type="text/javascript" src="../contrib/dcodeio/protobuf.min.js"></script>
+
+<script type="text/javascript" src="../js/ndn.js"></script>
+<!-- <script type="text/javascript" src="../build/ndn-iot.js"></script> -->
+<script type="text/javascript" src="../js/bootstrap/bootstrap.js"></script>
+<script type="text/javascript" src="../js/discovery/sync-based-discovery.js"></script>
+
+<script type="text/javascript">
+
+var bootstrap = undefined;
+var face = undefined;
+var myKeyChain = undefined;
+var myCertificateName = undefined;
+
+var Observer = function() {
+}
+
+Observer.prototype.onStateChanged = function(name, msgTyle, message) {
+    console.log("Observer: " + name + " : " + msgTyle + " : " + message);
+}
+
+var EntityInfo = function() {
+    this.description = "";
+}
+
+EntityInfo.prototype.setDescription = function(desc) {
+    this.description = desc;
+}
+
+EntityInfo.prototype.getDescription = function() {
+    return this.description;
+}
+
+var EntitySerializer = function() {
+}
+
+EntitySerializer.prototype.serialize = function(info) {
+    return info.getDescription();
+}
+
+function randomString(length) {
+    var seed = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789';
+    var result = '';
+    for (var i = 0; i < length; i++) {
+        var pos = Math.floor(Math.random() * seed.length);
+        result += seed[pos];
+    }
+  return result;
+}
+
+// TODO: debug what's in iot-db, is it only the serial for initial interests, and also for opt track matching?
+function start()
+{    
+    face = new Face({"host": "127.0.0.1"});
+    bootstrap = new Bootstrap(face);
+
+    var objectPrefix = "/home/browser1";
+
+    var keyChain = bootstrap.setupDefaultIdentityAndRoot(new Name(objectPrefix), undefined, function onSetupComplete(certificateName, keyChain) {
+        var syncPrefix = new Name("/home/discovery");
+        var observer = new Observer();
+        var serializer = new EntitySerializer();
+
+        var discovery = new SyncBasedDiscovery(face, keyChain, certificateName, syncPrefix, observer, serializer);
+        discovery.start();
+
+        var entityName = new Name(objectPrefix).append(randomString(3));
+        var ei = new EntityInfo();
+        ei.setDescription(entityName.toUri());
+
+        discovery.addHostedObject(entityName.toUri(), ei);
+    }, function onSetupFailed(msg) {
+        console.log(msg);
+    });
+}
+
+</script>
+
+</head>
+
+<body>
+<button onclick="start()">Test</button>
+</body>
+
+</html>

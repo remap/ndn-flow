@@ -958,7 +958,17 @@ Bootstrap.prototype.onTrustSchemaTimeout = function (interest, onUpdateSuccess, 
     }, function (interest) {
         self.onTrustSchemaTimeout(interest, onUpdateSuccess, onUpdateFailed);
     });
-    return
+    return;
+}
+
+Bootstrap.prototype.getDefaultCertificateName = function()
+{
+    if (this.defaultCertificateName === undefined) {
+        console.log("Default certificate is missing! Try setupDefaultIdentityAndRoot first?");
+        return;
+    } else {
+        return this.defaultCertificateName;
+    }
 }
 
 /**
@@ -1412,7 +1422,7 @@ SyncBasedDiscovery.prototype.start = function ()
 
     interest.setMustBeFresh(true);
     interest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
-    this.face.expressInterest(interest, this.onSyncData, this.onSyncTimeout);
+    this.face.expressInterest(interest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
 
     console.log("Express interest: " + interest.getName().toUri());
     return;
@@ -1441,13 +1451,13 @@ SyncBasedDiscovery.prototype.addHostedObject = function
     // If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 
     //   is only "listening" for sync, and will not help in the sync process
     if (Object.keys(this.hostedObjects).length == 0) {
-        this.memoryContentCache.registerPrefix(this.syncPrefix, this.onRegisterFailed, this.onSyncInterest);
+        this.memoryContentCache.registerPrefix(this.syncPrefix, this.onRegisterFailed.bind(this), this.onSyncInterest.bind(this));
     }
     if (this.addObject(name)) {
         this.hostedObjects[name] = entityInfo;
         this.contentCacheAddEntityData(name, entityInfo);
         // TODO: should the user configure this prefix as well?
-        this.memoryContentCache.registerPrefix(new Name(name), this.onRegisterFailed, this.onEntityDataNotFound);
+        this.memoryContentCache.registerPrefix(new Name(name), this.onRegisterFailed.bind(this), this.onEntityDataNotFound.bind(this));
     } else {
         console.log("Item with this name already added");
     }
@@ -1482,11 +1492,14 @@ SyncBasedDiscovery.prototype.contentCacheAddEntityData = function
 
     data.setContent(content);
     // Interest issuer should not ask for mustBeFresh in this case, for now
-    data.getMetaInfo().setFreshnessPeriod(self._entityDataFreshnessPeriod);
-    this.keyChain.sign(data, this.certificateName);
-    this.memoryContentCache.add(data);
+    data.getMetaInfo().setFreshnessPeriod(this.entityDataFreshnessPeriod);
 
-    console.log("* added data: " + data.getName().toUri() + "; content: " + content);
+    var self = this;
+    this.keyChain.sign(data, this.certificateName, function() {
+        self.memoryContentCache.add(data);
+
+        console.log("* added data: " + data.getName().toUri() + "; content: " + content);        
+    });
 }
 
 SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
@@ -1500,12 +1513,14 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
         
     data.setContent(content);
     data.getMetaInfo().setFreshnessPeriod(this.syncDataFreshnessPeriod);
-        
-    this.keyChain.sign(data, this.certificateName);
-    // adding this data to memoryContentCache should satisfy the pending interest
-    this.memoryContentCache.add(data);
     
-    console.log("* added data: " + data.getName().toUri() + "; content: " + content);
+    var self = this;
+    this.keyChain.sign(data, this.certificateNamem, function() {
+        // adding this data to memoryContentCache should satisfy the pending interest
+        self.memoryContentCache.add(data);
+        
+        console.log("* added data: " + data.getName().toUri() + "; content: " + content);
+    });
 }
         
 
@@ -1566,10 +1581,10 @@ SyncBasedDiscovery.prototype.onSyncData = function
     // Hack for re-expressing sync interest after a short interval
     var dummyInterest = new Interest(new Name("/local/timeout"));
     dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestMinInterval);
-    this.face.expressInterest(dummyInterest, this.onDummyData, this.expressSyncInterest);
+    this.face.expressInterest(dummyInterest, this.onDummyData.bind(this), this.expressSyncInterest.bind(this));
     return;
 }
-    
+
 SyncBasedDiscovery.prototype.onSyncTimeout = function
   (interest)
 {
@@ -1577,7 +1592,7 @@ SyncBasedDiscovery.prototype.onSyncTimeout = function
     var newInterest = new Interest(new Name(this.syncPrefix).append(this.currentDigest));
     newInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     newInterest.setMustBeFresh(true);
-    this.face.expressInterest(newInterest, this.onSyncData, this.onSyncTimeout);
+    this.face.expressInterest(newInterest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
     console.log("Express interest: " + newInterest.getName().toUri());
 
     return;
@@ -1591,7 +1606,7 @@ SyncBasedDiscovery.prototype.onReceivedSyncData = function
     var interest = new Interest(new Name(itemName));
     interest.setInterestLifetimeMilliseconds(4000);
     interest.setMustBeFresh(false);
-    this.face.expressInterest(interest, this.onEntityData, this.onEntityTimeout);
+    this.face.expressInterest(interest, this.onEntityData.bind(this), this.onEntityTimeout.bind(this));
     
     return;
 }
@@ -1613,7 +1628,7 @@ SyncBasedDiscovery.prototype.onEntityData = function
 
     var dummyInterest = new Interest(new Name("/local/timeout"));
     dummyInterest.setInterestLifetimeMilliseconds(4000);
-    this.face.expressInterest(dummyInterest, this.onDummyData, function (a) {
+    this.face.expressInterest(dummyInterest, this.onDummyData.bind(this), function (a) {
         self.expressHeartbeatInterest(a, interest)
     });
     return;
@@ -1625,7 +1640,7 @@ SyncBasedDiscovery.prototype.expressHeartbeatInterest = function
     var newInterest = new Interest(entityInterest);
     newInterest.refreshNonce();
 
-    this.face.expressInterest(entityInterest, this.onHeartbeatData, this.onHeartbeatTimeout); 
+    this.face.expressInterest(entityInterest, this.onHeartbeatData.bind(this), this.onHeartbeatTimeout.bind(this)); 
 }
 
 SyncBasedDiscovery.prototype.onHeartbeatData = function
@@ -1635,7 +1650,7 @@ SyncBasedDiscovery.prototype.onHeartbeatData = function
     this.resetTimeoutCnt(interest.getName().toUri());
     var dummyInterest = new Interest(new Name("/local/timeout"));
     dummyInterest.setInterestLifetimeMilliseconds(4000);
-    this.face.expressInterest(dummyInterest, this.onDummyData, function (a) {
+    this.face.expressInterest(dummyInterest, this.onDummyData.bind(this), function (a) {
         self.expressHeartbeatInterest(a, interest);
     });
 }
@@ -1649,7 +1664,7 @@ SyncBasedDiscovery.prototype.onHeartbeatTimeout = function
         var newInterest = new Interest(interest.getName());
         console.log("Express interest: " + newInterest.getName().toUri());
         newInterest.setInterestLifetimeMilliseconds(4000);
-        this.face.expressInterest(newInterest, this.onHeartbeatData, this.onHeartbeatTimeout);
+        this.face.expressInterest(newInterest, this.onHeartbeatData.bind(this), this.onHeartbeatTimeout.bind(this));
     }
 }
 
@@ -1666,7 +1681,7 @@ SyncBasedDiscovery.prototype.expressSyncInterest = function
     var newInterest = new Interest(new Name(this.syncPrefix).append(this.currentDigest));
     newInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     newInterest.setMustBeFresh(true);
-    this.face.expressInterest(newInterest, this.onSyncData, this.onSyncTimeout);
+    this.face.expressInterest(newInterest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
     console.log("Dummy timeout; Express interest: " + newInterest.getName().toUri());
     return;
 }
