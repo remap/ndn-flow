@@ -288,26 +288,17 @@ static byte dmp_updates[29][9] =
     0x02, 0x16, 0x02, 0x00, 0x0A } //D_0_22 inv_set_fifo_rate
 };
 
-// Define input/output pins.
-// Input pins for buttons, and output pins for LED RGB On-Off control
-// GPIO2 on the RFduino RGB shield is the Red LED
-// GPIO3 on the RFduino RGB shield is the Green LED
-// GPIO4 on the RFduino RGB shield is the Blue LED
-
-#define RED_LED_PIN   2
-#define GREEN_LED_PIN 3
-#define BLUE_LED_PIN  4
-
 uint8_t HmacKey[64];
 uint8_t HmacKeyDigest[ndn_SHA256_DIGEST_SIZE];
 R_RANDOM_STRUCT RandomStruct;
 
 // Connected or no: for now connected seems to break updateGyro, left as true for initial value
 bool connected = true;
-uint64_t currentIdx = 0;
-char sendBuffer[BUFFER_SIZE][20] = {};
-int bufferHead = 0;
-int bufferTail = 0;
+unsigned long currentIdx = 0;
+
+//char sendBuffer[BUFFER_SIZE][20] = {};
+//int bufferHead = 0;
+//int bufferTail = 0;
 int currentCycle = 0;
 
 static void printHex(const uint8_t* buffer, size_t bufferLength)
@@ -419,35 +410,10 @@ setupGyroProducer()
 
 void setup()
 {
-  // put your setup code here, to run once:
-  // Enable outputs.
-  pinMode(RED_LED_PIN, OUTPUT);
-  pinMode(GREEN_LED_PIN, OUTPUT);
-  pinMode(BLUE_LED_PIN, OUTPUT);
-
   // Enable serial debug, type cntrl-M at runtime.
   Serial.begin(9600);
   while (!Serial); // Wait untilSerial is ready.
   Serial.println("RFduino started");
-
-  // Turn Off all LEDs initially
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(BLUE_LED_PIN, LOW);
-
-  // Indicate RGB LED is operational to user.
-  digitalWrite(RED_LED_PIN, HIGH);    // red
-  delay (500);
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, HIGH);  // green
-  delay (500);
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(BLUE_LED_PIN, HIGH);   // blue
-  delay (500);
-  digitalWrite(RED_LED_PIN, LOW);     // lights out
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(BLUE_LED_PIN, LOW);
 
   // configure the RFduino BLE properties
   RFduinoBLE.advertisementData = "ledbtn";
@@ -456,7 +422,6 @@ void setup()
   RFduinoBLE.txPowerLevel = -20;
   Serial.println("RFduino BLE Advertising interval is 500ms");
   Serial.println("RFduino BLE DeviceName: RFduino");
-  Serial.println("RFduino BLE Tx Power Level: -20dBm");
 
   // Generate a random seed.
   // Turn on the random number generator.
@@ -506,6 +471,8 @@ void setup()
   setupGyroProducer();
 }
 
+int count = 0;
+
 void
 loop()
 {
@@ -513,14 +480,16 @@ loop()
   //RFduino_ULPDelay(INFINITE);
   //if (connected) {
   updateGyro();  
-  if (bufferHead != bufferTail) {
-    //Serial.println(sendBuffer[bufferHead][0], HEX);
-    Serial.println(bufferHead, HEX);
-    RFduinoBLE.send((const char *)(sendBuffer + bufferHead), strlen((const char *)(sendBuffer + bufferHead)));
-    bufferHead = (bufferHead + 1) % BUFFER_SIZE;
-  } else {
-    Serial.println("buffer empty!");
-  }
+  
+//  if (bufferHead != bufferTail) {
+//    //Serial.println(sendBuffer[bufferHead][0], HEX);
+//    Serial.println(bufferHead, HEX);
+//    RFduinoBLE.send((const char *)(sendBuffer + bufferHead), strlen((const char *)(sendBuffer + bufferHead)));
+//    bufferHead = (bufferHead + 1) % BUFFER_SIZE;
+//  } else {
+//    Serial.println("buffer empty!");
+//  }
+//  
   //}
 }
 
@@ -528,18 +497,12 @@ void
 RFduinoBLE_onAdvertisement()
 {
   Serial.println("RFduino is doing BLE advertising ...");
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(BLUE_LED_PIN, LOW);
 }
 
 void
 RFduinoBLE_onConnect()
 {
   Serial.println("RFduino BLE connection successful");
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, HIGH);
-  digitalWrite(BLUE_LED_PIN, LOW);
   //connected = true;
 }
 
@@ -547,9 +510,6 @@ void
 RFduinoBLE_onDisconnect()
 {
   Serial.println("RFduino BLE disconnected");
-  digitalWrite(RED_LED_PIN, LOW);
-  digitalWrite(GREEN_LED_PIN, LOW);
-  digitalWrite(BLUE_LED_PIN, LOW);
   //connected = false;
 }
 
@@ -726,17 +686,17 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
 //      }
 //      Serial.print("\n");
       
-      // Connect the device before calling this function
-      //RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes);
+      // send as suggested by the BulkDataTransfer example: https://github.com/RFduino/RFduino/blob/master/libraries/RFduinoBLE/examples/BulkDataTransfer/BulkDataTransfer.ino
+      while (!RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes))
 
-      // we implemented the circular buffer since rfduino does not seem to handle looped send here too well
-      int newTail = (bufferTail + 1) % BUFFER_SIZE;
-      if (newTail == bufferHead) {
-        Serial.println("Send buffer full!");
-      } else {
-        memcpy(sendBuffer + bufferTail, packet, iFragment + nFragmentBytes);
-        bufferTail = newTail;
-      }
+//      // we implemented the circular buffer since rfduino does not seem to handle looped send here too well
+//      int newTail = (bufferTail + 1) % BUFFER_SIZE;
+//      if (newTail == bufferHead) {
+//        Serial.println("Send buffer full!");
+//      } else {
+//        memcpy(sendBuffer + bufferTail, packet, iFragment + nFragmentBytes);
+//        bufferTail = newTail;
+//      }
       
       // Increment the fragment index in the packet.
       ++packet[iFragmentIndex];
@@ -1057,7 +1017,6 @@ boolean fifoReady(){
 // Wire.endTransmission();
   byte fifoCountH = Wire.read();
   fifoCountL = Wire.read();
-// Serial.println(fifoCountL, DEC);
   if(fifoCountL == 42 || fifoCountL == 44){
     return 1;
   }
@@ -1118,7 +1077,7 @@ void updateGyro(){
       }
 
       if(fifoCountL == 42){
-        if (currentCycle == 5) {
+        if (currentCycle == 50) {
           processQuat();
           sendQuat();
           currentCycle = 0;
@@ -1200,7 +1159,7 @@ void sendQuat(){
   DataLite data(dataNameComponents, sizeof(dataNameComponents) / sizeof(dataNameComponents[0]), 0, 0);
   data.getName().append("gyro1");
   char sequence[20] = "";
-  sprintf(sequence, "%" PRIu64, currentIdx);
+  sprintf(sequence, "%u", currentIdx);
   data.getName().append(sequence);
   data.setContent(BlobLite((const uint8_t*)buffer, strlen(buffer)));
   signAndSendData(data);
