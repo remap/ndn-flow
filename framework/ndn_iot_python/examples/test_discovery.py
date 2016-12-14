@@ -52,6 +52,18 @@ def usage():
     return
 
 def main():
+    def updateDigest():
+        keys = ["/abc"]
+
+        # TODO: for now, may change the format of the list encoding for easier cross language compatibility
+        if len(keys) > 0:
+            m = hashlib.sha256()
+            m.update("1")
+            currentDigest = str(m.hexdigest())
+            print currentDigest
+        return
+    updateDigest()
+
     face = Face()
 
     # Use the system default key chain and certificate name to sign commands.

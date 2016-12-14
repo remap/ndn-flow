@@ -132,7 +132,6 @@ namespace ndn_iot.discovery {
         }
 
         public void onReceivedSyncData(string itemName) {
-            Console.Out.WriteLine("Sync data received: " + itemName);
             Interest interest = new Interest(new Name(itemName));
             interest.setInterestLifetimeMilliseconds(4000);
             interest.setMustBeFresh(false);
@@ -160,7 +159,6 @@ namespace ndn_iot.discovery {
                 for (int i = 1; i < objects_.Keys.Count; i++)
                     content += "\n" + keys[i];
             }
-            Console.Out.WriteLine("added sync data: " + content);
             
             Data data = new Data(new Name(name));
             data.setContent(new Blob(content));
@@ -212,7 +210,15 @@ namespace ndn_iot.discovery {
             public void onInterest
               (Name prefix, Interest interest, Face face, long interestFilterId,
                 InterestFilter filter) {
-                Console.Out.WriteLine("Data not found in cache: " + interest.getName().toUri());
+                string name = interest.getName().toUri();
+                if (sbd_.hostedObjects_.ContainsKey(name)) {
+                    var content = sbd_.serializer_.serialize(sbd_.hostedObjects_[name]);
+                    Data data = new Data(new Name(name));
+                    data.setContent(new Blob(content));
+                    data.getMetaInfo().setFreshnessPeriod(sbd_.entityDataFreshnessPeriod_);
+                    sbd_.keyChain_.sign(data, sbd_.certificateName_);
+                    sbd_.getFace().putData(data);
+                }
             }
 
             public void onRegisterFailed(Name prefix) {
@@ -248,6 +254,8 @@ namespace ndn_iot.discovery {
                 Interest newInterest = new Interest(new Name(sbd_.getSyncPrefix()).append(sbd_.getCurrentDigest()));
                 newInterest.setInterestLifetimeMilliseconds(sbd_.syncInterestLifetime_);
                 newInterest.setMustBeFresh(true);
+                Console.Out.WriteLine("re-express: " + newInterest.getName().toUri());
+
                 sbd_.getFace().expressInterest(newInterest, this, this);
             }
 

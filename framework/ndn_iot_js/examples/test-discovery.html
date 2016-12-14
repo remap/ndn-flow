@@ -3,6 +3,7 @@
 
 <html>
 <head>
+
 <title>IoT Discovery Test</title>
 
 <script type="text/javascript" src="../contrib/dcodeio/long.min.js"></script>
@@ -83,12 +84,26 @@ function start()
     });
 }
 
+function testHash() {
+    var keys = ["/abc"];
+
+    if (keys.length > 0) {
+        var m = Crypto.createHash('sha256');
+        m.update("a");
+        currentDigest = m.digest('hex');
+    }
+    console.log(currentDigest);
+    return;
+}
+
 </script>
 
 </head>
 
 <body>
 <button onclick="start()">Test</button>
+<button onclick="testHash()">Test Hash</button>
+<p id="hash"></p>
 </body>
 
 </html>

@@ -137,8 +137,6 @@ SyncBasedDiscovery.prototype.contentCacheAddEntityData = function
     var self = this;
     this.keyChain.sign(data, this.certificateName, function() {
         self.memoryContentCache.add(data);
-
-        console.log("* added data: " + data.getName().toUri() + "; content: " + content);        
     });
 }
 
@@ -163,8 +161,6 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
     this.keyChain.sign(data, this.certificateNamem, function() {
         // adding this data to memoryContentCache should satisfy the pending interest
         self.memoryContentCache.add(data);
-        
-        console.log("* added data: " + data.getName().toUri() + "; content: " + content);
     });
 }
         
@@ -216,7 +212,8 @@ SyncBasedDiscovery.prototype.onSyncData = function
 {
     //TODO: do verification first
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
-    var content = data.getContent().buf().split('\n');
+    var content = String(data.getContent().buf()).split('\n');
+
     for (var itemName in content) {
         if (!(content[itemName] in this.objects)) {
             if (content[itemName] != "") {
@@ -227,7 +224,7 @@ SyncBasedDiscovery.prototype.onSyncData = function
     
     // Hack for re-expressing sync interest after a short interval
     var dummyInterest = new Interest(new Name("/local/timeout"));
-    dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestMinInterval);
+    dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     this.face.expressInterest(dummyInterest, this.onDummyData.bind(this), this.expressSyncInterest.bind(this));
     return;
 }
@@ -346,7 +343,6 @@ SyncBasedDiscovery.prototype.addObject = function
         return true;
     }
 }
-        
 
 SyncBasedDiscovery.prototype.removeObject = function
   (name)
@@ -362,7 +358,6 @@ SyncBasedDiscovery.prototype.removeObject = function
         return false;
     }
 }
-        
 
 SyncBasedDiscovery.prototype.updateDigest = function ()
 {
