@@ -85,7 +85,7 @@ SyncBasedDiscovery.prototype.getObjects = function ()
     return this.objects;
 }
 
-SyncBasedDiscovery.prototype.addHostedObject = function
+SyncBasedDiscovery.prototype.publishEntity = function
   (name, entityInfo)
 {
     // If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 

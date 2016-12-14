@@ -78,7 +78,7 @@ function start()
         var ei = new EntityInfo();
         ei.setDescription(entityName.toUri());
 
-        discovery.addHostedObject(entityName.toUri(), ei);
+        discovery.publishEntity(entityName.toUri(), ei);
     }, function onSetupFailed(msg) {
         console.log(msg);
     });

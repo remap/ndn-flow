@@ -44,6 +44,7 @@ namespace ndn_iot.discovery {
 
             objects_ = new SortedDictionary<string, EntityInfoBase>();
             hostedObjects_ = new SortedDictionary<string, EntityInfoBase>();
+            numOutstandingInterest_ = 0;
 
             memoryContentCache_ = new MemoryContentCache(face_);
         }
@@ -51,10 +52,7 @@ namespace ndn_iot.discovery {
         // public facing interface
         public void start() {
             updateDigest();
-            Interest interest = new Interest((new Name(syncPrefix_)).append(currentDigest_));
-            interest.setMustBeFresh(true);
-            interest.setInterestLifetimeMilliseconds(syncInterestLifetime_);
-            face_.expressInterest(interest, sdh_, sdh_);
+            expressSyncInterest();
         }
 
         public void stop() {
@@ -69,7 +67,7 @@ namespace ndn_iot.discovery {
             return hostedObjects_;
         }
 
-        public void addHostedObject(string name, EntityInfoBase entityInfo) {
+        public void publishEntity(string name, EntityInfoBase entityInfo) {
             // If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 
             // is only "listening" for sync, and will not help in the sync process
             if (hostedObjects_.Count == 0) {
@@ -80,6 +78,8 @@ namespace ndn_iot.discovery {
                 contentCacheAddEntityData(name, entityInfo);
                 // TODO: should the user configure this prefix as well?
                 memoryContentCache_.registerPrefix(new Name(name), cih_, cih_);
+
+                expressSyncInterest();
             } else {
 
             }
@@ -120,7 +120,6 @@ namespace ndn_iot.discovery {
             var contentString = "";
             for (int i = content.position(); i < content.limit(); ++i)
                 contentString += (char)content.get(i);
-                Console.Out.WriteLine(contentString);
             return contentString;
         }
 
@@ -128,7 +127,9 @@ namespace ndn_iot.discovery {
             Interest newInterest = new Interest(new Name(syncPrefix_).append(currentDigest_));
             newInterest.setInterestLifetimeMilliseconds(syncInterestLifetime_);
             newInterest.setMustBeFresh(true);
+            Console.Out.WriteLine("re-express: " + newInterest.getName().toUri());
             face_.expressInterest(newInterest, sdh_, sdh_);
+            numOutstandingInterest_ ++;
         }
 
         public void onReceivedSyncData(string itemName) {
@@ -234,6 +235,7 @@ namespace ndn_iot.discovery {
             }
 
             public void onData(Interest interest, Data data) {
+                sbd_.numOutstandingInterest_ --;
                 string[] content = sbd_.contentToString(data).Split('\n');
 
                 for (int i = 0; i < content.Length; i++) {
@@ -244,19 +246,18 @@ namespace ndn_iot.discovery {
                     }
                 }
 
-                // Hack for re-expressing sync interest after a short interval
+                // Hack for reexpressing sync interest after a short interval
                 Interest dummyInterest = new Interest(new Name("/local/timeout"));
-                dummyInterest.setInterestLifetimeMilliseconds(sbd_.syncInterestMinInterval_);
+                dummyInterest.setInterestLifetimeMilliseconds(sbd_.syncInterestLifetime_);
                 sbd_.getFace().expressInterest(dummyInterest, sbd_.dsdh_, sbd_.dsdh_);
             }
 
             public void onTimeout(Interest interest) {
-                Interest newInterest = new Interest(new Name(sbd_.getSyncPrefix()).append(sbd_.getCurrentDigest()));
-                newInterest.setInterestLifetimeMilliseconds(sbd_.syncInterestLifetime_);
-                newInterest.setMustBeFresh(true);
-                Console.Out.WriteLine("re-express: " + newInterest.getName().toUri());
+                sbd_.numOutstandingInterest_ --;
 
-                sbd_.getFace().expressInterest(newInterest, this, this);
+                if (sbd_.numOutstandingInterest_ <= 0) {
+                    sbd_.expressSyncInterest();
+                }
             }
 
             SyncBasedDiscovery sbd_;
@@ -331,7 +332,9 @@ namespace ndn_iot.discovery {
             }
 
             public void onTimeout(Interest interest) {
-                sbd_.expressSyncInterest();
+                if (sbd_.numOutstandingInterest_ <= 0) {
+                    sbd_.expressSyncInterest();
+                }
             }
 
             SyncBasedDiscovery sbd_;
@@ -465,6 +468,8 @@ namespace ndn_iot.discovery {
         int syncDataFreshnessPeriod_;
         string initialDigest_;
         int syncInterestLifetime_;
+
+        private int numOutstandingInterest_;
 
         public int syncInterestMinInterval_;
         public static int TimeoutCntThreshold = 3;

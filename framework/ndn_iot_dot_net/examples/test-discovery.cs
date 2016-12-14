@@ -94,7 +94,7 @@ namespace ndn_iot.tests {
             EntityInfo ei = new EntityInfo();
             ei.setDescription(entityName.toUri());
 
-            discovery.addHostedObject(entityName.toUri(), ei);
+            discovery.publishEntity(entityName.toUri(), ei);
 
             while (true) {
                 face.processEvents();
