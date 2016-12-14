@@ -62,6 +62,8 @@ class SyncBasedDiscovery(object):
 
         self._observer = observer
         self._serializer = serializer
+        self._numOutstandingInterest = 0
+
         return
 
     """
@@ -71,11 +73,11 @@ class SyncBasedDiscovery(object):
         """
         Starts the discovery
         """
-        self.updateDigest()
-        interest = Interest(Name(self._syncPrefix).append(self._currentDigest))
+        interest = Interest(Name(self._syncPrefix).append(self._initialDigest))
         interest.setMustBeFresh(True)
         interest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
         self._face.expressInterest(interest, self.onSyncData, self.onSyncTimeout)
+        self._numOutstandingInterest += 1
         if __debug__:
             print("Express interest: " + interest.getName().toUri())
         return
@@ -94,7 +96,7 @@ class SyncBasedDiscovery(object):
     def getObjects(self):
         return self._objects
 
-    def addHostedObject(self, name, entityInfo):
+    def publishEntity(self, name, entityInfo):
         """
         Adds another object and registers prefix for that object's name
 
@@ -107,9 +109,23 @@ class SyncBasedDiscovery(object):
         #   is only "listening" for sync, and will not help in the sync process
         if len(self._hostedObjects.keys()) == 0:
             self._memoryContentCache.registerPrefix(self._syncPrefix, self.onRegisterFailed, self.onSyncInterest)
-        if self.addObject(name):
+        if self.addObject(name, False):
+            # Do not add itself to contentCache if its currentDigest is "00".
+            if self._currentDigest != self._initialDigest:
+                self.contentCacheAddSyncData(Name(self._syncPrefix).append(self._currentDigest))
+            
+            self.updateDigest()
+            
+            interest = Interest(Name(self._syncPrefix).append(self._currentDigest))
+            interest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
+            interest.setMustBeFresh(True)
+            
+            self._face.expressInterest(interest, self.onSyncData, self.onSyncTimeout)
+            self._numOutstandingInterest += 1
+
             self._hostedObjects[name] = entityInfo
             self.contentCacheAddEntityData(name, entityInfo)
+            self.notifyObserver(name, "ADD", "")
             # TODO: should the user configure this prefix as well?
             self._memoryContentCache.registerPrefix(Name(name), self.onRegisterFailed, self.onEntityDataNotFound)
         else:
@@ -147,12 +163,11 @@ class SyncBasedDiscovery(object):
         data = Data(Name(name))
 
         data.setContent(content)
-        # Interest issuer should not ask for mustBeFresh in this case, for now
+
         data.getMetaInfo().setFreshnessPeriod(self._entityDataFreshnessPeriod)
         self._keyChain.sign(data, self._certificateName)
         self._memoryContentCache.add(data)
-        if __debug__:
-            print("* added data: " + data.getName().toUri() + "; content: " + content)
+        print "added entity to cache: " + data.getName().toUri() + "; " + data.getContent().toRawStr()
 
     def contentCacheAddSyncData(self, dataName):
         sortedKeys = sorted(self._objects.keys())
@@ -168,8 +183,6 @@ class SyncBasedDiscovery(object):
         self._keyChain.sign(data, self._certificateName)
         # adding this data to memoryContentCache should satisfy the pending interest
         self._memoryContentCache.add(data)
-        if __debug__:
-            print("* added data: " + data.getName().toUri() + "; content: " + content)
 
     def onSyncInterest(self, prefix, interest, face, interestFilterId, filter):
         if interest.getName().size() != self._syncPrefix.size() + 1:
@@ -206,6 +219,7 @@ class SyncBasedDiscovery(object):
         if __debug__:
             print("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().toRawStr())
         content = data.getContent().toRawStr().split('\n')
+        self._numOutstandingInterest -= 1
         for itemName in content:
             if itemName not in self._objects:
                 if itemName != "":
@@ -213,30 +227,31 @@ class SyncBasedDiscovery(object):
 
         # Hack for re-expressing sync interest after a short interval
         dummyInterest = Interest(Name("/local/timeout"))
-        dummyInterest.setInterestLifetimeMilliseconds(self._syncInterestMinInterval)
-        self._face.expressInterest(dummyInterest, self.onDummyData, self.expressSyncInterest)
+        dummyInterest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
+        self._face.expressInterest(dummyInterest, self.onDummyData, self.onSyncTimeout)
+        self._numOutstandingInterest += 1
         return
 
     def onSyncTimeout(self, interest):
-        if __debug__:
-            print("Sync interest times out: " + interest.getName().toUri())
         newInterest = Interest(Name(self._syncPrefix).append(self._currentDigest))
         newInterest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
         newInterest.setMustBeFresh(True)
-        self._face.expressInterest(newInterest, self.onSyncData, self.onSyncTimeout)
-        if __debug__:
-            print("Express interest: " + newInterest.getName().toUri())
+        self._numOutstandingInterest -= 1
+        print "re-expressing: " + newInterest.getName().toUri()
+
+        if self._numOutstandingInterest <= 0:
+            self._face.expressInterest(newInterest, self.onSyncData, self.onSyncTimeout)
+            self._numOutstandingInterest += 1
         return
 
     """
     Handling received sync data: express entity interest
     """
     def onReceivedSyncData(self, itemName):
-        print "Received itemName: " + itemName
         interest = Interest(Name(itemName))
         interest.setInterestLifetimeMilliseconds(4000)
         interest.setMustBeFresh(False)
-        self._face.expressInterest(interest, self.onEntityData, self.onEntityTimeout)
+        self._face.expressInterest(interest, self.onEntityData, self.onEntityTimeout) 
         return
 
     def onEntityTimeout(self, interest):
@@ -244,9 +259,8 @@ class SyncBasedDiscovery(object):
         return
 
     def onEntityData(self, interest, data):
-        print "Got data: " + data.getName().toUri()
-        self.addObject(interest.getName().toUri())
-        print "Added device: " + interest.getName().toUri()
+        self.addObject(interest.getName().toUri(), True)
+        self.notifyObserver(interest.getName().toUri(), "ADD", "");
 
         dummyInterest = Interest(Name("/local/timeout"))
         dummyInterest.setInterestLifetimeMilliseconds(4000)
@@ -269,7 +283,6 @@ class SyncBasedDiscovery(object):
             print "Remove: " + interest.getName().toUri() + " because of consecutive timeout cnt exceeded"
         else:
             newInterest = Interest(interest.getName())
-            print "Express interest: " + newInterest.getName().toUri()
             newInterest.setInterestLifetimeMilliseconds(4000)
             self._face.expressInterest(newInterest, self.onHeartbeatData, self.onHeartbeatTimeout)
 
@@ -279,23 +292,16 @@ class SyncBasedDiscovery(object):
         return
 
     def expressSyncInterest(self, interest):
-        newInterest = Interest(Name(self._syncPrefix).append(self._currentDigest))
-        newInterest.setInterestLifetimeMilliseconds(self._syncInterestLifetime)
-        newInterest.setMustBeFresh(True)
-        self._face.expressInterest(newInterest, self.onSyncData, self.onSyncTimeout)
-        if __debug__:
-            print("Dummy timeout; Express interest: " + newInterest.getName().toUri())
+        self.onSyncTimeout(interest)
         return
 
-
-    def addObject(self, name):
+    def addObject(self, name, update):
         if name in self._objects:
             return False
         else:
             self._objects[name] = {"timeout_count": 0}
-            self.notifyObserver(name, "ADD", "")
-            self.contentCacheAddSyncData(Name(self._syncPrefix).append(self._currentDigest))
-            self.updateDigest()
+            if update:
+                self.updateDigest()
             return True
 
     def removeObject(self, name):
@@ -315,7 +321,6 @@ class SyncBasedDiscovery(object):
             for item in sorted(self._objects.keys()):
                 m.update(item)
             self._currentDigest = str(m.hexdigest())
-            print "** current digest is " + self._currentDigest
         else:
             self._currentDigest = self._initialDigest
         return
@@ -347,4 +352,12 @@ class SyncBasedDiscovery(object):
         return
 
     def onEntityDataNotFound(self, prefix, interest, face, interestFilterId, filter):
+        name = interest.getName().toUri()
+        if name in self._hostedObjects:
+            content = self._serializer.serialize(self._hostedObjects[name])
+            data = Data(Name(name))
+            data.setContent(content)
+            data.getMetaInfo().setFreshnessPeriod(self._entityDataFreshnessPeriod)
+            self._keyChain.sign(data, self._certificateName)
+            self._face.putData(data)
         return

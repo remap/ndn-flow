@@ -1508,7 +1508,12 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
     var keys = Object.keys(this.objects);
     keys.sort();
 
-    var content = JSON.stringify(keys);
+    var content = "";
+    for (var item in keys) {
+        content += keys[item] + "\n";
+    }
+    content.trim();
+
     var data = new Data(new Name(dataName));
         
     data.setContent(content);
@@ -1571,10 +1576,12 @@ SyncBasedDiscovery.prototype.onSyncData = function
 {
     //TODO: do verification first
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
-    var content = JSON.parse(data.getContent().buf());
+    var content = data.getContent().buf().split('\n');
     for (var itemName in content) {
-        if (!(itemName in this.objects)) {
-            this.onReceivedSyncData(itemName);
+        if (!(content[itemName] in this.objects)) {
+            if (content[itemName] != "") {
+                this.onReceivedSyncData(content[itemName]);
+            }
         }
     }
     

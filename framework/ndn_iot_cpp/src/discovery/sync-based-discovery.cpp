@@ -107,7 +107,8 @@ SyncBasedDiscovery::onTimeout
   newInterest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
   newInterest.setMustBeFresh(true);
   
-  if (numOutstandingInterest_ == 0) {
+  if (numOutstandingInterest_ <= 0) {
+    cout << "re-expressing " << newInterest.getName().toUri() << endl;
     face_.expressInterest
       (newInterest, 
        bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2), 

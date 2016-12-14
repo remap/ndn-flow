@@ -30,8 +30,8 @@ namespace ndn_iot.discovery {
             initialDigest_ = "00";
             currentDigest_ = "00";
 
-            syncDataFreshnessPeriod_ = 4000;
-            syncInterestLifetime_ = 4000;
+            syncDataFreshnessPeriod_ = 2000;
+            syncInterestLifetime_ = 2000;
             syncInterestMinInterval_ = 500;
             entityDataFreshnessPeriod_ = 10000;
 

@@ -44,8 +44,7 @@ class DiscoveryTest(object):
 
     def start(self):
         testObjectName = Name("home").append("python-publisher-" + str(random.randint(1, 100)))
-        self._discovery.addHostedObject(testObjectName.toUri(), MyEntityInfo("good"))
-        print "hosting object " + testObjectName.toUri()
+        self._discovery.publishEntity(testObjectName.toUri(), MyEntityInfo("good"))
         self._discovery.start()
 
 def usage():
