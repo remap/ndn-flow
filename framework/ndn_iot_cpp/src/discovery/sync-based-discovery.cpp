@@ -29,7 +29,8 @@ SyncBasedDiscovery::start()
 
   face_.expressInterest
     (interest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2),
-     bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));    
+     bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));   
+  numOutstandingInterest_ ++; 
 }
 
 void 
@@ -39,6 +40,8 @@ SyncBasedDiscovery::onData
 {
   if (!enabled_)
     return ;
+  numOutstandingInterest_ --;
+
   string content;
   for (size_t i = 0; i < data->getContent().size(); ++i)
     content += (*data->getContent())[i];
@@ -68,26 +71,12 @@ SyncBasedDiscovery::onData
   Interest timeout("/local/timeout");
   timeout.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
   
+  // onTimeout here does the exact same thing as expressBroadcastInterest
   face_.expressInterest
-    (timeout, bind(&SyncBasedDiscovery::dummyOnData, shared_from_this(), _1, _2),
-     bind(&SyncBasedDiscovery::expressBroadcastInterest, shared_from_this(), _1));
-  return;
-}
-
-void
-SyncBasedDiscovery::expressBroadcastInterest
-  (const ptr_lib::shared_ptr<const Interest>& interest)
-{
-  Name name(broadcastPrefix_);
-  name.append(currentDigest_);
-
-  Interest newInterest(name);
-  newInterest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
-  newInterest.setMustBeFresh(true);
-  
-  face_.expressInterest
-    (newInterest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2),
+    (timeout, 
+     bind(&SyncBasedDiscovery::dummyOnData, shared_from_this(), _1, _2),
      bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));
+  numOutstandingInterest_ ++;
   return;
 }
 
@@ -98,6 +87,7 @@ SyncBasedDiscovery::dummyOnData
 {
   if (!enabled_)
     return ;
+
   cerr << "Dummy onData called." << endl;
   throw std::runtime_error("Discovery library called dummyOnData, which shouldn't be called in any case.\n");
   return;
@@ -109,16 +99,21 @@ SyncBasedDiscovery::onTimeout
 {
   if (!enabled_)
     return ;
+  numOutstandingInterest_ --;
   Name interestName(broadcastPrefix_);
   interestName.append(currentDigest_);
   
   Interest newInterest(interestName);
   newInterest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
   newInterest.setMustBeFresh(true);
-
-  face_.expressInterest
-    (newInterest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2), 
-     bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));
+  
+  if (numOutstandingInterest_ == 0) {
+    face_.expressInterest
+      (newInterest, 
+       bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2), 
+       bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));
+    numOutstandingInterest_ ++;
+  }
 }
 
 void 
@@ -293,8 +288,10 @@ SyncBasedDiscovery::publishObject(std::string name)
     interest.setMustBeFresh(true);
     
     face_.expressInterest
-      (interest, bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2), 
+      (interest, 
+       bind(&SyncBasedDiscovery::onData, shared_from_this(), _1, _2), 
        bind(&SyncBasedDiscovery::onTimeout, shared_from_this(), _1));
+    numOutstandingInterest_ ++;
   }
   else {
     cerr << "Object already exists." << endl;

@@ -72,7 +72,8 @@ namespace discovery
      : broadcastPrefix_(broadcastPrefix), onReceivedSyncData_(onReceivedSyncData), 
        face_(face), keyChain_(keyChain), certificateName_(certificateName), 
        contentCache_(&face), newComerDigest_("00"), currentDigest_(newComerDigest_),
-       defaultDataFreshnessPeriod_(2000), defaultInterestLifetime_(2000), enabled_(true)
+       defaultDataFreshnessPeriod_(2000), defaultInterestLifetime_(2000), enabled_(true), 
+       numOutstandingInterest_(0)
     {
     }
     
@@ -116,7 +117,9 @@ namespace discovery
        const ndn::ptr_lib::shared_ptr<ndn::Data>& data);
        
     void expressBroadcastInterest
-      (const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest);
+      (const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest) {
+      onTimeout(interest);
+    }
     
     void onInterestCallback
       (const ndn::ptr_lib::shared_ptr<const ndn::Name>& prefix,
@@ -247,6 +250,7 @@ namespace discovery
     // This serves as the rootDigest in ChronoSync.
     std::string currentDigest_;
     bool enabled_;
+    int numOutstandingInterest_;
     
     // This serves as the list of objects to be synchronized. 
     // For now, it's the list of full conference names (prefix + conferenceName)
