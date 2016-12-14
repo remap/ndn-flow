@@ -85,13 +85,10 @@ function start()
 }
 
 function testHash() {
-    var keys = ["/abc"];
-
-    if (keys.length > 0) {
-        var m = Crypto.createHash('sha256');
-        m.update("a");
-        currentDigest = m.digest('hex');
-    }
+    var m = Crypto.createHash('sha256');
+    // need to use md.updateString to avoid the default updateHex call in ndn-js
+    m.md.updateString("1");
+    currentDigest = m.digest('hex');
     console.log(currentDigest);
     return;
 }

@@ -1455,8 +1455,8 @@ SyncBasedDiscovery.prototype.addHostedObject = function
     }
     if (this.addObject(name)) {
         this.hostedObjects[name] = entityInfo;
+        // TODO: debug this, seems to not working as intended yet
         this.contentCacheAddEntityData(name, entityInfo);
-        // TODO: should the user configure this prefix as well?
         this.memoryContentCache.registerPrefix(new Name(name), this.onRegisterFailed.bind(this), this.onEntityDataNotFound.bind(this));
     } else {
         console.log("Item with this name already added");
@@ -1497,8 +1497,6 @@ SyncBasedDiscovery.prototype.contentCacheAddEntityData = function
     var self = this;
     this.keyChain.sign(data, this.certificateName, function() {
         self.memoryContentCache.add(data);
-
-        console.log("* added data: " + data.getName().toUri() + "; content: " + content);        
     });
 }
 
@@ -1523,8 +1521,6 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
     this.keyChain.sign(data, this.certificateNamem, function() {
         // adding this data to memoryContentCache should satisfy the pending interest
         self.memoryContentCache.add(data);
-        
-        console.log("* added data: " + data.getName().toUri() + "; content: " + content);
     });
 }
         
@@ -1576,7 +1572,8 @@ SyncBasedDiscovery.prototype.onSyncData = function
 {
     //TODO: do verification first
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
-    var content = data.getContent().buf().split('\n');
+    var content = String(data.getContent().buf()).split('\n');
+
     for (var itemName in content) {
         if (!(content[itemName] in this.objects)) {
             if (content[itemName] != "") {
@@ -1587,7 +1584,7 @@ SyncBasedDiscovery.prototype.onSyncData = function
     
     // Hack for re-expressing sync interest after a short interval
     var dummyInterest = new Interest(new Name("/local/timeout"));
-    dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestMinInterval);
+    dummyInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     this.face.expressInterest(dummyInterest, this.onDummyData.bind(this), this.expressSyncInterest.bind(this));
     return;
 }
@@ -1706,7 +1703,6 @@ SyncBasedDiscovery.prototype.addObject = function
         return true;
     }
 }
-        
 
 SyncBasedDiscovery.prototype.removeObject = function
   (name)
@@ -1722,7 +1718,6 @@ SyncBasedDiscovery.prototype.removeObject = function
         return false;
     }
 }
-        
 
 SyncBasedDiscovery.prototype.updateDigest = function ()
 {
@@ -1733,8 +1728,7 @@ SyncBasedDiscovery.prototype.updateDigest = function ()
     if (keys.length > 0) {
         var m = Crypto.createHash('sha256');
         for (var i = 0; i < keys.length; i++) {
-            // debug hash creation
-            m.update(keys[i]);
+            m.md.updateString(keys[i]);
         }
         this.currentDigest = m.digest('hex');
     } else {
@@ -1786,5 +1780,20 @@ SyncBasedDiscovery.prototype.onRegisterFailed = function
 SyncBasedDiscovery.prototype.onEntityDataNotFound = function 
   (prefix, interest, face, interestFilterId, filter)
 {
+    var name = interest.getName().toUri();
+    if (name in this.hostedObjects) {
+        var content = this.serializer.serialize(this.hostedObjects[name]);
+        var data = new Data(new Name(name));
+
+        data.setContent(content);
+        // Interest issuer should not ask for mustBeFresh in this case, for now
+        data.getMetaInfo().setFreshnessPeriod(this.entityDataFreshnessPeriod);
+
+        var self = this;
+        this.keyChain.sign(data, this.certificateName, function() {
+            self.memoryContentCache.add(data);
+        });
+    }
+    
     return;
 }

@@ -95,8 +95,8 @@ SyncBasedDiscovery.prototype.addHostedObject = function
     }
     if (this.addObject(name)) {
         this.hostedObjects[name] = entityInfo;
+        // TODO: debug this, seems to not working as intended yet
         this.contentCacheAddEntityData(name, entityInfo);
-        // TODO: should the user configure this prefix as well?
         this.memoryContentCache.registerPrefix(new Name(name), this.onRegisterFailed.bind(this), this.onEntityDataNotFound.bind(this));
     } else {
         console.log("Item with this name already added");
@@ -368,8 +368,7 @@ SyncBasedDiscovery.prototype.updateDigest = function ()
     if (keys.length > 0) {
         var m = Crypto.createHash('sha256');
         for (var i = 0; i < keys.length; i++) {
-            // debug hash creation
-            m.update(keys[i]);
+            m.md.updateString(keys[i]);
         }
         this.currentDigest = m.digest('hex');
     } else {
@@ -421,5 +420,20 @@ SyncBasedDiscovery.prototype.onRegisterFailed = function
 SyncBasedDiscovery.prototype.onEntityDataNotFound = function 
   (prefix, interest, face, interestFilterId, filter)
 {
+    var name = interest.getName().toUri();
+    if (name in this.hostedObjects) {
+        var content = this.serializer.serialize(this.hostedObjects[name]);
+        var data = new Data(new Name(name));
+
+        data.setContent(content);
+        // Interest issuer should not ask for mustBeFresh in this case, for now
+        data.getMetaInfo().setFreshnessPeriod(this.entityDataFreshnessPeriod);
+
+        var self = this;
+        this.keyChain.sign(data, this.certificateName, function() {
+            self.memoryContentCache.add(data);
+        });
+    }
+    
     return;
 }
