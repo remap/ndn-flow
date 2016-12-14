@@ -104,7 +104,7 @@ public:
     EntityInfo ei;
     ei.setDescription(entityName.toUri());
 
-    discovery->publishEntity(entityName.toUri(), ptr_lib::make_shared<EntityInfo>(ei));
+    discovery->publishObject(entityName.toUri(), ptr_lib::make_shared<EntityInfo>(ei));
     boost::asio::io_service::work work(ioService_);
     ioService_.run();
   }

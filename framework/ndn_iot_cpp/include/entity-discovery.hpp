@@ -72,7 +72,7 @@ namespace discovery
      * @return true, if entity name is not already published by this instance; false if otherwise.
      */
     bool 
-    publishEntity(ndn::Name entityName, ndn::ptr_lib::shared_ptr<EntityInfoBase> entityInfo);
+    publishObject(ndn::Name entityName, ndn::ptr_lib::shared_ptr<EntityInfoBase> entityInfo);
   
     /**
      * Stop publishing the entity of this instance. 

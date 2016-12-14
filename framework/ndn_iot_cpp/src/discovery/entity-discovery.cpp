@@ -65,7 +65,7 @@ EntityDiscovery::getEntity(std::string entityName)
 }
 
 bool 
-EntityDiscovery::publishEntity
+EntityDiscovery::publishObject
   (Name entityName, ptr_lib::shared_ptr<EntityInfoBase> entityInfo) 
 {
   Name entityFullName(entityName);

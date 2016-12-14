@@ -51,6 +51,8 @@ var SyncBasedDiscovery = function SyncBasedDiscovery
     this.observer = observer;
     this.serializer = serializer;
 
+    this.numOutstandingInterest = 0;
+
     return;
 }
 
@@ -63,6 +65,7 @@ SyncBasedDiscovery.prototype.start = function ()
     interest.setMustBeFresh(true);
     interest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     this.face.expressInterest(interest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
+    this.numOutstandingInterest += 1;
 
     console.log("Express interest: " + interest.getName().toUri());
     return;
@@ -74,7 +77,6 @@ SyncBasedDiscovery.prototype.stop = function ()
     return;
 }
 
-
 SyncBasedDiscovery.prototype.getHostedObjects = function ()
 {
     return this.hostedObjects;
@@ -85,7 +87,7 @@ SyncBasedDiscovery.prototype.getObjects = function ()
     return this.objects;
 }
 
-SyncBasedDiscovery.prototype.publishEntity = function
+SyncBasedDiscovery.prototype.publishObject = function
   (name, entityInfo)
 {
     // If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 
@@ -210,6 +212,7 @@ SyncBasedDiscovery.prototype.replySyncInterest = function
 SyncBasedDiscovery.prototype.onSyncData = function
   (interest, data)
 {
+    this.numOutstandingInterest -= 1;
     //TODO: do verification first
     console.log("Got sync data; name: " + data.getName().toUri() + "; content: " + data.getContent().buf());
     var content = String(data.getContent().buf()).split('\n');
@@ -232,13 +235,11 @@ SyncBasedDiscovery.prototype.onSyncData = function
 SyncBasedDiscovery.prototype.onSyncTimeout = function
   (interest)
 {
+    this.numOutstandingInterest -= 1;
     console.log("Sync interest times out: " + interest.getName().toUri());
-    var newInterest = new Interest(new Name(this.syncPrefix).append(this.currentDigest));
-    newInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
-    newInterest.setMustBeFresh(true);
-    this.face.expressInterest(newInterest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
-    console.log("Express interest: " + newInterest.getName().toUri());
-
+    if (this.numOutstandingInterest <= 0) {
+        this.expressSyncInterest();
+    }
     return;
 }
 
@@ -326,6 +327,7 @@ SyncBasedDiscovery.prototype.expressSyncInterest = function
     newInterest.setInterestLifetimeMilliseconds(this.syncInterestLifetime);
     newInterest.setMustBeFresh(true);
     this.face.expressInterest(newInterest, this.onSyncData.bind(this), this.onSyncTimeout.bind(this));
+    this.numOutstandingInterest += 1;
     console.log("Dummy timeout; Express interest: " + newInterest.getName().toUri());
     return;
 }

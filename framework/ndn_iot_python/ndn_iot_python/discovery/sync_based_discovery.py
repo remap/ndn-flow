@@ -96,7 +96,7 @@ class SyncBasedDiscovery(object):
     def getObjects(self):
         return self._objects
 
-    def publishEntity(self, name, entityInfo):
+    def publishObject(self, name, entityInfo):
         """
         Adds another object and registers prefix for that object's name
 

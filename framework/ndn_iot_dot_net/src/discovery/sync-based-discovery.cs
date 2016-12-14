@@ -67,7 +67,7 @@ namespace ndn_iot.discovery {
             return hostedObjects_;
         }
 
-        public void publishEntity(string name, EntityInfoBase entityInfo) {
+        public void publishObject(string name, EntityInfoBase entityInfo) {
             // If this is the first object we host, we register for sync namespace: meaning a participant not hosting anything 
             // is only "listening" for sync, and will not help in the sync process
             if (hostedObjects_.Count == 0) {
