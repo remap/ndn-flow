@@ -49,7 +49,7 @@ namespace ndn_iot.tests {
             //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
 
             // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
-            AppConsumerSequenceNumber consumer = new AppConsumerSequenceNumber(face, keyChain, certificateName, false);
+            AppConsumerSequenceNumber consumer = new AppConsumerSequenceNumber(face, keyChain, certificateName, false, 5, -1);
             ConsumerDataHandler cdh = new ConsumerDataHandler();
 
             // todo: fill in simulator prefix

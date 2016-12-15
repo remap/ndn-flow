@@ -9,43 +9,54 @@ namespace ndn_iot.consumer {
     // actually, not just the retrans mechanism, ordinary fetching could cause dangling, too
 
     public class AppConsumerSequenceNumber : AppConsumer {
+        // Check: the default param to -1 does not work, for now manually passing -1 to this function to start from rightMostChild
         public AppConsumerSequenceNumber
-          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, int defaultPipelineSize = 5, int defaultSeqNumber = 0) {
+          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, int defaultPipelineSize = 5, int defaultSeqNumber = -1) {
             face_ = face;
             keyChain_ = keyChain;
             certificateName_ = certificateName;
             doVerify_ = doVerify;
 
             pipelineSize_ = defaultPipelineSize;
+
             currentSeqNumber_ = defaultSeqNumber;
             emptySlot_ = defaultPipelineSize;
 
             verifyFailedRetransInterval_ = 4000;
             defaultInterestLifetime_ = 4000;
+            dh_ = null;
         }
 
         public void consume(Name prefix, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
-            int num = emptySlot_;
-
-            for (int i = 0; i < num; i++) {
+            if (dh_ == null) {
+                dh_ = new DataHandler(this, onVerified, onVerifyFailed, onTimeout, currentSeqNumber_ < 0);
+            }
+            if (currentSeqNumber_ < 0) {
                 Name name = new Name(prefix);
-                name.append(Convert.ToString(currentSeqNumber_));
                 Interest interest = new Interest(name);
-                
-                // interest configuration / template?
+                interest.setChildSelector(1);
                 interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
+                face_.expressInterest(interest, dh_, dh_);
+            } else {
+                int num = emptySlot_;
+                for (int i = 0; i < num; i++) {
+                    Name name = new Name(prefix);
+                    name.append(Convert.ToString(currentSeqNumber_));
+                    Interest interest = new Interest(name);
+                    
+                    // interest configuration / template?
+                    interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
 
-                DataHandler dh = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
-                face_.expressInterest(interest, dh, dh);
-                Console.Out.WriteLine("interest expressed: " + interest.getName().toUri());
+                    face_.expressInterest(interest, dh_, dh_);
 
-                currentSeqNumber_ += 1;
-                emptySlot_ -= 1;
+                    currentSeqNumber_ += 1;
+                    emptySlot_ -= 1;
+                }
             }
         }
 
         public class DataHandler : OnData, OnTimeout, OnVerified {
-            public DataHandler(AppConsumerSequenceNumber aps, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
+            public DataHandler(AppConsumerSequenceNumber aps, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout, bool resetSeqNumber = false) {
                 face_ = aps.getFace();
                 keyChain_ = aps.getKeyChain();
                 doVerify_ = aps.getDoVerify();
@@ -55,6 +66,7 @@ namespace ndn_iot.consumer {
                 onVerified_ = onVerified;
                 onVerifyFailed_ = onVerifyFailed;
                 onTimeout_ = onTimeout;
+                resetSeqNumber_ = resetSeqNumber;
             }
 
             public void onData(Interest interest, Data data) {
@@ -72,13 +84,18 @@ namespace ndn_iot.consumer {
 
                 face_.expressInterest(newInterest, this, this);
                 onTimeout_.onTimeout(interest);
-                Console.Out.WriteLine("interest expressed: " + newInterest.getName().toUri());
             }
 
             public void onVerified(Data data) {
                 //aps_.incrementCurrentSeqNumber();
-                aps_.incrementEmptySlot();
-
+                if (!resetSeqNumber_) {
+                    aps_.incrementEmptySlot();
+                } else {
+                    var seqNumber = Convert.ToInt32(data.getName().get(-1).toEscapedString());
+                    aps_.currentSeqNumber_ = seqNumber + 1;
+                    resetSeqNumber_ = false;
+                }
+                
                 aps_.consume(data.getName().getPrefix(-1), onVerified_, onVerifyFailed_, onTimeout_);
                 onVerified_.onVerified(data);
             }
@@ -92,6 +109,7 @@ namespace ndn_iot.consumer {
             public OnVerified onVerified_;
             public OnVerifyFailed onVerifyFailed_;
             public OnTimeout onTimeout_;
+            private bool resetSeqNumber_;
 
             public class VerifyFailedHandler : OnData, OnTimeout, OnVerifyFailed {
                 public VerifyFailedHandler(DataHandler dh, Interest interest) {
@@ -154,6 +172,8 @@ namespace ndn_iot.consumer {
 
         private int verifyFailedRetransInterval_;
         private int defaultInterestLifetime_;
+
+        private DataHandler dh_;
     }
 }
 
