@@ -86,14 +86,25 @@ class Bootstrap(object):
                 self._defaultCertificateName = self._identityManager.getDefaultCertificateNameForIdentity(self._defaultIdentity)
                 self._defaultKeyName = self._identityManager.getDefaultKeyNameForIdentity(identityName)
             except SecurityException:
-                msg = "Identity " + identityName.toUri() + " in configuration does not exist. Please configure the device with this identity first"
-                print msg
+                msg = "Identity " + identityName.toUri() + " in configuration does not exist. Please configure the device with this identity first."
                 if onSetupFailed:
                     onSetupFailed(msg)
+                return
+
+            if not self._defaultCertificateName:
+                msg = "Unable to get default certificate name for identity " + identityName.toUri() + ". Please configure the device with this identity first."
+                if onSetupFailed:
+                    onSetupFailed(msg)
+                return
+
+            if not self._defaultKeyName:
+                msg = "Unable to get default key name for identity " + identityName.toUri() + ". Please configure the device with this identity first."
+                if onSetupFailed:
+                    onSetupFailed(msg)
+                return
             
             # Note we'll not be able to issue face commands before this point
             self._face.setCommandSigningInfo(self._keyChain, self._defaultCertificateName)
-            print "default cert name " + self._defaultCertificateName.toUri()
             # Serve our own certificate
             self._certificateContentCache.registerPrefix(Name(self._defaultCertificateName).getPrefix(-1), self.onRegisterFailed)
             self._certificateContentCache.add(self._keyChain.getCertificate(self._defaultCertificateName))
