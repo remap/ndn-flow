@@ -35,8 +35,7 @@ namespace ndn_iot.bootstrap {
     public delegate void OnUpdateSuccess(string schema, bool isInitial);
     public delegate void OnUpdateFailed(string msg);
 
-    public class Bootstrap : OnRegisterFailed {        
-
+    public class Bootstrap : OnRegisterFailed {
         public Bootstrap(Face face) {
             applicationName_ = "";
 
@@ -168,7 +167,7 @@ namespace ndn_iot.bootstrap {
             KeyChain keyChain_;
         }
 
-        public class AppRequestVerifyHandler: OnVerified, OnVerifyFailed {
+        public class AppRequestVerifyHandler: OnVerified, OnDataValidationFailed {
             public AppRequestVerifyHandler(OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
                 onRequestSuccess_ = onRequestSuccess;
                 onRequestFailed_ = onRequestFailed;
@@ -185,8 +184,8 @@ namespace ndn_iot.bootstrap {
                 }
             }
 
-            public void onVerifyFailed(Data data) {
-                onRequestFailed_("Application request response verification failed.");
+            public void onDataValidationFailed(Data data, string reason) {
+                onRequestFailed_("Application request response verification failed: " + reason);
             }
 
             OnRequestSuccess onRequestSuccess_;
@@ -236,7 +235,7 @@ namespace ndn_iot.bootstrap {
             OnUpdateFailed onUpdateFailed_;
         }
 
-        class TrustSchemaVerifyHandler : OnVerified, OnVerifyFailed {
+        class TrustSchemaVerifyHandler : OnVerified, OnDataValidationFailed {
             public TrustSchemaVerifyHandler(OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed, Bootstrap bs) {
                 onUpdateSuccess_ = onUpdateSuccess;
                 onUpdateFailed_ = onUpdateFailed;
@@ -275,8 +274,8 @@ namespace ndn_iot.bootstrap {
                 }
             }
 
-            public void onVerifyFailed(Data data) {
-                onUpdateFailed_("Trust schema verification failed.");
+            public void onDataValidationFailed(Data data, string reason) {
+                onUpdateFailed_("Trust schema verification failed: " + reason);
             }
 
             OnUpdateSuccess onUpdateSuccess_;

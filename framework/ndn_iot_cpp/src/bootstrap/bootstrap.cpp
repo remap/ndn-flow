@@ -175,9 +175,9 @@ Bootstrap::onAppRequestDataVerified
 
 void
 Bootstrap::onAppRequestDataVerifyFailed
-(const ptr_lib::shared_ptr<Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
+(const ptr_lib::shared_ptr<Data>& data, string reason, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
 {
-  onRequestFailed("Application request response verification failed");
+  onRequestFailed("Application request response verification failed: " + reason);
 }
 
 void
@@ -191,7 +191,7 @@ Bootstrap::onAppRequestData
 
   keyChain_->verifyData(data, 
     bind(&Bootstrap::onAppRequestDataVerified, this, _1, onRequestSuccess, onRequestFailed), 
-    (const OnVerifyFailed)bind(&Bootstrap::onAppRequestDataVerifyFailed, this, _1, onRequestSuccess, onRequestFailed));
+    (const OnDataValidationFailed)bind(&Bootstrap::onAppRequestDataVerifyFailed, this, _1, _2, onRequestSuccess, onRequestFailed));
   return;
 }
 
@@ -260,7 +260,7 @@ Bootstrap::onTrustSchemaData
     cout << data->getName().toUri() << endl;
     keyChain_->verifyData(data, 
       bind(&Bootstrap::onSchemaVerified, this, _1, onUpdateSuccess, onUpdateFailed),
-      (const OnVerifyFailed)bind(&Bootstrap::onSchemaVerificationFailed, this, _1, onUpdateSuccess, onUpdateFailed));
+      (const OnDataValidationFailed)bind(&Bootstrap::onSchemaVerificationFailed, this, _1, _2, onUpdateSuccess, onUpdateFailed));
   }
   return;
 }
@@ -326,10 +326,10 @@ Bootstrap::onSchemaVerified
 
 void
 Bootstrap::onSchemaVerificationFailed
-(const ptr_lib::shared_ptr<const Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
+(const ptr_lib::shared_ptr<const Data>& data, string reason, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
 {
   // TODO: verification failure seems to deliver the last data packet that fails to verify, is this the expected behavior from the library?
-  cout << "trust schema verification failed" << endl;
+  cout << "trust schema verification failed " << reason << endl;
   std::string appNamespace = data->getName().getPrefix(-2).toUri();
   cout << appNamespace << endl;
 

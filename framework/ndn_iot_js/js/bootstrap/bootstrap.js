@@ -240,9 +240,9 @@ Bootstrap.prototype.onSchemaVerified = function (data, onUpdateSuccess, onUpdate
     return;
 }
 
-Bootstrap.prototype.onSchemaVerificationFailed = function (data, onUpdateSuccess, onUpdateFailed)
+Bootstrap.prototype.onSchemaVerificationFailed = function (data, reason, onUpdateSuccess, onUpdateFailed)
 {
-    console.log("trust schema verification failed");
+    console.log("trust schema verification failed " + reason);
     var namespace = data.getName().getPrefix(-2).toUri();
     if (!(namespace in self._trustSchemas)) {
         console.log("unexpected: received trust schema for application namespace that's not being followed; malformed data name?");
@@ -283,8 +283,8 @@ Bootstrap.prototype.onTrustSchemaData = function (interest, data, onUpdateSucces
         var self = this;
         this.keyChain.verifyData(data, function (data) {
             self.onSchemaVerified(data, onUpdateSuccess, onUpdateFailed);
-        }, function (data) {
-            self.onSchemaVerificationFailed(data, onUpdateSuccess, onUpdateFailed); 
+        }, function (data, reason) {
+            self.onSchemaVerificationFailed(data, reason, onUpdateSuccess, onUpdateFailed); 
         });
     }
         
@@ -386,8 +386,8 @@ Bootstrap.prototype.onAppRequestData = function (interest, data, onRequestSucces
         }
     }
         
-    function onVerifyFailed(data) {
-        var msg = "Application request response verification failed!"
+    function onVerifyFailed(data, reason) {
+        var msg = "Application request response verification failed: " + reason;
         console.log(msg);
         if (onRequestFailed !== undefined) {
             onRequestFailed(msg);

@@ -251,8 +251,8 @@ class IotNode(BaseNode):
 
         self.loop.call_later(5, self._updateCapabilities)
 
-    def _certificateValidationFailed(self, data):
-        self.log.error("Certificate from controller is invalid!")
+    def _certificateValidationFailed(self, data, reason):
+        self.log.error("Certificate from controller is invalid: " + str(reason))
         # remove trust info
         self._policyManager.removeTrustRules()
 
@@ -262,7 +262,7 @@ class IotNode(BaseNode):
         if self._hmacHandler.verifyData(data):
             self._processValidCertificate(data)
         else:
-            self._certificateValidationFailed(data)
+            self._certificateValidationFailed(data, "hmac verification failed")
 
 
 

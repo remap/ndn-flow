@@ -169,6 +169,7 @@ class Bootstrap(object):
         except SecurityException as e:
             print str(e)
         for schema in self._trustSchemas:
+            # TODO: remove the concept of pending-schema
             if "pending-schema" in self._trustSchemas[schema]:
                 self._keyChain.verifyData(self._trustSchemas[schema]["pending-schema"], self.onSchemaVerified, self.onSchemaVerificationFailed)
         if onSetupComplete:
@@ -272,8 +273,8 @@ class Bootstrap(object):
         self._trustSchemas[namespace]["is-initial"] = False
         return
 
-    def onSchemaVerificationFailed(self, data, onUpdateSuccess, onUpdateFailed):
-        print "trust schema verification failed"
+    def onSchemaVerificationFailed(self, data, reason, onUpdateSuccess, onUpdateFailed):
+        print "trust schema verification failed: " + reason
         namespace = data.getName().getPrefix(-2).toUri()
         if not (namespace in self._trustSchemas):
             print "unexpected: received trust schema for application namespace that's not being followed; malformed data name?"
@@ -304,7 +305,7 @@ class Bootstrap(object):
             # we veriy the received trust schema, should we use an internal KeyChain instead?
             self._keyChain.verifyData(data, 
               lambda data: self.onSchemaVerified(data, onUpdateSuccess, onUpdateFailed), 
-              lambda data: self.onSchemaVerificationFailed(data, onUpdateSuccess, onUpdateFailed))
+              lambda data, reason: self.onSchemaVerificationFailed(data, reason, onUpdateSuccess, onUpdateFailed))
 
         return
 
@@ -383,8 +384,8 @@ class Bootstrap(object):
                 print "Verified content: " + data.getContent().toRawStr()
                 if onRequestFailed:
                     onRequestFailed(data.getContent().toRawStr())
-        def onVerifyFailed(data):
-            msg = "Application request response verification failed!"
+        def onVerifyFailed(data, reason):
+            msg = "Application request response verification failed: " + reason
             print msg
             if onRequestFailed:
                 onRequestFailed(msg)

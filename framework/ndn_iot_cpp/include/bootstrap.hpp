@@ -124,7 +124,7 @@ private:
   onAppRequestDataVerified(const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
   void 
-  onAppRequestDataVerifyFailed(const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+  onAppRequestDataVerifyFailed(const ndn::ptr_lib::shared_ptr<ndn::Data>& data, std::string reason, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
   void
   onNetworkNack(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack,  OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
@@ -139,7 +139,7 @@ private:
   onRegisterFailed(const ndn::ptr_lib::shared_ptr<const ndn::Name>& prefix);
   
   void
-  onSchemaVerificationFailed(const ndn::ptr_lib::shared_ptr<const ndn::Data>& data, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
+  onSchemaVerificationFailed(const ndn::ptr_lib::shared_ptr<const ndn::Data>& data, std::string reason, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
 
   void
   reexpressSchemaInterest(ndn::Interest newInterest, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
