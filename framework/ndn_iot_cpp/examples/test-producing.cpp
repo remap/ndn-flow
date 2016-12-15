@@ -10,10 +10,10 @@ namespace ndn_iot {
 
 namespace examples {
 
-class AppConsumer
+class AppProducer
 {
 public:
-  AppConsumer() {
+  AppProducer() {
     face_ = ptr_lib::shared_ptr<ThreadsafeFace>(new ThreadsafeFace(ioService_));
   }
 
@@ -24,11 +24,11 @@ public:
     cout << "default certificate name is: " << defaultCertificateName_.toUri() << endl;
     memoryContentCache_.reset(new MemoryContentCache(face_.get()));
     memoryContentCache_->registerPrefix(Name("/home/flow/cpp-publisher-1"), 
-      bind(&AppConsumer::onRegisterFailed, this, _1));
+      bind(&AppProducer::onRegisterFailed, this, _1));
 
     bootstrap.requestProducerAuthorization(Name("/home/flow/cpp-publisher-1"), "flow",
-      bind(&AppConsumer::onRequestSuccess, this), 
-      bind(&AppConsumer::onRequestFailed, this, _1));
+      bind(&AppProducer::onRequestSuccess, this), 
+      bind(&AppProducer::onRequestFailed, this, _1));
     boost::asio::io_service::work work(ioService_);
     ioService_.run();
   }
@@ -78,8 +78,8 @@ private:
 }
 
 int main() {
-  ndn_iot::examples::AppConsumer consumer;
-  consumer.run();
+  ndn_iot::examples::AppProducer producer;
+  producer.run();
 
   return 0;
 }
