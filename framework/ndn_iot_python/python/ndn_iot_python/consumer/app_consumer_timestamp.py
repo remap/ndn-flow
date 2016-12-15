@@ -65,7 +65,7 @@ class AppConsumerTimestamp(AppConsumer):
 
         self._face.expressInterest(interest, 
           lambda i, d : self.onData(i, d, onVerified, onVerifyFailed, onTimeout), 
-          lambda i: self.beforeReplyTimeout(i, onVerified, onVerifyFailed, onTimeout)))
+          lambda i: self.beforeReplyTimeout(i, onVerified, onVerifyFailed, onTimeout))
         return
 
     """

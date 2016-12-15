@@ -45,9 +45,20 @@ class Bootstrap(object):
         self._applicationName = ""
 
         self._identityManager = IdentityManager(BasicIdentityStorage(), FilePrivateKeyStorage())
-        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-        self._policyManager = ConfigPolicyManager(os.path.join(__location__, ".default.conf"))
+        self._policyManager = ConfigPolicyManager()
+        self._policyManager.config.read("validator \n \
+            {                                      \n \
+              rule                                 \n \
+              {                                    \n \
+                id \"initial rule\"                \n \
+                for data                           \n \
+                checker                            \n \
+                {                                  \n \
+                  type hierarchical                \n \
+                }                                  \n \
+              }                                    \n \
+            }", "initial-schema")
         # keyChain is what we return to the application after successful setup
         # TODO: should we separate keyChain from internal KeyChain used to verify trust schemas?
         self._keyChain = KeyChain(self._identityManager, self._policyManager)

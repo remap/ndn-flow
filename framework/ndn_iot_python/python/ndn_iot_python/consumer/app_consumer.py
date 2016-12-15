@@ -1,18 +1,18 @@
 class AppConsumer():
-	"""
-	The interface for common application consumers (e.g. sequence
-	number based and timestamp based)
+    """
+    The interface for common application consumers (e.g. sequence
+    number based and timestamp based)
 
-	:param face: the face to consume data with
-	:type face: Face
-	:param keyChain: the keyChain to verify received data with
-	:type keyChain: KeyChain
-	:param certificateName: the certificate name to sign data with
-	  (not used by default for consumers)
-	:type certificateName: Name
-	:param doVerify: flag for whether the consumer should skip verification
-	:type doVerify: bool
-	"""
+    :param face: the face to consume data with
+    :type face: Face
+    :param keyChain: the keyChain to verify received data with
+    :type keyChain: KeyChain
+    :param certificateName: the certificate name to sign data with
+      (not used by default for consumers)
+    :type certificateName: Name
+    :param doVerify: flag for whether the consumer should skip verification
+    :type doVerify: bool
+    """
     def __init__(self, face, keyChain, certificateName, doVerify):
         self._face = face
         self._keyChain = keyChain
