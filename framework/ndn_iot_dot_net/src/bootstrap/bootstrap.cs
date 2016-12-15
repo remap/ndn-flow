@@ -68,6 +68,7 @@ namespace ndn_iot.bootstrap {
             keyChain_.setFace(face_);
 
             certificateContentCache_ = new MemoryContentCache(face_);
+            trustSchemas_ = new Dictionary<string, AppTrustSchema>();
         }
 
         public KeyChain setupDefaultIdentityAndRoot(Name defaultIdentityName, Name signerName) {
