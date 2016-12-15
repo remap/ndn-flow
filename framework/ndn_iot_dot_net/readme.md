@@ -1,11 +1,15 @@
-To compile into a library:
+NDN-IoT in C\#
+=====================
 
-In src folder:
-```
-mcs /target:library /out:../bin/ndn-iot-dot-net.dll -r:../bin/ndn-dot-net.dll bootstrap/*.cs consumer/*.cs discovery/*.cs ../contrib/*.cs
-```
+Dependency (OSX): mono framework, [ndn-dot-net](https://github.com/named-data/ndn-dot-net) library
 
-To work with the compiled binary, in examples folder
-```
-mcs -r:../bin/ndn-dot-net.dll -r:../bin/ndn-iot-dot-net.dll [example.cs]
-```
+To compile:
+<pre>
+./waf
+</pre>
+
+To run an example:
+<pre>
+cd build
+mono [example-name.exe]
+</pre>
