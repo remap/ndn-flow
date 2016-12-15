@@ -358,7 +358,8 @@ class IotController(BaseNode):
                     onVerifiedAppRequest, onVerificationFailedAppRequest)
         else:
             print("Got interest unable to answer yet: " + interest.getName().toUri())
-            pass
+            if interest.getExclude():
+                print("interest has exclude: " + interest.getExclude().toUri())
             # response = Data(interest.getName())
             # response.setContent("500")
             # response.getMetaInfo().setFreshnessPeriod(1000)
@@ -557,7 +558,6 @@ class IotController(BaseNode):
             # TODO: ideally, this is the trust schema of the application, and does not necessarily carry controller prefix. 
             # We make it carry controller prefix here so that prefix registration / route setup is easier (implementation workaround)
             data = Data(Name(self.prefix).append(appName).append("_schema").appendVersion(self._applications[appName]["version"]))
-            data.getMetaInfo().setFreshnessPeriod(100000)
             data.setContent(str(self._applications[appName]["tree"].getRoot()))
             self.signData(data)
             self._memoryContentCache.add(data)
@@ -580,8 +580,6 @@ class IotController(BaseNode):
                         self._applications[appName] = {"tree": BoostInfoParser(), "dataPrefix": [], "version": int(time.time())}
                         self._applications[appName]["tree"].read(fullFileName)
                         data = Data(Name(self.prefix).append(appName).append("_schema").appendVersion(self._applications[appName]["version"]))
-                        # TODO: change this arbitrary freshness period
-                        data.getMetaInfo().setFreshnessPeriod(100000)
                         data.setContent(str(self._applications[appName]["tree"].getRoot()))
                         self.signData(data)
                         self._memoryContentCache.add(data)
