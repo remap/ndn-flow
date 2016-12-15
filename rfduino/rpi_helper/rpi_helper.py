@@ -38,7 +38,6 @@ class AppProducer():
         self._dataCache = MemoryContentCache(self._face, 100000)
         self.registerCachePrefix()
         print "Serving data at {}".format(self._dataPrefix.toUri())
-        self._face.callLater(5000, self.publishData)
         return
 
     def registerCachePrefix(self):
@@ -60,7 +59,7 @@ class AppProducer():
         pyr = content.split(',')
         if len(pyr) >= 3:
             resultingContent = "{\"p\":" + pyr[0] + ",\"y\":" + pyr[1] + ",\"r\":" + pyr[2] + "}"
-
+            timestamp = time.time()
             dataOut = Data(Name(self._dataPrefix).appendVersion(int(timestamp)))
             dataOut.setContent(resultingContent)
             dataOut.getMetaInfo().setFreshnessPeriod(10000)
@@ -73,8 +72,8 @@ if __name__ == '__main__':
     # TODO: take customized parameters
     service_uuid = UUID(0x2220)
     my_uuid = UUID(0x2221)
-    peripheral = Peripheral("EE:C5:46:65:D3:C1", "random")
 
+    peripheral = None
     loop = asyncio.get_event_loop()
     face = ThreadsafeFace(loop)
     
@@ -89,7 +88,7 @@ if __name__ == '__main__':
                 pass
             time.sleep(0.01)
             yield None
-
+        
     def startProducer(defaultCertificateName, keyChain):
         producer = AppProducer(face, defaultCertificateName, keyChain, dataPrefix)
         producer.start()
@@ -104,11 +103,12 @@ if __name__ == '__main__':
                 
             def handleNotification(self, cHandle, data):
                 em.onReceivedData(data[2:])
-
+        
+        peripheral = Peripheral("EE:C5:46:65:D3:C1", "random")
         # tell rfduino we are ready for notifications
         peripheral.setDelegate(MyDelegate())
         peripheral.writeCharacteristic(peripheral.getCharacteristics(uuid=my_uuid)[0].valHandle + 1, "\x01\x00")
-        
+        loop.create_task(btleNotificationListen(peripheral))
         return
 
     def onSetupComplete(defaultCertificateName, keyChain):
@@ -130,5 +130,4 @@ if __name__ == '__main__':
 
     bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
 
-    loop.run_until_complete(btleNotificationListen(peripheral))
     loop.run_forever()
