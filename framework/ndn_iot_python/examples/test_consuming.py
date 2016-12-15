@@ -38,8 +38,8 @@ class AppConsumer():
         def onVerified(data):
             print "data verified: " + data.getContent().toRawStr()
             return
-        def onVerifyFailed(data):
-            print "data verification failed"
+        def onVerifyFailed(data, reason):
+            print "data verification failed: " + reason
             return
         self._keyChain.verifyData(data, onVerified, onVerifyFailed)
         return

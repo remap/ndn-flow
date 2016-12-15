@@ -48,8 +48,8 @@ private:
     cout << "data verified: " << data->getName().toUri() << endl;
   }
 
-  void onVerifyFailed(const ptr_lib::shared_ptr<const Data>& data) {
-    cout << "data verification failed: " << data->getName().toUri() << endl;
+  void onVerifyFailed(const ptr_lib::shared_ptr<const Data>& data, string reason) {
+    cout << "data verification failed: " << data->getName().toUri() << reason << endl;
   }
 
   void onData(const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<Data>& data) {
@@ -57,7 +57,7 @@ private:
     cout << "default cert name of keychain: " << keyChain_->getDefaultCertificateName() << endl;
     keyChain_->verifyData(data, 
       bind(&AppConsumer::onVerified, this, _1),
-      (const OnVerifyFailed)bind(&AppConsumer::onVerifyFailed, this, _1));
+      (const OnDataValidationFailed)bind(&AppConsumer::onVerifyFailed, this, _1, _2));
   }
 
   void onTimeout(const ptr_lib::shared_ptr<const Interest>& interest) {

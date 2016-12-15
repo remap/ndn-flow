@@ -52,10 +52,10 @@ def build (bld):
                      update_outputs=True)
 
         ndn_iot_dot_net_tests = [
-                  "examples/test-consumer.cs",
+                  "examples/test-consuming.cs",
                   "examples/test-discovery.cs",
                   "examples/test-sequential-consumer.cs",
-                  "examples/test-producer.cs"
+                  "examples/test-producing.cs"
                 ]
 
         # this expects Mono.Data.Sqlite.dll to be available globally

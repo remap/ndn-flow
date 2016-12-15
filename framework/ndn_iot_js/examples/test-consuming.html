@@ -41,8 +41,8 @@ function onUpdateSuccess(schema, isInitial)
             console.log(data.getSignature().getKeyLocator().getKeyName().toUri());
             myKeyChain.verifyData(data, function (data) {
                 console.log("Data verified: " + data.getContent().toString("binary"));
-            }, function (data) {
-                console.log("Data verification failed!");
+            }, function (data, reason) {
+                console.log("Data verification failed: " + reason);
             })
         }, function (interest) {
             console.log("Interest times out: " + interest.getName().toUri());
