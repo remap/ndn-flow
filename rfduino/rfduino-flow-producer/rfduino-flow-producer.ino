@@ -294,8 +294,8 @@ uint8_t HmacKey[64];
 uint8_t HmacKeyDigest[ndn_SHA256_DIGEST_SIZE];
 R_RANDOM_STRUCT RandomStruct;
 
-// Connected or no: for now connected seems to break updateGyro, left as true for initial value
-bool connected = true;
+// Connected or no
+bool connected = false;
 unsigned long currentIdx = 0;
 
 //char sendBuffer[BUFFER_SIZE][20] = {};
@@ -480,14 +480,14 @@ void
 RFduinoBLE_onConnect()
 {
   Serial.println("RFduino BLE connection successful");
-  //connected = true;
+  connected = true;
 }
 
 void
 RFduinoBLE_onDisconnect()
 {
   Serial.println("RFduino BLE disconnected");
-  //connected = false;
+  connected = false;
 }
 
 static void
@@ -971,6 +971,7 @@ void updateGyro(){
       if(fifoCountL == 42){
         if (currentCycle == CYCLE_THRESHOLD) {
           processQuat();
+          // sendQuat is not called at all after btle disconnection; debugging
           sendQuat();
           currentCycle = 0;
         } else {
@@ -1025,16 +1026,18 @@ void sendQuat(){
   char buffer[20] = "";
   serializeQuatData(q, 4, buffer);
 
-  // make and send data packet
-  ndn_NameComponent dataNameComponents[2];
-  DataLite data(dataNameComponents, sizeof(dataNameComponents) / sizeof(dataNameComponents[0]), 0, 0);
-  data.getName().append("gyro1");
-  char sequence[20] = "";
-  sprintf(sequence, "%u", currentIdx);
-  data.getName().append(sequence);
-  data.setContent(BlobLite((const uint8_t*)buffer, strlen(buffer)));
-  signAndSendData(data);
-  currentIdx++;
+  if (connected) {
+    // make and send data packet
+    ndn_NameComponent dataNameComponents[2];
+    DataLite data(dataNameComponents, sizeof(dataNameComponents) / sizeof(dataNameComponents[0]), 0, 0);
+    data.getName().append("gyro1");
+    char sequence[20] = "";
+    sprintf(sequence, "%u", currentIdx);
+    data.getName().append(sequence);
+    data.setContent(BlobLite((const uint8_t*)buffer, strlen(buffer)));
+    signAndSendData(data);
+    currentIdx++;    
+  }
 }
 
 void sendPacket(){
