@@ -20,6 +20,12 @@ namespace ndn_iot.bootstrap {
     // TODO: to be removed after inline testing's done
     using net.named_data.jndn.transport;
 
+    // SimpleJSON for parsing controller response
+    // included since dependency for our Unity application?
+    using SimpleJSON;
+
+    using ndn_iot.util;
+
     // TODO: abandoned protobuf-C# for now, not wise to investigate given we don't have enough time, hack controller instead
     //using ndn_iot.bootstrap.command;
 
@@ -110,6 +116,10 @@ namespace ndn_iot.bootstrap {
             return keyChain_;
         }
 
+        public KeyChain getKeyChain() {
+            return keyChain_;
+        }
+
         /**
          * Publishing authorization
          */
@@ -134,8 +144,6 @@ namespace ndn_iot.bootstrap {
             AppRequestHandler appRequestHandler = new AppRequestHandler(keyChain_, onRequestSuccess, onRequestFailed);
             face_.expressInterest(requestInterest, appRequestHandler, appRequestHandler);
             
-            Console.Out.WriteLine("Sent interest: " + requestInterest.getName().toUri());
-
             return ;
         }
 
@@ -147,7 +155,6 @@ namespace ndn_iot.bootstrap {
             }
 
             public void onData(Interest interest, Data data) {
-                Console.Out.WriteLine("Got data: " + data.getName().toUri());
                 AppRequestVerifyHandler verifyHandler = new AppRequestVerifyHandler(onRequestSuccess_, onRequestFailed_);
                 keyChain_.verifyData(data, verifyHandler, verifyHandler);
             }
@@ -168,11 +175,18 @@ namespace ndn_iot.bootstrap {
             }
 
             public void onVerified(Data data) {
-                // TODO: JSON parsing of controller reply
+                string content = Util.dataContentToString(data);
+                var response = JSON.Parse(content);
+                string status = response["status"];
+                if (status == "200") {
+                    onRequestSuccess_();
+                } else {
+                    onRequestFailed_("Application request failed with message: " + content);
+                }
             }
 
             public void onVerifyFailed(Data data) {
-
+                onRequestFailed_("Application request response verification failed.");
             }
 
             OnRequestSuccess onRequestSuccess_;
@@ -196,40 +210,69 @@ namespace ndn_iot.bootstrap {
             Interest initialInterest = new Interest(new Name(appNamespace).append("_schema"));
             initialInterest.setChildSelector(1);
 
-            TrustSchemaUpdateHandler trustSchemaUpdateHandler = new TrustSchemaUpdateHandler(keyChain_, onUpdateSuccess, onUpdateFailed);
+            TrustSchemaUpdateHandler trustSchemaUpdateHandler = new TrustSchemaUpdateHandler(onUpdateSuccess, onUpdateFailed, this);
             face_.expressInterest(initialInterest, trustSchemaUpdateHandler, trustSchemaUpdateHandler);
         }
 
         class TrustSchemaUpdateHandler : OnData, OnTimeout {
-            public TrustSchemaUpdateHandler(KeyChain keyChain, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed) {
+            public TrustSchemaUpdateHandler(OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed, Bootstrap bs) {
                 onUpdateSuccess_ = onUpdateSuccess;
                 onUpdateFailed_ = onUpdateFailed;
-                keyChain_ = keyChain;
+                bs_ = bs;
             }
 
             public void onData(Interest interest, Data data) {
                 Console.Out.WriteLine("Received trust schema update data");
-                TrustSchemaVerifyHandler trustSchemaVerifyHandler = new TrustSchemaVerifyHandler(onUpdateSuccess_, onUpdateFailed_);
-                keyChain_.verifyData(data, trustSchemaVerifyHandler, trustSchemaVerifyHandler);
+                TrustSchemaVerifyHandler trustSchemaVerifyHandler = new TrustSchemaVerifyHandler(onUpdateSuccess_, onUpdateFailed_, bs_);
+                bs_.getKeyChain().verifyData(data, trustSchemaVerifyHandler, trustSchemaVerifyHandler);
             }
 
             public void onTimeout(Interest interest) {
                 Console.Out.WriteLine("Trust schema update times out");
             }
 
-            KeyChain keyChain_;
+            Bootstrap bs_;
             OnUpdateSuccess onUpdateSuccess_;
             OnUpdateFailed onUpdateFailed_;
         }
 
         class TrustSchemaVerifyHandler : OnVerified, OnVerifyFailed {
-            public TrustSchemaVerifyHandler(OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed) {
+            public TrustSchemaVerifyHandler(OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed, Bootstrap bs) {
                 onUpdateSuccess_ = onUpdateSuccess;
                 onUpdateFailed_ = onUpdateFailed;
+                bs_ = bs;
             }
 
             public void onVerified(Data data) {
-                //onUpdateSuccess_();
+                var versionComponent = data.getName().get(-1);
+                var version = versionComponent.toVersion();
+                string appNamespace = data.getName().getPrefix(-2).toUri();
+                var trustSchemas = bs_.trustSchemas_;
+                if (trustSchemas.ContainsKey(appNamespace)) {
+                    if (version < trustSchemas[appNamespace].getVersion()) {
+                        Console.Out.WriteLine("Got out of date schema");
+                        return;
+                    }
+                    trustSchemas[appNamespace].setVersion(version);
+                    string schemaContent = Util.dataContentToString(data);
+                    trustSchemas[appNamespace].setSchema(schemaContent);
+
+                    Interest newInterest = new Interest(new Name(data.getName()).getPrefix(-1));
+                    newInterest.setChildSelector(1);
+                    Exclude exclude = new Exclude();
+                    exclude.appendAny();
+                    exclude.appendComponent(versionComponent);
+                    newInterest.setExclude(exclude);
+
+                    TrustSchemaUpdateHandler tsuh = new TrustSchemaUpdateHandler(onUpdateSuccess_, onUpdateFailed_, bs_);
+                    bs_.face_.expressInterest(newInterest, tsuh, tsuh);
+                    bs_.policyManager_.load(schemaContent, "updated-schema");
+                    onUpdateSuccess_(schemaContent, trustSchemas[appNamespace].getIsInitial());
+                    trustSchemas[appNamespace].setIsInitial(false);
+                } else {
+                    Console.Out.WriteLine("unexpected: received trust schema for application namespace that's not being followed; malformed data name?");
+                    return;
+                }
             }
 
             public void onVerifyFailed(Data data) {
@@ -238,6 +281,7 @@ namespace ndn_iot.bootstrap {
 
             OnUpdateSuccess onUpdateSuccess_;
             OnUpdateFailed onUpdateFailed_;
+            Bootstrap bs_;
         }
 
         class AppTrustSchema {

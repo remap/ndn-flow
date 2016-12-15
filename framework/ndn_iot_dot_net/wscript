@@ -39,7 +39,8 @@ def build (bld):
                  "src/discovery/external-observer.cs",
                  "src/discovery/entity-serializer.cs",
                  "src/discovery/entity-info.cs",
-                 "contrib/SimpleJSON.cs"
+                 "contrib/SimpleJSON.cs",
+                 "src/util.cs"
                 ]
 
         # TODO: allow options for ndn-dot-net.dll path
@@ -53,8 +54,8 @@ def build (bld):
         ndn_iot_dot_net_tests = [
                   "examples/test-consumer.cs",
                   "examples/test-discovery.cs",
-                  "examples/test-sequential-consumer.cs"
-                  #"examples/test-producer.cs"
+                  "examples/test-sequential-consumer.cs",
+                  "examples/test-producer.cs"
                 ]
 
         # this expects Mono.Data.Sqlite.dll to be available globally

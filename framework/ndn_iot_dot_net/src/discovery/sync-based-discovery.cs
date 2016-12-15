@@ -14,6 +14,8 @@ namespace ndn_iot.discovery {
     using net.named_data.jndn.security;
     using net.named_data.jndn.transport;
 
+    using ndn_iot.util;
+
     public class SyncBasedDiscovery {
         public SyncBasedDiscovery
           (Face face, KeyChain keyChain, Name certificateName, Name syncPrefix, 
@@ -112,15 +114,6 @@ namespace ndn_iot.discovery {
 
         public Face getFace() {
             return face_;
-        }
-
-        // internal functions
-        public string contentToString(Data data) {
-            var content = data.getContent().buf();
-            var contentString = "";
-            for (int i = content.position(); i < content.limit(); ++i)
-                contentString += (char)content.get(i);
-            return contentString;
         }
 
         public void expressSyncInterest() {
@@ -236,7 +229,7 @@ namespace ndn_iot.discovery {
 
             public void onData(Interest interest, Data data) {
                 sbd_.numOutstandingInterest_ --;
-                string[] content = sbd_.contentToString(data).Split('\n');
+                string[] content = Util.dataContentToString(data).Split('\n');
 
                 for (int i = 0; i < content.Length; i++) {
                     if (!(sbd_.getObjects().ContainsKey(content[i]))) {
