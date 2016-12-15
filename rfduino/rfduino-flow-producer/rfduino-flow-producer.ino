@@ -467,7 +467,9 @@ int count = 0;
 void
 loop()
 {
-  updateGyro();  
+  // always report gyro reading, even if no rpi's connected; 
+  // but only send stuff out on ble when something's connected
+  updateGyro(); 
 }
 
 void
@@ -481,6 +483,7 @@ RFduinoBLE_onConnect()
 {
   Serial.println("RFduino BLE connection successful");
   connected = true;
+  resetFifo();
 }
 
 void
@@ -488,6 +491,7 @@ RFduinoBLE_onDisconnect()
 {
   Serial.println("RFduino BLE disconnected");
   connected = false;
+  resetFifo();
 }
 
 static void
@@ -940,7 +944,7 @@ void resetFifo(){
   regWrite(0x6A, ctrl);
 }
 
-void updateGyro(){  
+void updateGyro(){
   if(millis() >= lastRead + GYRO_UPDATE_INTERVAL){
     lastRead = millis();
     if(fifoReady()){
@@ -971,7 +975,6 @@ void updateGyro(){
       if(fifoCountL == 42){
         if (currentCycle == CYCLE_THRESHOLD) {
           processQuat();
-          // sendQuat is not called at all after btle disconnection; debugging
           sendQuat();
           currentCycle = 0;
         } else {
