@@ -21,7 +21,7 @@ namespace ndn_iot.tests {
     using ndn_iot.bootstrap;
     using ndn_iot.consumer;
 
-    class TestSequentialConsumer {
+    class TestTimestampConsumer {
         class ConsumerDataHandler : OnVerified, OnVerifyFailed, OnTimeout {
             public void onVerified(Data data) {
                 Console.Out.WriteLine("Data received: " + data.getName().toUri());
@@ -48,11 +48,11 @@ namespace ndn_iot.tests {
             //bootstrap.createIdentityAndCertificate(new Name("/home/flow/csharp-publisher-1"));
 
             // main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
-            AppConsumerSequenceNumber consumer = new AppConsumerSequenceNumber(face, keyChain, false, 5, -1);
+            AppConsumerTimestamp consumer = new AppConsumerTimestamp(face, keyChain, false);
             ConsumerDataHandler cdh = new ConsumerDataHandler();
 
             // todo: fill in simulator prefix
-            consumer.consume(new Name("/home/flow1/gyro-sim1"), cdh, cdh, cdh);
+            consumer.consume(new Name("/home/flow/ts-publisher-1"), cdh, cdh, cdh);
 
             //Interest interest = new Interest(new Name("/abc"));
             //keyChain.sign(interest, bootstrap.getDefaultCertificateName());

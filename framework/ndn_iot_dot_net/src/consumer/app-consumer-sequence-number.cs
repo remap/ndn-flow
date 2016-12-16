@@ -4,17 +4,12 @@ namespace ndn_iot.consumer {
     using net.named_data.jndn;
     using net.named_data.jndn.security;
 
-    // TODO: the timeout / verify failed re-expression mechanism here will likely cause dangling: 
-    // DataHandler gets created over and over again, for each interest that times out. Should check implementation again.
-    // actually, not just the retrans mechanism, ordinary fetching could cause dangling, too
-
     public class AppConsumerSequenceNumber : AppConsumer {
         // Check: the default param to -1 does not work, for now manually passing -1 to this function to start from rightMostChild
         public AppConsumerSequenceNumber
-          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, int defaultPipelineSize = 5, int defaultSeqNumber = -1) {
+          (Face face, KeyChain keyChain, bool doVerify, int defaultPipelineSize = 5, int defaultSeqNumber = -1) {
             face_ = face;
             keyChain_ = keyChain;
-            certificateName_ = certificateName;
             doVerify_ = doVerify;
 
             pipelineSize_ = defaultPipelineSize;
@@ -25,6 +20,10 @@ namespace ndn_iot.consumer {
             verifyFailedRetransInterval_ = 4000;
             defaultInterestLifetime_ = 4000;
             dh_ = null;
+        }
+
+        public int getPipelineSize() {
+            return pipelineSize_;
         }
 
         public void consume(Name prefix, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
@@ -163,7 +162,6 @@ namespace ndn_iot.consumer {
 
         private Face face_;
         private KeyChain keyChain_;
-        private Name certificateName_;
         private bool doVerify_;
         
         private int pipelineSize_;

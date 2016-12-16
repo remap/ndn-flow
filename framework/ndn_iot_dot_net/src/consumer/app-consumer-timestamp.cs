@@ -4,24 +4,23 @@ namespace ndn_iot.consumer {
     using net.named_data.jndn;
     using net.named_data.jndn.security;
 
-    // TODO: the timeout / verify failed re-expression mechanism here will likely cause dangling: 
-    // DataHandler gets created over and over again, for each interest that times out. Should check implementation again.
-    // actually, not just the retrans mechanism, ordinary fetching could cause dangling, too
-
     public class AppConsumerTimestamp : AppConsumer {
         public AppConsumerTimestamp
-          (Face face, KeyChain keyChain, Name certificateName, bool doVerify, long currentTimestamp = -1) {
+          (Face face, KeyChain keyChain, bool doVerify, long currentTimestamp = -1) {
             face_ = face;
             keyChain_ = keyChain;
-            certificateName_ = certificateName;
             doVerify_ = doVerify;
 
             currentTimestamp_ = currentTimestamp;
             verifyFailedRetransInterval_ = 4000;
             defaultInterestLifetime_ = 4000;
+            dh_ = null;
         }
 
         public void consume(Name prefix, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
+            if (dh_ == null) {
+                dh_ = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
+            }
             Name name = new Name(prefix);
             Interest interest = new Interest(name);
             interest.setInterestLifetimeMilliseconds(defaultInterestLifetime_);
@@ -34,8 +33,7 @@ namespace ndn_iot.consumer {
                 interest.setExclude(exclude);
             }
 
-            DataHandler dh = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
-            face_.expressInterest(interest, dh, dh);
+            face_.expressInterest(interest, dh_, dh_);
         }
 
         public class DataHandler : OnData, OnTimeout, OnVerified {
@@ -130,12 +128,13 @@ namespace ndn_iot.consumer {
 
         private Face face_;
         private KeyChain keyChain_;
-        private Name certificateName_;
         private bool doVerify_;
         
         private long currentTimestamp_;
         private int verifyFailedRetransInterval_;
         private int defaultInterestLifetime_;
+
+        private DataHandler dh_;
     }
 }
 

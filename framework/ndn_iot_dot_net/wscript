@@ -55,6 +55,7 @@ def build (bld):
                   "examples/test-consuming.cs",
                   "examples/test-discovery.cs",
                   "examples/test-sequential-consumer.cs",
+                  "examples/test-timestamp-consumer.cs",
                   "examples/test-producing.cs"
                 ]
 

@@ -37,7 +37,7 @@ namespace ndn_iot.bootstrap {
 
     public class Bootstrap : OnRegisterFailed {
         public Bootstrap(Face face) {
-            applicationName_ = "";
+            //applicationName_ = "";
 
             string homePath = (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
                                 ? Environment.GetEnvironmentVariable("HOME")
@@ -77,7 +77,7 @@ namespace ndn_iot.bootstrap {
                 try {
                     defaultIdentityName = identityManager_.getDefaultIdentity();
                 } catch (SecurityException ex) {
-                    throw new SystemException("Default identity does not exist\n");
+                    throw new SystemException("Default identity does not exist: " + ex.Message);
                 }
             }
 
@@ -105,8 +105,8 @@ namespace ndn_iot.bootstrap {
             try {
                 controllerCertificate_ = keyChain_.getCertificate(identityManager_.getDefaultCertificateNameForIdentity(controllerName_));
                 certificateCache_.insertCertificate(controllerCertificate_);
-            } catch (SecurityException e) {
-                throw new SystemException("Default certificate for controller identity does not exist");
+            } catch (SecurityException ex) {
+                throw new SystemException("Default certificate for controller identity does not exist: " + ex.Message);
             }
 
             face_.setCommandSigningInfo(keyChain_, defaultCertificateName_);
@@ -396,7 +396,7 @@ namespace ndn_iot.bootstrap {
         Name controllerName_;
         IdentityCertificate controllerCertificate_;
 
-        string applicationName_;
+        //string applicationName_;
         IdentityManager identityManager_;
         ConfigPolicyManager policyManager_;
         CertificateCache certificateCache_;
