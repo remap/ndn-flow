@@ -660,7 +660,8 @@ fragmentAndSend(const uint8_t* buffer, size_t bufferLength)
           nFragmentBytes = bufferLength - i;
       memcpy(packet + iFragment, buffer + i, nFragmentBytes);
       // send as suggested by the BulkDataTransfer example: https://github.com/RFduino/RFduino/blob/master/libraries/RFduinoBLE/examples/BulkDataTransfer/BulkDataTransfer.ino
-      while (!RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes))
+      //while (!RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes))
+      RFduinoBLE.send((const char *) packet, iFragment + nFragmentBytes);
       
       // Increment the fragment index in the packet.
       ++packet[iFragmentIndex];
