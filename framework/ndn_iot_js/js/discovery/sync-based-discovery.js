@@ -160,7 +160,7 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
     data.getMetaInfo().setFreshnessPeriod(this.syncDataFreshnessPeriod);
     
     var self = this;
-    this.keyChain.sign(data, this.certificateNamem, function() {
+    this.keyChain.sign(data, this.certificateName, function() {
         // adding this data to memoryContentCache should satisfy the pending interest
         self.memoryContentCache.add(data);
     });
