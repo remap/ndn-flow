@@ -21,6 +21,8 @@ import json
 
 import logging
 
+import argparse
+
 try:
     import asyncio
 except ImportError:
@@ -69,6 +71,9 @@ class AppProducer():
             print "data added: " + dataOut.getName().toUri()
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'RaspberryPi helper for RFduino in Flow')
+    parser.add_argument('addr', help = 'peripheral address')
+
     # TODO: take customized parameters
     service_uuid = UUID(0x2220)
     my_uuid = UUID(0x2221)
@@ -80,7 +85,7 @@ if __name__ == '__main__':
     bootstrap = Bootstrap(face)
     appName = "flow"
     dataPrefix = Name("/home/flow/gyro-1")
-
+    
     @asyncio.coroutine
     def btleNotificationListen(peripheral):
         while True:
@@ -93,7 +98,7 @@ if __name__ == '__main__':
         producer = AppProducer(face, defaultCertificateName, keyChain, dataPrefix)
         producer.start()
 
-        # init btle
+        # init btle ElementReader
         el = BtleNode(producer.onBtleData, None, None)
         em = ElementReader(el)
 
@@ -105,11 +110,15 @@ if __name__ == '__main__':
                 # TODO: this should handle incorrect format caused by packet losses
                 em.onReceivedData(data[2:])
         
+        # connect ble
         peripheral = Peripheral("EE:C5:46:65:D3:C1", "random")
         # tell rfduino we are ready for notifications
         peripheral.setDelegate(MyDelegate())
         peripheral.writeCharacteristic(peripheral.getCharacteristics(uuid=my_uuid)[0].valHandle + 1, "\x01\x00")
         loop.create_task(btleNotificationListen(peripheral))
+        
+        # send our public key if configured to do so
+        
         return
 
     def onSetupComplete(defaultCertificateName, keyChain):
