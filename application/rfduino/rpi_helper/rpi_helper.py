@@ -102,6 +102,7 @@ if __name__ == '__main__':
                 DefaultDelegate.__init__(self)
                 
             def handleNotification(self, cHandle, data):
+                # TODO: this should handle incorrect format caused by packet losses
                 em.onReceivedData(data[2:])
         
         peripheral = Peripheral("EE:C5:46:65:D3:C1", "random")
