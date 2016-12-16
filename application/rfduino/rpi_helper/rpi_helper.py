@@ -18,6 +18,8 @@ from ndn_iot_python.bootstrap.bootstrap import Bootstrap
 import time
 import sys
 import json
+import struct
+import math
 
 import logging
 
@@ -76,16 +78,17 @@ class AppProducer():
             self._dataCache.add(dataOut)
             print "data added: " + dataOut.getName().toUri()
 
-    def makeCommandInterest(self):
-        interest = Interest(Name("/cert"))
-        self._face.makeCommandInterest(interest)
+    def makePublicKeyInterest(self):
+        interest = Interest(Name("/"))
+        interest.getName().append(self._keyChain.getCertificate(self._certificateName).getPublicKeyInfo().getKeyDer())
         return interest
 
 class BtlePeripheral():
-    def __init__(self, addr, producer, loop, receive_uuid = 0x2221, security = False):
+    def __init__(self, addr, producer, loop, receive_uuid = 0x2221, send_uuid = 0x2222, security = False):
         self._addr = addr
         self._producer = producer
         self._receive_uuid = receive_uuid
+        self._send_uuid = send_uuid
         self._loop = loop
         self._security = security
 
@@ -112,10 +115,22 @@ class BtlePeripheral():
         
         if self._security:
             # send our public key if configured to do so
-            interest = self._producer.makeCommandInterest()
+            print "security on, sending our public key"
+            interest = self._producer.makePublicKeyInterest()
             # write characteristics
-            #self._p.writeCharacteristic(self._send_uuid, interest.wireEncode().toHex())
+            data = interest.wireEncode().toRawStr()
+            num_fragments = int(math.ceil(float(len(data)) / 18))
+            print "length of data: " + str(len(data)) + "; number of fragments: " + str(num_fragments)
+            current = 0
+            for i in range(0, num_fragments - 1):
+                fragment = struct.pack(">B", i) + struct.pack(">B", num_fragments) + data[current:current + 18]
+                current += 18
+                self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._send_uuid)[0].valHandle, fragment)
+                print " ".join(x.encode('hex') for x in fragment)
+            fragment = struct.pack(">B", num_fragments - 1) + struct.pack(">B", num_fragments) + data[current:]
+            self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._send_uuid)[0].valHandle, fragment)
 
+            print " ".join(x.encode('hex') for x in fragment)
     @asyncio.coroutine
     def btleNotificationListen(self):
         while True:
@@ -134,6 +149,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     service_uuid = 0x2220
+    send_uuid = 0x2222
     receive_uuid = 0x2221
 
     default_addr = "EE:C5:46:65:D3:C1"
@@ -174,7 +190,7 @@ if __name__ == '__main__':
         for i in range(0, len(addrs)):
             producer = AppProducer(face, defaultCertificateName, keyChain, Name(namespaces[i]))
             producer.start()
-            peripheral = BtlePeripheral(addrs[i], producer, loop, receive_uuid, security_option)
+            peripheral = BtlePeripheral(addrs[i], producer, loop, receive_uuid, send_uuid, security_option)
             peripheral.start()
         return
 
