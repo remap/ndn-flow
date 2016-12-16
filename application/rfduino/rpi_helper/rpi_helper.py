@@ -29,7 +29,7 @@ except ImportError:
     import trollius as asyncio
 
 class AppProducer():
-    def __init__(self, face, certificateName, keyChain, dataPrefix, security):
+    def __init__(self, face, certificateName, keyChain, dataPrefix, security = False):
         self._keyChain = keyChain
         self._certificateName = certificateName
         self._face = face
@@ -67,7 +67,7 @@ class AppProducer():
         pyr = content.split(',')
         if len(pyr) >= 3:
             resultingContent = "{\"p\":" + pyr[0] + ",\"y\":" + pyr[1] + ",\"r\":" + pyr[2] + "}"
-            timestamp = time.time()
+            timestamp = time.time() * 1000
             dataOut = Data(Name(self._dataPrefix).appendVersion(int(timestamp)))
             dataOut.setContent(resultingContent)
             dataOut.getMetaInfo().setFreshnessPeriod(10000)
@@ -82,15 +82,14 @@ class AppProducer():
         return interest
 
 class BtlePeripheral():
-    def __init__(self, addr, producer, loop, receive_uuid = UUID(0x2221), send_uuid = UUID(0x2222), security = False):
+    def __init__(self, addr, producer, loop, receive_uuid = 0x2221, security = False):
         self._addr = addr
         self._producer = producer
         self._receive_uuid = receive_uuid
-        self._send_uuid = send_uuid
         self._loop = loop
         self._security = security
 
-    def start():
+    def start(self):
         # init btle ElementReader
         el = BtleNode(self._producer.onBtleData, None, None)
         em = ElementReader(el)
@@ -107,14 +106,15 @@ class BtlePeripheral():
         self._p = Peripheral(self._addr, "random")
         # tell rfduino we are ready for notifications
         self._p.setDelegate(MyDelegate())
-        self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._send_uuid), "\x01\x00")
-        self._loop.create_task(btleNotificationListen(self._p))
+
+        self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._receive_uuid)[0].valHandle + 1, "\x01\x00")
+        self._loop.create_task(self.btleNotificationListen())
         
         if self._security:
             # send our public key if configured to do so
             interest = self._producer.makeCommandInterest()
             # write characteristics
-            self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._send_uuid), interest.wireEncode().toHex())
+            #self._p.writeCharacteristic(self._send_uuid, interest.wireEncode().toHex())
 
     @asyncio.coroutine
     def btleNotificationListen(self):
@@ -126,16 +126,15 @@ class BtlePeripheral():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'RaspberryPi helper for RFduino in Flow')
-    parser.add_argument('addr', help = 'peripheral address (comma separated addrs if multiple)')
-    parser.add_argument('namespace', help = 'namespaces (comma separated names corresponding with each peripheral)')
-    parser.add_argument('security', help = 'flag for if key exchange should happen initially and if data should be verified')
-    parser.add_argument('request', help = 'request namespace to ask controller to grant publishing permission to (mutual parent of publishing namespaces)')
+    parser.add_argument('--addr', help = 'peripheral address (comma separated addrs if multiple)')
+    parser.add_argument('--namespace', help = 'namespaces (comma separated names corresponding with each peripheral)')
+    parser.add_argument('--security', help = 'flag for if key exchange should happen initially and if data should be verified')
+    parser.add_argument('--request', help = 'request namespace to ask controller to grant publishing permission to (mutual parent of publishing namespaces)')
 
     args = parser.parse_args()
 
-    service_uuid = UUID(0x2220)
-    receive_uuid = UUID(0x2221)
-    send_uuid = UUID(0x2222)
+    service_uuid = 0x2220
+    receive_uuid = 0x2221
 
     default_addr = "EE:C5:46:65:D3:C1"
     default_prefix = "/home/flow/gyros/gyro-1"
@@ -175,7 +174,7 @@ if __name__ == '__main__':
         for i in range(0, len(addrs)):
             producer = AppProducer(face, defaultCertificateName, keyChain, Name(namespaces[i]))
             producer.start()
-            peripheral = BtlePeripheral(addrs[i], producer, loop, receive_uuid, send_uuid, security_option)
+            peripheral = BtlePeripheral(addrs[i], producer, loop, receive_uuid, security_option)
             peripheral.start()
         return
 
@@ -188,7 +187,7 @@ if __name__ == '__main__':
         def onRequestFailed(msg):
             print "data production request failed : " + msg
             # For this test, we start anyway
-            startProducer(defaultCertificateName, keyChain)
+            startProducers(defaultCertificateName, keyChain)
             return
 
         bootstrap.requestProducerAuthorization(Name(request_prefix), appName, onRequestSuccess, onRequestFailed)
