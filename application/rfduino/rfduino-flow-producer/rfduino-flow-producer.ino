@@ -260,8 +260,7 @@ processInterest(const InterestLite& interest);
 static void
 fragmentAndSend(const uint8_t* buffer, size_t bufferLength);
 
-// TODO: Determine the correct max size of a received packet.
-uint8_t receiveBuffer[100];
+uint8_t receiveBuffer[1200];
 size_t receiveBufferLength = 0;
 int expectedFragmentIndex = 0;
 
@@ -287,6 +286,8 @@ RFduinoBLE_onReceive(char *buffer, int bufferLength)
     if (fragmentIndex != expectedFragmentIndex) {
       // Assume we have a dropped fragment. Wait for a new fragment index 0.
       Serial.println("Unexpected fragment index. Dropped. Waiting for the start of the next packet.");
+      Serial.println(fragmentIndex);
+      Serial.println(expectedFragmentIndex);
       expectedFragmentIndex = -1;
       return;
     }
@@ -306,6 +307,7 @@ RFduinoBLE_onReceive(char *buffer, int bufferLength)
     // Finished. With the fragmentation protocol, we don't need an ElementReader, so
     // call onReceivedElement right away.
     expectedFragmentIndex = 0;
+    Serial.println("calling onReceivedElement");
     onReceivedElement(receiveBuffer, receiveBufferLength);
   }
 }
@@ -338,7 +340,8 @@ static void
 processInterest(const InterestLite& interest)
 {
   Serial.print("Debug: Received interest ");
-  simplePrintNameUri(interest.getName());
+  //simplePrintNameUri(interest.getName());
+  Serial.print(interest.getName().get(0).getValue().size());
   Serial.println("");
 }
 
