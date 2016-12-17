@@ -43,6 +43,11 @@ R_RANDOM_STRUCT RandomStruct;
 
 // Connected or no
 bool connected = false;
+// security turned on or no
+bool security = false;
+// key exchange finished
+bool keyExchanged = false;
+
 unsigned long currentIdx = 0;
 
 int currentCycle = 0;
@@ -56,7 +61,7 @@ static void printHex(const uint8_t* buffer, size_t bufferLength)
   }
 }
 
-static R_RSA_PUBLIC_KEY CONSUMER_E_KEY = {
+R_RSA_PUBLIC_KEY CONSUMER_E_KEY = {
   2048,
   { 0xb8, 0x09, 0xa7, 0x59, 0x82, 0x84, 0xec, 0x4f, 0x06, 0xfa, 0x1c, 0xb2, 0xe1, 0x38, 0x93, 0x53,
     0xbb, 0x7d, 0xd4, 0xac, 0x88, 0x1a, 0xf8, 0x25, 0x11, 0xe4, 0xfa, 0x1d, 0x61, 0x24, 0x5b, 0x82,
@@ -128,6 +133,7 @@ void setup()
   // Set HmacKeyDigest to sha256(HmacKey).
   CryptoLite::digestSha256(HmacKey, sizeof(HmacKey), HmacKeyDigest);
 
+// replaced with encrypt with the actual key rather than the test one
 #if 1
   // Encrypt the HmacKey for the CONSUMER_E_KEY.
   RsarefRsaPublicKeyLite publicKeyLite(CONSUMER_E_KEY);
@@ -153,7 +159,6 @@ void setup()
   RFduinoBLE.begin();
   Serial.println("RFduino BLE stack started");
 
-  // set up gyroscope publisher
   setupGyroProducer();
 }
 
@@ -212,7 +217,9 @@ loop()
 {
   // always report gyro reading, even if no rpi's connected; 
   // but only send stuff out on ble when something's connected
-  updateGyro(); 
+  if (!security || keyExchanged) {
+    updateGyro(); 
+  }
 }
 
 void
@@ -260,13 +267,18 @@ processInterest(const InterestLite& interest);
 static void
 fragmentAndSend(const uint8_t* buffer, size_t bufferLength);
 
-uint8_t receiveBuffer[1200];
+uint8_t receiveBuffer[350];
 size_t receiveBufferLength = 0;
 int expectedFragmentIndex = 0;
 
 void
 RFduinoBLE_onReceive(char *buffer, int bufferLength)
 {
+  if (!security) {
+    // security flag is turned off, we can return directly
+    Serial.println("Debug: Received data over BLE but security is turned off");
+    return;
+  }
   Serial.print("Debug: Received data over BLE:");
   printHex((const uint8_t*)buffer, bufferLength);
   Serial.println("");
@@ -336,13 +348,47 @@ onReceivedElement(const uint8_t *element, size_t elementLength)
   }
 }
 
+uint8_t* locatePublicKeyBitStart(uint8_t* derBuffer)
+{
+  if (derBuffer[30] == 0x01 && derBuffer[31] == 0x00) {
+    return derBuffer + 32;
+  } else if (derBuffer[30] == 0x01 && derBuffer[31] == 0x01) {
+    return derBuffer + 33;
+  } else {
+    Serial.println("received unexpected der format");
+    return 0;
+  }
+}
+
 static void
 processInterest(const InterestLite& interest)
 {
   Serial.print("Debug: Received interest ");
   //simplePrintNameUri(interest.getName());
-  Serial.print(interest.getName().get(0).getValue().size());
-  Serial.println("");
+  //Serial.print(interest.getName().get(0).getValue().size());
+  const uint8_t* blobValue = interest.getName().get(0).getValue().buf();
+  memcpy(CONSUMER_E_KEY.modulus, blobValue, 256);
+  //RFduinoBLE.end();
+  
+  RsarefRsaPublicKeyLite publicKeyLite(CONSUMER_E_KEY);
+  uint8_t encryptedHmacKey[MAX_ENCRYPTED_KEY_LEN];
+  size_t encryptedHmacKeyLength;
+  ndn_Error error;
+  // debug: encrypt does not work when ble is on, it seems
+  error = publicKeyLite.encrypt
+          (HmacKey, sizeof(HmacKey), ndn_EncryptAlgorithmType_RsaPkcs,
+           encryptedHmacKey, encryptedHmacKeyLength);
+  if (error) {
+    // We don't expect this to happen.
+    Serial.print("Error encrypting the HmacKey: ");
+    Serial.println(error);
+  } else {
+    Serial.print("encryptedHmacKey");
+    printHex(encryptedHmacKey, encryptedHmacKeyLength); 
+    Serial.println("");
+  }
+  //setupGyroProducer();
+  keyExchanged = true;
 }
 
 /**
@@ -786,7 +832,7 @@ void sendQuat(){
     data.getName().append(sequence);
     data.setContent(BlobLite((const uint8_t*)buffer, strlen(buffer)));
     signAndSendData(data);
-    currentIdx++;    
+    currentIdx++;
   }
 }
 
