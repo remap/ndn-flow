@@ -6,6 +6,6 @@ namespace ndn_iot.consumer {
     using net.named_data.jndn.security;
     
     public interface AppConsumer {
-        void consume(Name name, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout);
+        void consume(Name name, OnVerified onVerified, OnDataValidationFailed onVerifyFailed, OnTimeout onTimeout);
     }
 }

@@ -22,13 +22,13 @@ namespace ndn_iot.tests {
     using ndn_iot.consumer;
 
     class TestSequentialConsumer {
-        class ConsumerDataHandler : OnVerified, OnVerifyFailed, OnTimeout {
+        class ConsumerDataHandler : OnVerified, OnDataValidationFailed, OnTimeout {
             public void onVerified(Data data) {
                 Console.Out.WriteLine("Data received: " + data.getName().toUri());
             }
 
-            public void onVerifyFailed(Data data) {
-                Console.Out.WriteLine("Data verify failed: " + data.getName().toUri());
+            public void onDataValidationFailed(Data data, string reason) {
+                Console.Out.WriteLine("Data verify failed: " + data.getName().toUri() + " : " + reason);
 
             }
 

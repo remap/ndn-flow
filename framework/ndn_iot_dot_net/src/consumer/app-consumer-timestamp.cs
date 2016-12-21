@@ -17,7 +17,7 @@ namespace ndn_iot.consumer {
             dh_ = null;
         }
 
-        public void consume(Name prefix, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
+        public void consume(Name prefix, OnVerified onVerified, OnDataValidationFailed onVerifyFailed, OnTimeout onTimeout) {
             if (dh_ == null) {
                 dh_ = new DataHandler(this, onVerified, onVerifyFailed, onTimeout);
             }
@@ -37,7 +37,7 @@ namespace ndn_iot.consumer {
         }
 
         public class DataHandler : OnData, OnTimeout, OnVerified {
-            public DataHandler(AppConsumerTimestamp apt, OnVerified onVerified, OnVerifyFailed onVerifyFailed, OnTimeout onTimeout) {
+            public DataHandler(AppConsumerTimestamp apt, OnVerified onVerified, OnDataValidationFailed onVerifyFailed, OnTimeout onTimeout) {
                 face_ = apt.getFace();
                 keyChain_ = apt.getKeyChain();
                 doVerify_ = apt.getDoVerify();
@@ -81,16 +81,16 @@ namespace ndn_iot.consumer {
             public int verifyFailedRetransInterval_;
 
             public OnVerified onVerified_;
-            public OnVerifyFailed onVerifyFailed_;
+            public OnDataValidationFailed onVerifyFailed_;
             public OnTimeout onTimeout_;
 
-            public class VerifyFailedHandler : OnData, OnTimeout, OnVerifyFailed {
+            public class VerifyFailedHandler : OnData, OnTimeout, OnDataValidationFailed {
                 public VerifyFailedHandler(DataHandler dh, Interest interest) {
                     dh_ = dh;
                     interest_ = interest;
                 }
 
-                public void onVerifyFailed(Data data) {
+                public void onDataValidationFailed(Data data, string reason) {
                     Interest newInterest = new Interest(interest_);
                     newInterest.refreshNonce();
                     
@@ -98,7 +98,7 @@ namespace ndn_iot.consumer {
                     dummyInterest.setInterestLifetimeMilliseconds(dh_.verifyFailedRetransInterval_);
 
                     dh_.face_.expressInterest(dummyInterest, this, this);
-                    dh_.onVerifyFailed_.onVerifyFailed(data);
+                    dh_.onVerifyFailed_.onDataValidationFailed(data, reason);
                 }
 
                 public void onData(Interest interest, Data data) {
