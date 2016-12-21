@@ -25,7 +25,7 @@
     bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined, onSetupComplete, onSetupFailed);
 
     function testMatch() {
-    	var matcher = new TrackMatcher(new Name("/home/flow/unity1/"), deviceId, face);
+    	var matcher = new TrackMatcher(new Name("/home/flow-csharp"), deviceId, face);
         matcher.sendTrackMatchCommand();
     }
   </script>
