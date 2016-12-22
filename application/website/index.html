@@ -10,23 +10,54 @@
   <script type="text/javascript" src="ndn-iot.js"></script>
 
   <script type="text/javascript" src="js/track-matcher.js"></script>
-  <script type="text/javascript" src="js/page.js"></script>
+  <script type="text/javascript" src="js/link-click.js"></script>
+  <script type="text/javascript" src="js/html-consumer.js"></script>
   <script type="text/javascript" src="js/producer.js"></script>
 
   <!-- Associating opt trackID with mobile ID in certain areas -->
-  <button onclick="testMatch()">Match</button>
+  <p> <button onclick="testMatch()">Match</button> </p>
+  <p> <button onclick="fetchHtml()">Fetch html</button> </p>
+  <p> <a href="javascript:testLink()" id="test-link">click this link</a> </p>
+
+  <div id="unity-content"></div>
 
   <!-- Other webpage functionalities -->
   <script>
     face = new Face({"host": "127.0.0.1"});
     bootstrap = new Bootstrap(face);
     var deviceId = new Name("/home/browser1");
+    var prefix = new Name("/home/flow-csharp");
+    var keyChain;
+    var certificateName;
 
-    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined, onSetupComplete, onSetupFailed);
+    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined, 
+      function (defaultCertificateName, keyChain) {
+        console.log("Default certificate name and keyChain set up complete.");
+      }, 
+      function (msg) {
+        console.log("Setup failed " + msg);
+      });
 
     function testMatch() {
-    	var matcher = new TrackMatcher(new Name("/home/flow-csharp"), deviceId, face);
-        matcher.sendTrackMatchCommand();
+    	var matcher = new TrackMatcher(prefix, deviceId, face);
+      matcher.sendTrackMatchCommand();
+    }
+
+    function fetchHtml() {
+      var consumer = new HtmlConsumer(prefix, deviceId, face, keyChain);
+      consumer.consume(function (content) {
+        document.getElementById("unity-content").innerHTML = content;
+      });
+    }
+
+    function testLink() {
+      var linkClick = new LinkClick(prefix, deviceId, face);
+      var content = document.getElementById("test-link").innerHTML;
+      linkClick.sendLinkClick(content, function (data) {
+        console.log("got data response: " + data.getContent().buf().toString('binary'));
+      }, function (msg) {
+        console.log("link click failed: " + msg);
+      })
     }
   </script>
 </head>

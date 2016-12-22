@@ -25,16 +25,19 @@ class TrackIdMatcher {
   public const string commandVerb = "match";
 
   public void start() {
+    // generic face setup
     face_ = new Face(new TcpTransport(), new TcpTransport.ConnectionInfo(hostName));
 
     bootstrap_ = new Bootstrap(face_);
     keyChain_ = bootstrap_.setupDefaultIdentityAndRoot(new Name(instanceName), new Name());
     certificateName_ = bootstrap_.getDefaultCertificateName();
 
+    // class-specific start
     InterestHandler ih = new InterestHandler(this);
     prefix_ = new Name(instanceName).append(commandVerb);
     face_.registerPrefix(prefix_, ih, ih);
 
+    // update event
     while (true) {
       face_.processEvents();
       System.Threading.Thread.Sleep(5);
