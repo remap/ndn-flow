@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44692504, g: 0.4967869, b: 0.57508504, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -661,8 +661,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 0
-  hostName: localhost
-  gyroPrefix: /home/flow1/gyro-sim1
+  gyroPrefix: /home/flow/gyros/gyro-1/
   minSensorValues: {x: -1, y: -1, z: -1}
   maxSensorValues: {x: 1, y: 1, z: 1}
   minScaleValues: {x: -1, y: -1, z: -1}
@@ -681,8 +680,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 1
-  hostName: localhost
-  gyroPrefix: /home/flow1/gyro-sim1
+  gyroPrefix: /home/flow/gyros/gyro-1/
   minSensorValues: {x: -1, y: -1, z: -1}
   maxSensorValues: {x: 1, y: 1, z: 1}
   minScaleValues: {x: -1, y: -1, z: -1}

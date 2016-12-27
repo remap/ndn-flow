@@ -34,7 +34,9 @@ public class NDN_Gyro : MonoBehaviour {
 
 	public GyroTypes gyroType = GyroTypes.OrientationGyros;
 
-	public string hostName = "localhost";
+
+	//for some reason unity is caching the old property value
+	//changing the varaible name to force update! (now I'm worried about other parts of this project)
 	public string gyroPrefix = "/home/flow/gyros/gyro-1/";
 
 
