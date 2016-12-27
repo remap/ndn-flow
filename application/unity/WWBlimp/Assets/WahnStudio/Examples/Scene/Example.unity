@@ -1,0 +1,651 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!29 &1
+SceneSettings:
+  m_ObjectHideFlags: 0
+  m_PVSData: 
+  m_PVSObjectsArray: []
+  m_PVSPortalsArray: []
+  m_OcclusionBakeSettings:
+    smallestOccluder: 5
+    smallestHole: 0.25
+    backfaceThreshold: 100
+--- !u!104 &2
+RenderSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 7
+  m_Fog: 0
+  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_FogMode: 3
+  m_FogDensity: 0.01
+  m_LinearFogStart: 0
+  m_LinearFogEnd: 300
+  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
+  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientIntensity: 1
+  m_AmbientMode: 0
+  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_HaloStrength: 0.5
+  m_FlareStrength: 1
+  m_FlareFadeSpeed: 3
+  m_HaloTexture: {fileID: 0}
+  m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
+  m_DefaultReflectionMode: 0
+  m_DefaultReflectionResolution: 128
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 1
+  m_CustomReflection: {fileID: 0}
+  m_Sun: {fileID: 0}
+  m_IndirectSpecularColor: {r: 0.44692504, g: 0.4967869, b: 0.57508504, a: 1}
+--- !u!157 &3
+LightmapSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 7
+  m_GIWorkflowMode: 0
+  m_GISettings:
+    serializedVersion: 2
+    m_BounceScale: 1
+    m_IndirectOutputScale: 1
+    m_AlbedoBoost: 1
+    m_TemporalCoherenceThreshold: 1
+    m_EnvironmentLightingMode: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 1
+  m_LightmapEditorSettings:
+    serializedVersion: 4
+    m_Resolution: 2
+    m_BakeResolution: 40
+    m_TextureWidth: 1024
+    m_TextureHeight: 1024
+    m_AO: 0
+    m_AOMaxDistance: 1
+    m_CompAOExponent: 0
+    m_CompAOExponentDirect: 0
+    m_Padding: 2
+    m_LightmapParameters: {fileID: 0}
+    m_LightmapsBakeMode: 1
+    m_TextureCompression: 1
+    m_DirectLightInLightProbes: 1
+    m_FinalGather: 0
+    m_FinalGatherFiltering: 1
+    m_FinalGatherRayCount: 1024
+    m_ReflectionCompression: 2
+  m_LightingDataAsset: {fileID: 0}
+  m_RuntimeCPUUsage: 25
+--- !u!196 &4
+NavMeshSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_BuildSettings:
+    serializedVersion: 2
+    agentRadius: 0.5
+    agentHeight: 2
+    agentSlope: 45
+    agentClimb: 0.4
+    ledgeDropHeight: 0
+    maxJumpAcrossDistance: 0
+    accuratePlacement: 0
+    minRegionArea: 2
+    cellSize: 0.16666667
+    manualCellSize: 0
+  m_NavMeshData: {fileID: 0}
+--- !u!1 &10528065
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 10528067}
+  - 108: {fileID: 10528066}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &10528066
+Light:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10528065}
+  m_Enabled: 1
+  serializedVersion: 7
+  m_Type: 1
+  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 2
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_Lightmapping: 4
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &10528067
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 10528065}
+  m_LocalRotation: {x: 0.40821794, y: -0.23456973, z: 0.109381676, w: 0.87542605}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+--- !u!1 &183209968
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 183209973}
+  - 20: {fileID: 183209972}
+  - 92: {fileID: 183209971}
+  - 124: {fileID: 183209970}
+  - 81: {fileID: 183209969}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!81 &183209969
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 183209968}
+  m_Enabled: 1
+--- !u!124 &183209970
+Behaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 183209968}
+  m_Enabled: 1
+--- !u!92 &183209971
+Behaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 183209968}
+  m_Enabled: 1
+--- !u!20 &183209972
+Camera:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 183209968}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0.019607844}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: -1
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+  m_StereoMirrorMode: 0
+--- !u!4 &183209973
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 183209968}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!1 &259173491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 259173495}
+  - 218: {fileID: 259173494}
+  - 154: {fileID: 259173493}
+  - 114: {fileID: 259173492}
+  m_Layer: 0
+  m_Name: Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 4294967295
+  m_IsActive: 1
+--- !u!114 &259173492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 259173491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddbabc32222255a4396acede04fb21ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrain: {fileID: 259173494}
+  meshRenderer: {fileID: 0}
+  m_heightmaterial: {fileID: 2100000, guid: ce03164d0e5974b48a95e31e7ce78bf7, type: 2}
+  shader: {fileID: 0}
+  properties:
+    levels:
+    - _name: UnderWater
+      texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
+      color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
+      height: 126
+      textureTiling: 6
+      readOnlyName: 1
+    - _name: Beach
+      texture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+      color: {r: 0.9, g: 0.86, b: 0, a: 1}
+      height: 135
+      textureTiling: 100
+      readOnlyName: 1
+    - _name: Level1
+      texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+      color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
+      height: 140
+      textureTiling: 20
+      readOnlyName: 1
+    - _name: Level2
+      texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+      color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
+      height: 180
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: Level3
+      texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+      color: {r: 0.75, g: 0.53, b: 0, a: 1}
+      height: 190
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: LastLevel
+      texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+      color: {r: 0.8, g: 0.9, b: 0.9, a: 1}
+      height: 220
+      textureTiling: 50
+      readOnlyName: 1
+    waterLevel: 126
+    slopeFader: 0.3
+    brightness: 0.5
+    relationType: 1
+  isInitialized: 1
+  test: Here you will see your custom fields
+--- !u!154 &259173493
+TerrainCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 259173491}
+  m_Material: {fileID: 0}
+  m_Enabled: 1
+  m_TerrainData: {fileID: 15600000, guid: 964b3ade6cf6fd64d8efb98994b9b4fd, type: 2}
+  m_EnableTreeColliders: 1
+--- !u!218 &259173494
+Terrain:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 259173491}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_TerrainData: {fileID: 15600000, guid: 964b3ade6cf6fd64d8efb98994b9b4fd, type: 2}
+  m_TreeDistance: 2000
+  m_TreeBillboardDistance: 50
+  m_TreeCrossFadeLength: 5
+  m_TreeMaximumFullLODCount: 50
+  m_DetailObjectDistance: 79
+  m_DetailObjectDensity: 1
+  m_HeightmapPixelError: 5
+  m_SplatMapDistance: 30000
+  m_HeightmapMaximumLOD: 0
+  m_CastShadows: 1
+  m_DrawHeightmap: 1
+  m_DrawTreesAndFoliage: 1
+  m_ReflectionProbeUsage: 1
+  m_MaterialType: 3
+  m_LegacySpecular:
+    serializedVersion: 2
+    rgba: 4286545791
+  m_LegacyShininess: 0.078125
+  m_MaterialTemplate: {fileID: 2100000, guid: ce03164d0e5974b48a95e31e7ce78bf7, type: 2}
+  m_BakeLightProbesForTrees: 1
+  m_ScaleInLightmap: 0.032
+  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+--- !u!4 &259173495
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 259173491}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+--- !u!1 &695082569
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 695082574}
+  - 33: {fileID: 695082573}
+  - 65: {fileID: 695082572}
+  - 23: {fileID: 695082571}
+  - 114: {fileID: 695082570}
+  m_Layer: 0
+  m_Name: Cube
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &695082570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 695082569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddbabc32222255a4396acede04fb21ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrain: {fileID: 0}
+  meshRenderer: {fileID: 695082571}
+  m_heightmaterial: {fileID: 2100000, guid: 6f337b4c59306484dbfa67fb9fc9019a, type: 2}
+  shader: {fileID: 0}
+  properties:
+    levels:
+    - _name: UnderWater
+      texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
+      color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
+      height: 0.2711892
+      textureTiling: 6
+      readOnlyName: 1
+    - _name: Beach
+      texture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+      color: {r: 0.9, g: 0.86, b: 0, a: 1}
+      height: 0.47327214
+      textureTiling: 100
+      readOnlyName: 1
+    - _name: Level1
+      texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+      color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
+      height: 0.58677185
+      textureTiling: 20
+      readOnlyName: 1
+    - _name: Level2
+      texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+      color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
+      height: 0.6923077
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: Level3
+      texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+      color: {r: 0.75, g: 0.53, b: 0, a: 1}
+      height: 1.448027
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: LastLevel
+      texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+      color: {r: 0.8, g: 0.9, b: 0.9, a: 1}
+      height: 1.448027
+      textureTiling: 50
+      readOnlyName: 1
+    waterLevel: 0.2711892
+    slopeFader: 0.17757007
+    brightness: 0.79816514
+    relationType: 0
+  isInitialized: 1
+  test: Here you will see your custom fields
+--- !u!23 &695082571
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 695082569}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 6f337b4c59306484dbfa67fb9fc9019a, type: 2}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_SelectedWireframeHidden: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!65 &695082572
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 695082569}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &695082573
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 695082569}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &695082574
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 695082569}
+  m_LocalRotation: {x: -0.9647875, y: -0.00000020003701, z: -0.00000020003701, w: 0.26303086}
+  m_LocalPosition: {x: 560.55, y: 106, z: 408}
+  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+--- !u!1 &1337291702
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1337291707}
+  - 33: {fileID: 1337291706}
+  - 135: {fileID: 1337291705}
+  - 23: {fileID: 1337291704}
+  - 114: {fileID: 1337291703}
+  m_Layer: 0
+  m_Name: Sphere
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1337291703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1337291702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddbabc32222255a4396acede04fb21ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrain: {fileID: 0}
+  meshRenderer: {fileID: 1337291704}
+  m_heightmaterial: {fileID: 2100000, guid: bdeb7e679abc60d4facabe3ac35e0645, type: 2}
+  shader: {fileID: 0}
+  properties:
+    levels:
+    - _name: UnderWater
+      texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
+      color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
+      height: -61.467407
+      textureTiling: 6
+      readOnlyName: 1
+    - _name: Beach
+      texture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+      color: {r: 0.9, g: 0.86, b: 0, a: 1}
+      height: -38.235394
+      textureTiling: 100
+      readOnlyName: 1
+    - _name: Level1
+      texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+      color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
+      height: -28.33136
+      textureTiling: 20
+      readOnlyName: 1
+    - _name: Level2
+      texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+      color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
+      height: 66.34326
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: Level3
+      texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+      color: {r: 0.74264705, g: 0.74264705, b: 0.74264705, a: 1}
+      height: 84.89902
+      textureTiling: 10
+      readOnlyName: 1
+    - _name: LastLevel
+      texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+      color: {r: 0.8, g: 0.9, b: 0.9, a: 1}
+      height: 138.95963
+      textureTiling: 50
+      readOnlyName: 1
+    waterLevel: -61.467407
+    slopeFader: 0.7579439
+    brightness: 1
+    relationType: 0
+  isInitialized: 1
+  test: Here you will see your custom fields
+--- !u!23 &1337291704
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1337291702}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 2100000, guid: bdeb7e679abc60d4facabe3ac35e0645, type: 2}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_SelectedWireframeHidden: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!135 &1337291705
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1337291702}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1337291706
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1337291702}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1337291707
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1337291702}
+  m_LocalRotation: {x: -0.9799245, y: 0, z: 0, w: 0.19936888}
+  m_LocalPosition: {x: 777, y: -30, z: 103}
+  m_LocalScale: {x: 400, y: 400, z: 400}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3

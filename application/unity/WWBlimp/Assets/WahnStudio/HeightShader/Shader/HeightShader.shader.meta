@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5c0a178b81a50d24ea8e8d1fb256813a
+timeCreated: 1453429017
+licenseType: Store
+ShaderImporter:
+  defaultTextures:
+  - _LastLevelTexture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+  - _Level3Texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+  - _Level2Texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+  - _Level1Texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+  - _BeachTexture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+  - _UnderWaterTexture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7,
+      type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
