@@ -35,7 +35,7 @@ public class NDN_Gyro : MonoBehaviour {
 	public GyroTypes gyroType = GyroTypes.OrientationGyros;
 
 	public string hostName = "localhost";
-	public string gyroPrefix = "/home/flow1/gyro-sim1";
+	public string gyroPrefix = "/home/flow/gyros/gyro-1/";
 
 
 	[Header("Sensor Scaling")]
@@ -114,19 +114,12 @@ public class NDN_Gyro : MonoBehaviour {
 		gyroValues =  new Vector3 ();
 		scaledGyroValues =  new Vector3 ();
 
-			
-
-
-
 		// main is static so cannot refer to non-static members here, if want to make onRequestSuccess and onRequestFailed non-static
-		AppConsumerSequenceNumber consumer = new AppConsumerSequenceNumber(FaceSingleton.getFace(), FaceSingleton.getKeychain(), false);
+		AppConsumerTimestamp consumer = new AppConsumerTimestamp(FaceSingleton.getFace(), FaceSingleton.getKeychain(), false);
 		ConsumerDataHandler cdh = new ConsumerDataHandler(this);
 
 		// todo: fill in simulator prefix
 		consumer.consume(new Name(gyroPrefix), cdh, cdh, cdh);
-
-
-	
 	}
 	
 	// Update is called once per frame
