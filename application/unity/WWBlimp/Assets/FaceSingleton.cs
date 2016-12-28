@@ -19,6 +19,7 @@ public class FaceSingleton : MonoBehaviour {
 	private static Bootstrap theBootstrap = null;
 	private static KeyChain theKeyChain;
 	private static Name theCertificateName;
+	private static Name theSpace;
 
 	public static Face getFace(FaceSingleton owner = null) {
 		// not thread safe ok for unity
@@ -27,8 +28,9 @@ public class FaceSingleton : MonoBehaviour {
 				theFaceOwner = owner;
 				theFace = new Face (theFaceOwner.hostName);
 				// the fisrt owner to claim the face gets it
+				theSpace = new Name(theFaceOwner.space);
 				theBootstrap = new Bootstrap (theFace);
-				theKeyChain = theBootstrap.setupDefaultIdentityAndRoot (new Name (theFaceOwner.space), new Name ());
+				theKeyChain = theBootstrap.setupDefaultIdentityAndRoot (theSpace, new Name ());
 				theCertificateName = theBootstrap.getDefaultCertificateName ();
 
 			} else {
@@ -59,6 +61,12 @@ public class FaceSingleton : MonoBehaviour {
 		return theCertificateName;
 	}
 
+	public static Name getSpaceName() {
+		if (theFace == null) {
+			getFace();
+		}
+		return theSpace;
+	}
 
 	//this should happen beofe all the calls to start
 
@@ -87,6 +95,7 @@ public class FaceSingleton : MonoBehaviour {
 			theFace = null;
 			theFaceOwner = null;
 		}
+
 	}
 
 

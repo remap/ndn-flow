@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.44692504, g: 0.4967869, b: 0.57508504, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -570,6 +570,7 @@ GameObject:
   - 114: {fileID: 1260582051}
   - 114: {fileID: 1260582052}
   - 114: {fileID: 1260582053}
+  - 114: {fileID: 1260582054}
   m_Layer: 0
   m_Name: Blimp
   m_TagString: Untagged
@@ -687,6 +688,21 @@ MonoBehaviour:
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
+--- !u!114 &1260582054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1260582047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7428f75074b144100a129335d827000e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fetchVerb: fetch
+  linkVerb: link
+  segmentSize: 2000
+  defaultDataFreshnessPeriod: 6000
 --- !u!1 &1891660832
 GameObject:
   m_ObjectHideFlags: 0
