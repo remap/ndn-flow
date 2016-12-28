@@ -10,6 +10,7 @@ var HtmlConsumer = function HtmlConsumer(prefix, mobileId, face, keyChain) {
     this.face = face;
     this.keyChain = keyChain;
     this.baseInterest = new Interest(new Name(prefix).append(HTML_FETCH_COMMAND_VERB).append(new Name(this.mobileId).toUri()));
+    this.baseInterest.setInterestLifetimeMilliseconds(60000);
 }
 
 HtmlConsumer.prototype.consume = function(onComplete) {
