@@ -14,7 +14,9 @@ LinkClick.prototype.sendLinkClick = function(content, onResponse, onFailure) {
     var commandInterest = new Interest(new Name(this.commandInterestPrefix).append(LINK_CLICK_COMMAND_VERB).append(new Name(this.mobileId).toUri()).append(content));
     var self = this;
     this.face.makeCommandInterest(commandInterest, function() {
+        commandInterest.setInterestLifetimeMilliseconds(60000);
         console.log("made link click interest: " + commandInterest.getName().toUri());
+        console.log(commandInterest.getInterestLifetimeMilliseconds());
         self.face.expressInterest(commandInterest, function(interest, data) {
             console.log("got link click data!");
             if (onResponse) {

@@ -84,7 +84,6 @@ public class WebComm : MonoBehaviour {
 			data.setContent(new Blob(htmlString.Substring(startIdx, endIdx)));
 			data.getMetaInfo().setFinalBlockId(Name.Component.fromSegment(finalBlockNumber));
 			data.getMetaInfo().setFreshnessPeriod(defaultDataFreshnessPeriod);
-			print(data.getMetaInfo().getFreshnessPeriod());
 
 			startIdx = endIdx;
 			currentBlockNumber += 1;

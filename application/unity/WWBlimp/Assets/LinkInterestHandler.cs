@@ -32,7 +32,7 @@ class LinkInterestHandler : OnInterestCallback, OnRegisterFailed {
 		var data = new Data(interest.getName());
 		var content = "User " + phoneId + " clicked link \"" + linkContent + "\"";
 		data.setContent(new Blob(content));
-		data.getMetaInfo().setFreshnessPeriod(2000);
+		data.getMetaInfo().setFreshnessPeriod(60000);
 
 		try {
 			FaceSingleton.getKeychain().sign(data, FaceSingleton.getCertificateName());      
@@ -44,6 +44,7 @@ class LinkInterestHandler : OnInterestCallback, OnRegisterFailed {
 		webComm.gotALink("Sent content " + content);
 		try {
 			FaceSingleton.getFace().putData(data);
+			webComm.gotALink("sending back data!");
 		} catch (Exception ex) {
 			webComm.gotALink("Echo: Exception in sending data " + ex);
 		}

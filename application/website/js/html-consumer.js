@@ -20,6 +20,6 @@ HtmlConsumer.prototype.consume = function(onComplete) {
             onComplete(content);
         },
         function(errorCode, message) {
-            console.log(message);
+            console.log(errorCode + " : " + message);
         });
 }
