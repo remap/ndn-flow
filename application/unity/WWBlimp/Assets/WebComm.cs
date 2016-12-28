@@ -23,7 +23,7 @@ public class WebComm : MonoBehaviour {
 	public string linkVerb = "link";
 
 	public int segmentSize = 2000;
-	public int defaultDataFreshnessPeriod = 6000;
+	public static int defaultDataFreshnessPeriod = 60000;
 
 	// Use this for initialization
 
@@ -40,7 +40,7 @@ public class WebComm : MonoBehaviour {
 		face = FaceSingleton.getFace ();
 
 		// class-specific start
-		 memoryContentCache = new MemoryContentCache(face);
+		memoryContentCache = new MemoryContentCache(face);
 
 		fetchPrefix = new Name(FaceSingleton.getSpaceName()).append(fetchVerb);
 		linkPrefix = new Name(FaceSingleton.getSpaceName()).append(linkVerb);
@@ -84,6 +84,7 @@ public class WebComm : MonoBehaviour {
 			data.setContent(new Blob(htmlString.Substring(startIdx, endIdx)));
 			data.getMetaInfo().setFinalBlockId(Name.Component.fromSegment(finalBlockNumber));
 			data.getMetaInfo().setFreshnessPeriod(defaultDataFreshnessPeriod);
+			print(data.getMetaInfo().getFreshnessPeriod());
 
 			startIdx = endIdx;
 			currentBlockNumber += 1;
