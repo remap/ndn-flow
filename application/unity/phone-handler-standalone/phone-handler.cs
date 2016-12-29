@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+
 using ILOG.J2CsMapping.NIO;
 
 using net.named_data.jndn;
@@ -13,6 +15,18 @@ using net.named_data.jndn.security.policy;
 using ndn_iot.bootstrap;
 
 class PhoneHandler {
+  private const int nextThreshold_ = 2000;
+  private int cycleCount_ = 0;
+
+  private static Random random = new Random();
+  public static string randomString(int length)
+  {
+    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return new string(Enumerable.Repeat(chars, length)
+      .Select(s => s[random.Next(s.Length)]).ToArray());
+  }
+
+
   public Face face_;
   public KeyChain keyChain_;
   public Name certificateName_;
@@ -62,6 +76,16 @@ class PhoneHandler {
     while (true) {
       face_.processEvents();
       System.Threading.Thread.Sleep(5);
+
+      // dummy for testing repeated fetch on consumer
+      if (nextThreshold_ > 0) {
+        cycleCount_ += 1;
+        if (cycleCount_ > nextThreshold_) {
+          htmlString = "<p>" + PhoneHandler.randomString(5) + "</p>";
+          publishHtmlForMobile(mobileName, htmlString);
+          cycleCount_ = 0;
+        }
+      }
     }
   }
 
