@@ -77,6 +77,7 @@ public class FaceSingleton : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		print ("start");
+		Application.runInBackground = true;
 	}
 	
 	// Update is called once per frame
