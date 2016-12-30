@@ -72,7 +72,12 @@ IotNode.prototype.beforeLoopStart = function()
         console.log("Error: get serial has not yet finished.");
         return;
     }
-    console.log("Serial: " + this.serial + "; Configuration PIN: " + this.createNewPin());
+
+    var pin = this.createNewPin();
+    if (document.getElementById("content")) {
+        document.getElementById("content").innerHTML += "<p>Serial: " + this.serial + "; Configuration PIN: " + pin + "</p>";
+    }
+    console.log("Serial: " + this.serial + "; Configuration PIN: " + pin);
     this.prefix = new Name(default_prefix).append(this.serial);
 
     // Make sure that we are trusted by the remote NFD to registerPrefix
@@ -129,6 +134,9 @@ IotNode.prototype.onConfigurationReceived = function(prefix, interest, face, int
 
         this.trustRootIdentity = controllerName;
         console.log(controllerName.toUri());
+        if (document.getElementById("content")) {
+            document.getElementById("content").innerHTML += "<p>Controller name: " + controllerName.toUri() + "</p>";
+        }
 
         this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix.components);
         this.configureIdentity = new Name(networkPrefix).append(this.deviceSuffix);
@@ -313,13 +321,22 @@ IotNode.prototype.finalizeCertificateDownload = function(newCert)
     this.identityManager.addCertificate(new IdentityCertificate(newCert), function () {
         self.identityManager.setDefaultCertificateForKey(newCert, function() {
             console.log("Add device complete!");
+            if (document.getElementById("content")) {
+                document.getElementById("content").innerHTML += "<p>Add device complete!</p>";
+            }
         }, function (error) {
             console.log("Error setting default certificate for key!");
             console.log(error);
+            if (document.getElementById("content")) {
+                document.getElementById("content").innerHTML += "<p>" + error + "</p>";
+            }
         });
     }, function (error) {
         console.log("Error adding new cert!");
         console.log(error);
+        if (document.getElementById("content")) {
+            document.getElementById("content").innerHTML += "<p>" + error + "</p>";
+        }
     });
     
 // For adding device only, the rest shouldn't matter
