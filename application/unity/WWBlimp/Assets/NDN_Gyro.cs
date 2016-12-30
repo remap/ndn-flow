@@ -102,7 +102,7 @@ public class NDN_Gyro : MonoBehaviour {
 		}
 
 		public void onTimeout(Interest interest) {
-			print("Interest times out: " + interest.getName().toUri());
+			//print("Interest times out: " + interest.getName().toUri());
 		}
 
 		public void onDataValidationFailed (Data data, string reason) {

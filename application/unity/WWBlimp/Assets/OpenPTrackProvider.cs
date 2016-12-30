@@ -20,7 +20,8 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 
 
 	//TODO: remove this
-	//public static Track DUMMY_TRACK = null;
+	public static Track DUMMY_TRACK = null;
+	public static string DUMMY_TRACK_ID = "1010101";
 
 	[System.Serializable]
 	public class NDNConfig  {
@@ -90,7 +91,10 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 		return startTimeComponent = comp;
 	}
 
+
 	public void Update() {
+
+
 	
 
 	}
@@ -113,6 +117,9 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 		expressInitialInterest ();
 		Track.updatesTillActive = config.trackUpdatesTillActive;
 		Track.timeoutsTillDead = config.trackTimeoutsTillDead;
+
+		DUMMY_TRACK = new Track (DUMMY_TRACK_ID);
+		tracks.Add (DUMMY_TRACK.id, DUMMY_TRACK);
 
 	}
 
@@ -270,7 +277,8 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 
 			}
 
-//			DUMMY_TRACK.touchByHint ();
+			DUMMY_TRACK.setPosition (0, 0, 0);
+			DUMMY_TRACK.touchByHint ();
 
 			List<Track> toCull = new List<Track>(providerOuterInstance.tracks.Count);
 			foreach (Track t in providerOuterInstance.tracks.Values) {

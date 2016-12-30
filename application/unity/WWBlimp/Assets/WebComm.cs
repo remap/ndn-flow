@@ -13,11 +13,23 @@ using net.named_data.jndn.security.policy;
 using ndn_iot.bootstrap;
 
 public class WebComm : MonoBehaviour {
+
+
+	public delegate void NDN_RFC(string callerID, string[] methodNameAndArgs) ;
+
+	static Dictionary<string, NDN_RFC> rfcs = new Dictionary<string, NDN_RFC> ();
+
+
+	private static WebComm theWebComm;
+
+
 	Face face;
 	MemoryContentCache memoryContentCache;
 
 	Name fetchPrefix;
 	Name linkPrefix;
+
+
 
 	public string fetchVerb = "fetch";
 	public string linkVerb = "link";
@@ -26,6 +38,7 @@ public class WebComm : MonoBehaviour {
 	public static int defaultDataFreshnessPeriod = 60000;
 
 	// Use this for initialization
+
 
 
 	public Name getLinkPrefix() {
@@ -37,6 +50,13 @@ public class WebComm : MonoBehaviour {
 	}
 
 	void Start () {
+		if (theWebComm != null) {
+			Debug.LogError ("attempt to create two WebComm Objects");
+			return;
+		}
+
+		theWebComm = this;
+
 		face = FaceSingleton.getFace ();
 
 		// class-specific start
@@ -51,15 +71,23 @@ public class WebComm : MonoBehaviour {
 		LinkInterestHandler lh = new LinkInterestHandler(this);
 		face.registerPrefix(linkPrefix, lh, lh);
 
-		// publish html content for given mobile, call when needed
-		// for this example call this on start
-		string htmlString = "<p>Hello world!</p>";
-		string mobileName = "/home/browser1";
-		publishHtmlForMobile(mobileName, htmlString);
 	}
-	public void gotALink(string s) {
-		print (s);
+
+	public void handleLink(string id, string data) {
+		//TODO: the deivce name is coming in URL encoded. There is not Name from url.  
+		// this s probably not complete.
+		id = id.Replace("%2F", "/");
+		data = data.Replace("%2C", ",");
+		data = data.Replace("%2F", "/");
+		invokeRFC (id, data);
 	}
+
+	public static void publishHtml(string toDeivce, string html) {
+		if (theWebComm != null) {
+			theWebComm.publishHtmlForMobile (toDeivce, html);
+		}
+	}
+
 	public void publishHtmlForMobile(string mobileName, string htmlString, string identifier = "") {
 		int startIdx = 0;
 		int endIdx = 0;
@@ -90,6 +118,31 @@ public class WebComm : MonoBehaviour {
 			memoryContentCache.add(data);
 		}
 		return;
+	}
+
+
+	public static void addRFC(string functionName, NDN_RFC function) {
+		rfcs [functionName] = function;
+
+	}
+
+	public static void removeRFC(string functionName) {
+		rfcs.Remove (functionName);
+	}
+
+	static void invokeRFC(string device, string invocationString) {
+		string[] mathodNameAndArgs = invocationString.split (",");
+
+		try {
+			rfcs [mathodNameAndArgs [0]] (device, mathodNameAndArgs);
+		}
+		catch {
+			Debug.LogError ("Unable to invoke " + invocationString + " from device:" + device);
+		}
+	}
+
+	public static string expressionLink(string displayText, string data) {
+		return "<a href=\"#\" class=\"expression\" data=\"" + data + "\">" + displayText + "</a>";
 	}
 
 	// Update is called once per frame

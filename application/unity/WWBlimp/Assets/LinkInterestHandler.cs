@@ -1,4 +1,5 @@
-﻿using System;
+﻿using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using ILOG.J2CsMapping.NIO;
@@ -22,12 +23,11 @@ class LinkInterestHandler : OnInterestCallback, OnRegisterFailed {
 	public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId,
 		InterestFilter filter)
 	{
-		webComm.gotALink ("GOT A LINK");
 		int linkPrefixSize = webComm.getLinkPrefix ().size ();
 		string phoneId = interest.getName().get(linkPrefixSize).toEscapedString();
 		string linkContent = interest.getName().get(linkPrefixSize + 1).toEscapedString();
 
-		webComm.gotALink("User " + phoneId + " clicked link \"" + linkContent + "\"");
+		webComm.handleLink(phoneId, linkContent);
 
 		var data = new Data(interest.getName());
 		var content = "User " + phoneId + " clicked link \"" + linkContent + "\"";
@@ -41,17 +41,15 @@ class LinkInterestHandler : OnInterestCallback, OnRegisterFailed {
 			throw new SecurityException("SecurityException in sign: " + exception);
 		}
 
-		webComm.gotALink("Sent content " + content);
 		try {
 			FaceSingleton.getFace().putData(data);
-			webComm.gotALink("sending back data!");
 		} catch (Exception ex) {
-			webComm.gotALink("Echo: Exception in sending data " + ex);
+			Debug.Log("Echo: Exception in sending data " + ex);
 		}
 	}
 
 	public void onRegisterFailed(Name prefix) {
-		webComm.gotALink("Register failed for prefix: " + prefix.toUri());
+		Debug.Log("Register failed for prefix: " + prefix.toUri());
 	}
 
 }

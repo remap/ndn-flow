@@ -31,10 +31,10 @@
     var keyChain;
     var certificateName;
 
-    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined, 
+    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined,
       function (defaultCertificateName, keyChain) {
         console.log("Default certificate name and keyChain set up complete.");
-      }, 
+      },
       function (msg) {
         console.log("Setup failed " + msg);
       });
@@ -64,6 +64,12 @@
 </head>
 
 <body>
+<p>
+  Please go to the special spot on the floor that needs some sort
+  of special designation and click this link:
+  <a href="#" class="expression" data="match">Associate me with a track</a>
+</p>
+
 
 </body>
 </html>

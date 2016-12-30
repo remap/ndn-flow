@@ -71,12 +71,11 @@ public class FaceSingleton : MonoBehaviour {
 	//this should happen beofe all the calls to start
 
 	public void Awake() {
-		print ("awake");
 		getFace (this);
 	}
 	// Use this for initialization
 	void Start () {
-		print ("start");
+		// required for update to run when unity is not in forground
 		Application.runInBackground = true;
 	}
 	

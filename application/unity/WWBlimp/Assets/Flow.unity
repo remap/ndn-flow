@@ -342,6 +342,9 @@ GameObject:
   - 114: {fileID: 1118242462}
   - 114: {fileID: 1118242465}
   - 114: {fileID: 1118242466}
+  - 114: {fileID: 1118242468}
+  - 114: {fileID: 1118242469}
+  - 114: {fileID: 1118242467}
   m_Layer: 0
   m_Name: Terrain
   m_TagString: Untagged
@@ -557,6 +560,48 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hostName: localhost
   space: /home/flow-csharp
+--- !u!114 &1118242467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1118242458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 188ea8a615c5446bab6f75aa17cd92c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mediaFolderPath: ../../wwFlowMedia/
+  matchLocationX: 0
+  matchLocationZ: 0
+  matchRadius: 0.5
+--- !u!114 &1118242468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1118242458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7428f75074b144100a129335d827000e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fetchVerb: fetch
+  linkVerb: link
+  segmentSize: 2000
+--- !u!114 &1118242469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1118242458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848f9175b7b8f4ee8b46c6099f2b0536, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropClothPrefab: {fileID: 160226, guid: 20fc82367f0004491a8d9b941835faed, type: 2}
+  dropHeight: 100
 --- !u!1 &1260582047
 GameObject:
   m_ObjectHideFlags: 0
@@ -570,7 +615,6 @@ GameObject:
   - 114: {fileID: 1260582051}
   - 114: {fileID: 1260582052}
   - 114: {fileID: 1260582053}
-  - 114: {fileID: 1260582054}
   m_Layer: 0
   m_Name: Blimp
   m_TagString: Untagged
@@ -688,21 +732,6 @@ MonoBehaviour:
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
---- !u!114 &1260582054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1260582047}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7428f75074b144100a129335d827000e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fetchVerb: fetch
-  linkVerb: link
-  segmentSize: 2000
-  defaultDataFreshnessPeriod: 6000
 --- !u!1 &1891660832
 GameObject:
   m_ObjectHideFlags: 0
