@@ -61,7 +61,8 @@ public class TrackDeviceManager : MonoBehaviour {
 			string trackID = devTrackDict[devID];
 			try {
 				Track track = openPTrack.getTracks()[trackID];
-				imageDropScript.Drop(track.getPosition(), mediaDirectory+fNameAndArgs[1]);
+				print(track.getPosition());
+				imageDropScript.Drop(track.unityPosition, mediaDirectory+fNameAndArgs[1]);
 			} catch {
 				Debug.LogError ("TrackDeviceManager.drop unable to get track for id " + trackID + " (for device "  +devID+")");
 			}
@@ -71,7 +72,7 @@ public class TrackDeviceManager : MonoBehaviour {
 
 
 	}
-	 
+	
 	public void match(string devID, string[] fNameAndArgs) {		
 		print ("matching");
 		Dictionary<string, Track> tracks = openPTrack.getTracks ();
@@ -87,6 +88,8 @@ public class TrackDeviceManager : MonoBehaviour {
 			if (distSqr <= bestDistSqr) {
 				bestDistSqr = distSqr;
 				bestTrack = track;
+			} else {
+				print("dist to candidate: " + distSqr.ToString() + " " + track.id + "(x: " + posLoc.x.ToString() + ", z:" + posLoc.z.ToString() + ")");
 			}
 		}
 		if (bestTrack == null) {
@@ -97,7 +100,7 @@ public class TrackDeviceManager : MonoBehaviour {
 		} else {
 			print ("got a match");
 			devTrackDict [devID] = bestTrack.id;
-			string html = "<p> Select an image to drop from your location:\n  <ul>";
+			string html = "<p> Select an image to drop from your location (track ID: " + bestTrack.id + "):\n  <ul>";
 			foreach(string fname in mediaFiles) {
 				html += "    <li>";
 				// can't use full path because we hit a length limit

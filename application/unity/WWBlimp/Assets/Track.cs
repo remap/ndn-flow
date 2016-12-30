@@ -3,6 +3,9 @@
 public class Track {
 	public string id;
 	Vector3 position;
+
+	public Vector3 unityPosition;
+
 	public static int updatesTillActive = 4;
 	public static int timeoutsTillDead = 10;
 	public int updateCount = 0;
@@ -31,7 +34,7 @@ public class Track {
 	/* returns true if newly active */
 	public bool setPosition(float x, float y, float z) {
 		position.Set (x, y, z);
-	//	Debug.Log("Track(" + id + "): setPosition=" + position);
+		//Debug.Log("Track(" + id + "): setPosition=" + position);
 		updateCount++;
 		timeoutCount = 0;
 		if (updateCount == updatesTillActive) {

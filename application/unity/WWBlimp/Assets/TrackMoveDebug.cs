@@ -48,10 +48,12 @@ public class TrackMoveDebug : MonoBehaviour
 		}
 			
 		trackPosition = track.getPosition ();
+		//print(trackPosition);
 		Vector3 pos = trackToTerrain.convertTrackLocToUnityDims (trackPosition);
 		pos.y = Terrain.activeTerrain.SampleHeight (transform.position) + 20	;
 		unityPosition = pos;
 		transform.position = pos;
+		track.unityPosition = unityPosition;
 	}
 	
 }

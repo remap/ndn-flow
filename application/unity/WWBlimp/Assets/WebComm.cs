@@ -35,7 +35,7 @@ public class WebComm : MonoBehaviour {
 	public string linkVerb = "link";
 
 	public int segmentSize = 2000;
-	public static int defaultDataFreshnessPeriod = 60000;
+	public static int defaultDataFreshnessPeriod = 4000;
 
 	// Use this for initialization
 

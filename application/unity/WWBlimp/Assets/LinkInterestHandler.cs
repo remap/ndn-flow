@@ -32,7 +32,7 @@ class LinkInterestHandler : OnInterestCallback, OnRegisterFailed {
 		var data = new Data(interest.getName());
 		var content = "User " + phoneId + " clicked link \"" + linkContent + "\"";
 		data.setContent(new Blob(content));
-		data.getMetaInfo().setFreshnessPeriod(60000);
+		data.getMetaInfo().setFreshnessPeriod(4000);
 
 		try {
 			FaceSingleton.getKeychain().sign(data, FaceSingleton.getCertificateName());      
