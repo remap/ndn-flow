@@ -28,7 +28,10 @@ Typically, an application should set up the default identity and keyChain first,
     var consumer = new AppConsumerSequenceNumber(face, keyChain, true, 5, -1);
     consumer.consume(new Name("/home/flow1/some-data-prefix"), onVerified, onVerifyFailed, onTimeout);
 ```
+
 More examples can be found in examples folder inside each framework language's subfolder.
+
+And check [here](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_python/interface.md) for a set of library interfaces description (in Python) (being updated)
 
 ### Worflow
 (after building your application using the framework)

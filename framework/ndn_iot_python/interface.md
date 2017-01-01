@@ -1,5 +1,12 @@
+NDN-IoT framework interface (Python)
+=============================
+(All languages should hold similar interfaces, and initial /default values definition)
+
+(TODO: OnDataValidationFailed across framework, resolve Face / ThreadsafeFace, Discovery function naming conformance)
+
 **Boostrap**
 
+Constructor
 ```python
 class Bootstrap(object):
     """
@@ -14,7 +21,7 @@ class Bootstrap(object):
     def __init__(self, face):
 ```
 
-
+Set up default identity and certificate name of this instance, and controller name
 ```python
 def setupDefaultIdentityAndRoot(self, defaultIdentityOrFileName, signerName, onSetupComplete, onSetupFailed):
     """
@@ -36,7 +43,7 @@ def setupDefaultIdentityAndRoot(self, defaultIdentityOrFileName, signerName, onS
     """
 ```
 
-
+Consumer functionality bootstrap
 ```python
 def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFailed = None):
     """
@@ -59,7 +66,7 @@ def startTrustSchemaUpdate(self, appPrefix, onUpdateSuccess = None, onUpdateFail
     """
 ```
 
-
+Producer functionality bootstrap
 ```python
 def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = None, onRequestFailed = None):
     Requests producing authorization for a data prefix: commandInterest is sent out 
@@ -84,6 +91,7 @@ def requestProducerAuthorization(self, dataPrefix, appName, onRequestSuccess = N
 
 **Consumer**
 
+Consumer interface class
 ```python
 class AppConsumer():
     """
@@ -103,8 +111,67 @@ class AppConsumer():
     def __init__(self, face, keyChain, certificateName, doVerify):
 ```
 
+Interface class consume call
+```python
+    def consume(self, name, onData, onVerifyFailed, onTimeout):
+        """
+        Consume one piece of data, or consume continuously, depending on
+        child class's implementation
+
+        :param name: name / prefix to consume data under
+        :type name: Name
+        :param onData: onData(data) gets called after received data's onVerifyFailed
+        :type onData: function object
+        :param onVerifyFailed: onVerifyFailed(data) gets called if received data 
+          cannot be verified
+        :type onVerifyFailed: function object
+        :param onTimeout: onTimeout(interest) gets called if a consumer interest times out
+        :type onTimeout: function object
+        """
+        return
+```
+
+Sequence number consumer constructor
+```python
+class AppConsumerSequenceNumber(AppConsumer):
+    """
+    Sequence number based consumer with interest pipelining
+
+    :param face: the face to consume data with
+    :type face: Face
+    :param keyChain: the keyChain to verify received data with
+    :type keyChain: KeyChain
+    :param doVerify: flag for whether the consumer should skip verification
+    :type doVerify: bool
+    :param defaultPipelineSize: interest pipeline size
+    :type defaultPipelineSize: int
+    :param startingSeqNumber: the starting sequence number to ask for
+    :type startingSeqNumber: int
+    """
+    def __init__(self, face, keyChain, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0):
+```
+
+Timestamp consumer constructor
+```python
+class AppConsumerTimestamp(AppConsumer):
+    """
+    Timestamp based consumer with exclusion filters
+
+    :param face: the face to consume data with
+    :type face: Face
+    :param keyChain: the keyChain to verify received data with
+    :type keyChain: KeyChain
+    :param doVerify: flag for whether the consumer should skip verification
+    :type doVerify: bool
+    :param currentTimestamp: the timestamp to start excluding with
+    :type currentTimestamp: int
+    """
+    def __init__(self, face, keyChain, doVerify, currentTimestamp = None):
+```
+
 **Discovery**
 
+Discovery constructor and functionalities
 ```python
 class SyncBasedDiscovery(object):
     """
