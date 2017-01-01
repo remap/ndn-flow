@@ -16,16 +16,13 @@ class AppConsumerTimestamp(AppConsumer):
     :type face: Face
     :param keyChain: the keyChain to verify received data with
     :type keyChain: KeyChain
-    :param certificateName: the certificate name to sign data with
-      (not used by default for consumers)
-    :type certificateName: Name
     :param doVerify: flag for whether the consumer should skip verification
     :type doVerify: bool
     :param currentTimestamp: the timestamp to start excluding with
     :type currentTimestamp: int
     """
-    def __init__(self, face, keyChain, certificateName, doVerify, currentTimestamp = None):
-        super(AppConsumerSequenceNumber, self).__init__(face, keyChain, certificateName, doVerify)
+    def __init__(self, face, keyChain, doVerify, currentTimestamp = None):
+        super(AppConsumerSequenceNumber, self).__init__(face, keyChain, doVerify)
 
         self._pipelineSize = defaultPipelineSize
         self._emptySlot = defaultPipelineSize

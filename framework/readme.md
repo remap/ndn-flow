@@ -25,7 +25,7 @@ Typically, an application should set up the default identity and keyChain first,
     // in onSetupComplete, request trust schema update
     bootstrap.startTrustSchemaUpdate(new Name("/home/flow1"), onUpdateSuccess, onUpdateFailed);
     // in the first onUpdateSuccess, initialize a SequenceNumber consumer
-    var consumer = new AppConsumerSequenceNumber(face, keyChain, defaultCertName, true, 5, -1);
+    var consumer = new AppConsumerSequenceNumber(face, keyChain, true, 5, -1);
     consumer.consume(new Name("/home/flow1/some-data-prefix"), onVerified, onVerifyFailed, onTimeout);
 ```
 More examples can be found in examples folder inside each framework language's subfolder.

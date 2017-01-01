@@ -16,9 +16,6 @@ class AppConsumerSequenceNumber(AppConsumer):
     :type face: Face
     :param keyChain: the keyChain to verify received data with
     :type keyChain: KeyChain
-    :param certificateName: the certificate name to sign data with
-      (not used by default for consumers)
-    :type certificateName: Name
     :param doVerify: flag for whether the consumer should skip verification
     :type doVerify: bool
     :param defaultPipelineSize: interest pipeline size
@@ -26,8 +23,8 @@ class AppConsumerSequenceNumber(AppConsumer):
     :param startingSeqNumber: the starting sequence number to ask for
     :type startingSeqNumber: int
     """
-    def __init__(self, face, keyChain, certificateName, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0):
-        super(AppConsumerSequenceNumber, self).__init__(face, keyChain, certificateName, doVerify)
+    def __init__(self, face, keyChain, doVerify, defaultPipelineSize = 5, startingSeqNumber = 0):
+        super(AppConsumerSequenceNumber, self).__init__(face, keyChain, doVerify)
 
         self._pipelineSize = defaultPipelineSize
         self._emptySlot = defaultPipelineSize

@@ -1,15 +1,36 @@
 NDN-IoT in C\#
 =====================
 
-Dependency (OSX): mono framework, [ndn-dot-net](https://github.com/named-data/ndn-dot-net) library
-
-To compile:
-<pre>
+### Compile
+```
+cd ndn_iot_dot_net
+./waf configure
 ./waf
-</pre>
+```
 
-To run an example:
-<pre>
+### Dependency
+* [Mono framework](http://www.mono-project.com/download/), or Unity
+
+* [ndn-dot-net](https://github.com/named-data/ndn-dot-net) (a copy is already included in this repository)
+
+### Examples
+* [Bootstrap - basic consumer](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_dot_net/examples/test-consuming.cs)
+
+* [Bootstrap - basic producer](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_dot_net/examples/test-producing.cs)
+
+* [Discovery](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_dot_net/examples/test-discovery.cs)
+
+* [Consumer - timestamp consumer](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_dot_net/examples/test-timestamp-consumer.cs)
+
+* [Consumer - sequence number consumer](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_dot_net/examples/test-sequential-consumer.cs)
+
+* [Flow-specific application examples](https://github.com/remap/ndn-flow/tree/master/application/unity)
+
+### To run an example:
+```
 cd build
 mono [example-name.exe]
-</pre>
+```
+
+### Using in your code
+Reference ndn-iot-dot-net.dll, ndn-dot-net.dll, and Mono.Data.Sqlite.dll when building; add dll to the same folder as compiled exe

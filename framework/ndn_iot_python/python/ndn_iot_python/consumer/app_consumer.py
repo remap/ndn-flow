@@ -7,16 +7,12 @@ class AppConsumer():
     :type face: Face
     :param keyChain: the keyChain to verify received data with
     :type keyChain: KeyChain
-    :param certificateName: the certificate name to sign data with
-      (not used by default for consumers)
-    :type certificateName: Name
     :param doVerify: flag for whether the consumer should skip verification
     :type doVerify: bool
     """
-    def __init__(self, face, keyChain, certificateName, doVerify):
+    def __init__(self, face, keyChain, doVerify):
         self._face = face
         self._keyChain = keyChain
-        self._certificateName = certificateName
         self._doVerify = doVerify
 
         return
