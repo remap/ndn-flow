@@ -1,4 +1,5 @@
-# ndn-flow
+NDN-IoT framework and Flow application
+=========================
 
 The repository for:
 
@@ -22,4 +23,7 @@ The repository for:
  - **design** // _folder for design slides and interface documents_
 
 ### Contact
-Zhehao <zhehao@remap.ucla.edu>
+
+Zhehao <zhehao@remap.ucla.edu> (framework and application sample code)
+
+Eitan <eitanm@gmail.com> (Unity application)
