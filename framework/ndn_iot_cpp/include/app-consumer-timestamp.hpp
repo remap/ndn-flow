@@ -8,7 +8,7 @@ namespace ndn_iot {
 
 class AppConsumerTimestamp : public AppConsumer {
 public:
-    AppConsumerTimestamp(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, ndn::Name certificateName, bool doVerify, int64_t currentTimestamp = -1);
+    AppConsumerTimestamp(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, bool doVerify, int64_t currentTimestamp = -1);
 
     ~AppConsumerTimestamp() {};
 

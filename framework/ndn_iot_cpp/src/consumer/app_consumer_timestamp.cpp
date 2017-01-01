@@ -8,8 +8,8 @@ using namespace ndn::func_lib;
 namespace ndn_iot {
 
 AppConsumerTimestamp::AppConsumerTimestamp
-  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, Name certificateName, bool doVerify, int64_t currentTimestamp) 
- : AppConsumer(face, keyChain, certificateName, doVerify)
+  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, bool doVerify, int64_t currentTimestamp) 
+ : AppConsumer(face, keyChain, doVerify)
 {
     currentTimestamp_ = currentTimestamp;
     

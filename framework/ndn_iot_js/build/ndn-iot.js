@@ -178,7 +178,12 @@ IotNode.prototype.beforeLoopStart = function()
         console.log("Error: get serial has not yet finished.");
         return;
     }
-    console.log("Serial: " + this.serial + "; Configuration PIN: " + this.createNewPin());
+
+    var pin = this.createNewPin();
+    if (document.getElementById("content")) {
+        document.getElementById("content").innerHTML += "<p>Serial: " + this.serial + "; Configuration PIN: " + pin + "</p>";
+    }
+    console.log("Serial: " + this.serial + "; Configuration PIN: " + pin);
     this.prefix = new Name(default_prefix).append(this.serial);
 
     // Make sure that we are trusted by the remote NFD to registerPrefix
@@ -235,6 +240,9 @@ IotNode.prototype.onConfigurationReceived = function(prefix, interest, face, int
 
         this.trustRootIdentity = controllerName;
         console.log(controllerName.toUri());
+        if (document.getElementById("content")) {
+            document.getElementById("content").innerHTML += "<p>Controller name: " + controllerName.toUri() + "</p>";
+        }
 
         this.deviceSuffix = ProtobufTlv.toName(environmentConfig.configuration.deviceSuffix.components);
         this.configureIdentity = new Name(networkPrefix).append(this.deviceSuffix);
@@ -419,13 +427,22 @@ IotNode.prototype.finalizeCertificateDownload = function(newCert)
     this.identityManager.addCertificate(new IdentityCertificate(newCert), function () {
         self.identityManager.setDefaultCertificateForKey(newCert, function() {
             console.log("Add device complete!");
+            if (document.getElementById("content")) {
+                document.getElementById("content").innerHTML += "<p>Add device complete!</p>";
+            }
         }, function (error) {
             console.log("Error setting default certificate for key!");
             console.log(error);
+            if (document.getElementById("content")) {
+                document.getElementById("content").innerHTML += "<p>" + error + "</p>";
+            }
         });
     }, function (error) {
         console.log("Error adding new cert!");
         console.log(error);
+        if (document.getElementById("content")) {
+            document.getElementById("content").innerHTML += "<p>" + error + "</p>";
+        }
     });
     
 // For adding device only, the rest shouldn't matter
@@ -1120,16 +1137,15 @@ Bootstrap.prototype.getIdentityNameFromCertName = function (certName)
 Bootstrap.prototype.getKeyChain = function()
 {
     return this.keyChain;
-};var AppConsumer = function AppConsumer(face, keyChain, certificateName, doVerify)
+};var AppConsumer = function AppConsumer(face, keyChain, doVerify)
 {
     this.face = face;
     this.keyChain = keyChain;
-    this.certificateName = certificateName;
     this.doVerify = doVerify;
 };var AppConsumerTimestamp = function AppConsumerTimestamp
-  (face, keyChain, certificateName, doVerify, currentTimestamp)
+  (face, keyChain, doVerify, currentTimestamp)
 {
-    AppConsumer.call(this, face, keyChain, certificateName, doVerify);
+    AppConsumer.call(this, face, keyChain, doVerify);
 
     this.currentTimestamp = currentTimestamp;
 
@@ -1240,7 +1256,7 @@ AppConsumerTimestamp.prototype.onDummyData = function
 }
         
 var AppConsumerSequenceNumber = function AppConsumerSequenceNumber
-  (face, keyChain, certificateName, doVerify, defaultPipelineSize, startingSeqNumber)
+  (face, keyChain, doVerify, defaultPipelineSize, startingSeqNumber)
 {
     if (defaultPipelineSize === undefined) {
         defaultPipelineSize = 5;
@@ -1248,7 +1264,7 @@ var AppConsumerSequenceNumber = function AppConsumerSequenceNumber
     if (startingSeqNumber === undefined) {
         startingSeqNumber = 0;
     }
-    AppConsumer.call(this, face, keyChain, certificateName, doVerify);
+    AppConsumer.call(this, face, keyChain, doVerify);
 
     this.pipelineSize = defaultPipelineSize;
     this.emptySlot = defaultPipelineSize;
@@ -1520,7 +1536,7 @@ SyncBasedDiscovery.prototype.contentCacheAddSyncData = function
     data.getMetaInfo().setFreshnessPeriod(this.syncDataFreshnessPeriod);
     
     var self = this;
-    this.keyChain.sign(data, this.certificateNamem, function() {
+    this.keyChain.sign(data, this.certificateName, function() {
         // adding this data to memoryContentCache should satisfy the pending interest
         self.memoryContentCache.add(data);
     });

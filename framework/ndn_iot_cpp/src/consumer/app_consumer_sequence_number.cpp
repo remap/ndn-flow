@@ -7,8 +7,8 @@ using namespace ndn::func_lib;
 namespace ndn_iot {
 
 AppConsumerSequenceNumber::AppConsumerSequenceNumber
-  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, Name certificateName, bool doVerify, int defaultPipelineSize, int defaultSeqNumber) 
- : AppConsumer(face, keyChain, certificateName, doVerify)
+  (Face& face, ndn::ptr_lib::shared_ptr<KeyChain> keyChain, bool doVerify, int defaultPipelineSize, int defaultSeqNumber) 
+ : AppConsumer(face, keyChain, doVerify)
 {
     currentSeqNumber_ = defaultSeqNumber;
     pipelineSize_ = defaultPipelineSize;

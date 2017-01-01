@@ -1,7 +1,7 @@
 var AppConsumerTimestamp = function AppConsumerTimestamp
-  (face, keyChain, certificateName, doVerify, currentTimestamp)
+  (face, keyChain, doVerify, currentTimestamp)
 {
-    AppConsumer.call(this, face, keyChain, certificateName, doVerify);
+    AppConsumer.call(this, face, keyChain, doVerify);
 
     this.currentTimestamp = currentTimestamp;
 

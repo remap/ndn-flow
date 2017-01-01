@@ -8,7 +8,7 @@ namespace ndn_iot {
 
 class AppConsumerSequenceNumber : public AppConsumer {
 public:
-    AppConsumerSequenceNumber(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, ndn::Name certificateName, bool doVerify, int defaultPipelineSize = 5, int startingSequenceNumber = 0);
+    AppConsumerSequenceNumber(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, bool doVerify, int defaultPipelineSize = 5, int startingSequenceNumber = 0);
 
     ~AppConsumerSequenceNumber() {};
 

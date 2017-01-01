@@ -1,5 +1,5 @@
 var AppConsumerSequenceNumber = function AppConsumerSequenceNumber
-  (face, keyChain, certificateName, doVerify, defaultPipelineSize, startingSeqNumber)
+  (face, keyChain, doVerify, defaultPipelineSize, startingSeqNumber)
 {
     if (defaultPipelineSize === undefined) {
         defaultPipelineSize = 5;
@@ -7,7 +7,7 @@ var AppConsumerSequenceNumber = function AppConsumerSequenceNumber
     if (startingSeqNumber === undefined) {
         startingSeqNumber = 0;
     }
-    AppConsumer.call(this, face, keyChain, certificateName, doVerify);
+    AppConsumer.call(this, face, keyChain, doVerify);
 
     this.pipelineSize = defaultPipelineSize;
     this.emptySlot = defaultPipelineSize;

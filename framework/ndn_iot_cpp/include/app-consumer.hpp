@@ -7,7 +7,7 @@ namespace ndn_iot {
 
 class AppConsumer {
 public:
-    AppConsumer(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, ndn::Name certificateName, bool doVerify);
+    AppConsumer(ndn::Face& face, ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain, bool doVerify);
 
     ~AppConsumer();
 
@@ -16,7 +16,6 @@ public:
 protected:
     ndn::Face& face_;
     ndn::ptr_lib::shared_ptr<ndn::KeyChain> keyChain_;
-    ndn::Name certificateName_;
     bool doVerify_;    
 };
 

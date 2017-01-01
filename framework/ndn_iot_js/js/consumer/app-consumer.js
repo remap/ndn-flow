@@ -1,7 +1,6 @@
-var AppConsumer = function AppConsumer(face, keyChain, certificateName, doVerify)
+var AppConsumer = function AppConsumer(face, keyChain, doVerify)
 {
     this.face = face;
     this.keyChain = keyChain;
-    this.certificateName = certificateName;
     this.doVerify = doVerify;
 };
