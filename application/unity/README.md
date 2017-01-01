@@ -1,14 +1,15 @@
-# Using NDN in Unity
+Unity related / C\# component of Flow application
+=============================
 
-The following installation was tested on Unity version 5.3.2.f1 Personal running on Mac OS X version 10.11.5.
+### Content
 
-## Installation
+Flow Unity application:
 
-1. [Install NFD][1]
-2. Create a Unity project
-3. Add [`ndn-dot-net.dll`][2] to the project’s assets.
-4. Add [SimpleJSON][3] to the project's assets.
+* **WWBlimp**: Unity application for Flow (refer to its readme for what it does and what to expect)
 
-[1]:	https://github.com/named-data/NFD/blob/master/docs/INSTALL.rst
-[2]:	https://github.com/named-data/ndn-dot-net/blob/master/bin/ndn-dot-net.dll
-[3]:	http://wiki.unity3d.com/index.php/SimpleJSON#Download
+Sample code:
+
+* **matcher-standalone**: standalone JS and C\# sample code for matching an opt track ID with mobile identity name
+* **opt**: (coming soon) standalone C\# sample code OpenPTrack consumer
+* **phone-handler-standalone**: standalone JS and C\# sample code for mobile website's interaction with Unity in Flow application
+* **structure**: suggested structure for implementing the Unity app with ndn-iot-dot-net framework
