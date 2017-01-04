@@ -3,16 +3,20 @@ NDN-IoT in C++
 
 ### Compile and install
 ```
-cd ndn_iot_cpp
+cd ndn_iot_cpp/src/commands
+protoc --cpp_out=. *.proto
+cd ../..
 ./waf configure
 ./waf
 sudo ./waf install
 ```
 
 ### Dependency
+* Protobuf
+
 * Boost (>= 1.54) ASIO
 
-* [ndn-cpp](https://github.com/named-data/ndn-cpp/blob/master/INSTALL.md) (soon to be updated to >= 0.11, for OnDataValidationFailed support; compiled with standard / boost shared pointers and functions; with **boost asio**)
+* [ndn-cpp](https://github.com/named-data/ndn-cpp/blob/master/INSTALL.md) (>= 0.11, for OnDataValidationFailed support; compiled with standard / boost shared pointers and functions; with **boost asio**)
 
 * [rapidjson](https://github.com/miloyip/rapidjson) (please use latest version or clang may complain)
 

@@ -16,7 +16,7 @@ using namespace ndn::func_lib;
 namespace ndn_iot {
 
 Bootstrap::Bootstrap
-  (ndn::ThreadsafeFace& face, std::string confFile)
+  (ndn::Face& face)
  : face_(face), certificateContentCache_(&face)
 {
   identityStorage_ = ptr_lib::shared_ptr<BasicIdentityStorage>(new BasicIdentityStorage());
@@ -41,9 +41,9 @@ Bootstrap::Bootstrap
   keyChain_.reset(new KeyChain(identityManager_, policyManager_));
   keyChain_->setFace(&face_);
   defaultCertificateName_ = Name();
-
-  //processConfiguration(confFile);
 }
+
+
 
 Bootstrap::~Bootstrap()
 {
@@ -347,8 +347,18 @@ Bootstrap::onSchemaVerificationFailed
   exclude.appendComponent(Name::Component::fromVersion(it->second->getVersion()));
   newInterest.setExclude(exclude);
 
-  face_.callLater(4000, bind(&Bootstrap::reexpressSchemaInterest, this, newInterest, onUpdateSuccess, onUpdateFailed));
+  Interest dummyInterest(Name("/local/timeout"));
+  dummyInterest.setInterestLifetimeMilliseconds(4000);
+  face_.expressInterest(dummyInterest, 
+    bind(&Bootstrap::onDummyData, this, _1, _2),
+    bind(&Bootstrap::reexpressSchemaInterest, this, newInterest, onUpdateSuccess, onUpdateFailed));
 
+  return;
+}
+
+void 
+Bootstrap::onDummyData(const ptr_lib::shared_ptr<const ndn::Interest>& interest, const ptr_lib::shared_ptr<const ndn::Data>& data)
+{
   return;
 }
 
@@ -400,81 +410,5 @@ Bootstrap::getIdentityNameFromCertName
 
   return certName.getPrefix(i);
 }
-
-/*
-bool 
-Bootstrap::processConfiguration
-  (std::string confFile, bool requestPermission, 
-   const OnSetupComplete& onSetupComplete, const OnSetupFailed& onSetupFailed)
-{
-  BoostInfoParser config;
-
-  try {
-    // if the file does not exist, we would run into a runtime_error
-    config.read(confFile);
-
-    string defaultIdentityString = "";
-    if (config.getRoot()["application/identity"].size() > 0) {
-      defaultIdentityString = config.getRoot()["application/identity"][0]->getValue();
-      if (defaultIdentityString == "default") {
-        defaultIdentity_ = keyChain_->getDefaultIdentity();
-      } else {
-        try {
-          defaultIdentity_ = Name(defaultIdentityString);
-          keyChain_->getIdentityManager()->getDefaultKeyNameForIdentity(defaultIdentity_);
-        } catch (const SecurityException& e) {
-          cout << "Cannot find keys for configured identity " << defaultIdentityString << endl;
-          return false;
-        }
-      }
-    } else {
-      defaultIdentity_ = keyChain_->getDefaultIdentity();
-    }
-    cout << "here..." << endl;
-
-    defaultCertificateName_ = keyChain_->getIdentityManager()->getDefaultCertificateNameForIdentity(defaultIdentity_);
-    Name signerName = (KeyLocator::getFromSignature(keyChain_->getCertificate(defaultCertificateName_)->getSignature())).getKeyName();
-
-    if (config.getRoot()["application/signer"].size() > 0) {
-      string intendedSigner = config.getRoot()["application/signer"][0]->getValue();
-      if (intendedSigner == "default") {
-        cout << "Using default signer name " << signerName.toUri() << endl;
-      } else {
-        if (intendedSigner != signerName.toUri()) {
-          cout << "Signer name mismatch" << endl;
-        }
-      }
-    }
-
-    controllerName_ = getIdentityNameFromCertName(signerName);
-
-    if (config.getRoot()["application/appName"].size() > 0) {
-      applicationName_ = config.getRoot()["application/appName"][0]->getValue();
-    } else {
-      throw std::runtime_error("Configuration is missing expected appName (application name).\n");
-    }
-
-    if (config.getRoot()["application/prefix"].size() > 0) {
-      dataPrefix_ = config.getRoot()["application/prefix"][0]->getValue();
-    } else {
-      throw std::runtime_error("Configuration is missing expected prefix (application prefix).\n");
-    }
-  } catch (const std::exception& e) {
-    cout << e.what() << endl;
-    if (onSetupFailed) {
-      onSetupFailed(e.what());
-    }
-    return false;
-  }
-  if (requestPermission) {
-    sendAppRequest();
-  } else {
-    if (onSetupComplete) {
-      onSetupComplete(defaultIdentity_, *keyChain_.get());
-    }
-  }
-  return true;
-}
-*/
 
 }

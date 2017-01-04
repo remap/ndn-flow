@@ -43,6 +43,7 @@ def build (ctx):
     # )
 
     # Build the library
+    # TODO: install does not seem to install headers correctly
     libndn_iot = dict(
         target = "ndn_iot_cpp",
         name = "ndn_iot_cpp",

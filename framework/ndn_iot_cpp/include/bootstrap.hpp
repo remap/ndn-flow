@@ -84,15 +84,9 @@ class Bootstrap {
 
 public:
   Bootstrap
-    (ndn::ThreadsafeFace& face, std::string confFile = "app.conf");
+    (ndn::Face& face);
   
   ~Bootstrap();
-
-  bool 
-  processConfiguration
-    (std::string confFile, bool requestPermission = true, 
-     const OnSetupComplete& onSetupComplete = NULL, 
-     const OnSetupFailed& onSetupFailed = NULL);
   
   ndn::Name
   getIdentityNameFromCertName(ndn::Name certName);
@@ -156,7 +150,10 @@ private:
   void
   onNetworkNackSchema(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::NetworkNack>& networkNack, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed);
 
-  ndn::ThreadsafeFace& face_;
+  void
+  onDummyData(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<const ndn::Data>& data);
+
+  ndn::Face& face_;
   ndn::Name defaultIdentity_;
   ndn::Name defaultCertificateName_;
   ndn::Name defaultKeyName_;
