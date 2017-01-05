@@ -199,12 +199,15 @@ void
 Bootstrap::onAppRequestTimeout
 (const ptr_lib::shared_ptr<const Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
 {
+  onRequestFailed("Application request failed because of interest time out");
+  /*
   Interest newInterest(*interest);
   newInterest.refreshNonce();
   face_.expressInterest(newInterest, 
     bind(&Bootstrap::onAppRequestData, this, _1, _2, onRequestSuccess, onRequestFailed), 
     bind(&Bootstrap::onAppRequestTimeout, this, _1, onRequestSuccess, onRequestFailed), 
     bind(&Bootstrap::onNetworkNack, this, _1, _2, onRequestSuccess, onRequestFailed));
+  */
   return;
 }
 
@@ -212,7 +215,7 @@ void
 Bootstrap::onNetworkNack
 (const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<NetworkNack>& networkNack, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
 {
-  cout << "Network NACK not yet handled" << endl;
+  onRequestFailed("Application request failed because of interest NACK");
   return;
 }
 
