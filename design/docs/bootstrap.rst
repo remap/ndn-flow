@@ -10,10 +10,10 @@ Bootstrap class sets up a keyChain, default certificate name, (as a producer) re
     | Namespace: ``ndn_iot``
 
 :[Python]:
-    Module: ``ndn_iot_python``
+    Module: ``ndn_iot_python.bootstrap``
 
 :[C#]:
-    Package: ``net.named_data.jndn``
+    Package: ``ndn_iot.bootstrap``
 
 Bootstrap Constructors
 -----------------
@@ -235,7 +235,7 @@ Request the trust schema of an application from the controller. This call should
     
         # Returns None
         def startTrustSchemaUpdate(self, 
-            appPrefix,       # Name
+            appPrefix,        # Name
             onUpdateSuccess,  # Function object, onUpdateSuccess(string, bool)
             onUpdateFailed    # Function object, onUpdateFailed(string)
         )
