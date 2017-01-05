@@ -31,15 +31,16 @@
 
   function testAddDevice() {
     //var node = new IotNode("127.0.0.1");
-    var node = new IotNode("128.97.152.38");
+    var node = new IotNode(document.getElementById("host").value);
   }
 </script>
 
 </head>
 
 <body>
-
-  <button onclick="testAddDevice()">Test</button>
+  <p><input id="host" type="text" value="128.97.152.38"></input></p>
+  <button onclick="testAddDevice()">Add device</button>
+  <p id="console-section">Console</p>
   <div id="content"></div>
 </body>
 </html>
