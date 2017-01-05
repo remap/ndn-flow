@@ -30,8 +30,6 @@ def configure(conf):
 
     conf.write_config_header('config.h')
 
-
-
 def build (ctx):
     version(ctx)
     # Generate protobuf file, being debugged
@@ -43,7 +41,6 @@ def build (ctx):
     # )
 
     # Build the library
-    # TODO: install does not seem to install headers correctly
     libndn_iot = dict(
         target = "ndn_iot_cpp",
         name = "ndn_iot_cpp",
@@ -60,6 +57,12 @@ def build (ctx):
         CNUM = VERSION_BASE,
         **libndn_iot
     )
+
+    headers = ctx.path.ant_glob('include/*.hpp')
+                #excl=[''])
+
+    ctx.install_files("%s/ndn_iot_cpp" % '${INCLUDES}', headers,
+                  relative_trick=True, cwd=ctx.path.find_node('include'))
 
     # Build the test    
     # TODO: for now need to make install and export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
