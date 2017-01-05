@@ -18,4 +18,6 @@ Flow application components
   * What it does: controls the visualization by issueing NDN command interests to the Unity component
   * [Source code](https://github.com/remap/ndn-flow/blob/master/application/website/wwblimp.html)
 
+A diagram of the application installation is available [here](https://github.com/remap/ndn-flow/blob/master/design/flow-components.pdf).
+
 Refer to the readme of each component for more details.

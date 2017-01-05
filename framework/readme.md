@@ -13,6 +13,8 @@ The framework libraries in Python, C++, JS and C\# all implement three major fun
   * Sequence-number-based namespace (/prefix/[consecutive sequence numbers]) consumer: pipelines interest for the next few sequence numbers
   * (Producer implementation should be straightforward using NDN CCL's memoryContentCache, or built-in examples that talk to repo-ng, thus not included in the framework implementation)
 
+For more details on the functionalities of the framework, check [here](https://github.com/remap/ndn-flow/blob/master/design/docs) for a set of library interface descriptions, and [here](https://github.com/remap/ndn-flow/blob/master/design/Flow-design-zhehao-rev4.pptx) for the design slides.
+
 **Naming**
 The framework generally supports arbitrary names given by the application, although the framework is developed with these levels of names (manufacture/bootstrap-level, device-level, and application-level) in mind, as suggested in these application [design slides](https://github.com/remap/ndn-flow/blob/master/design/Flow-design-zhehao-rev4.pptx) for Flow and the IoTDI '16 paper section VI.A.
 
@@ -33,7 +35,7 @@ Typically, an application should set up the default identity and keyChain first,
 
 More examples can be found in examples folder inside each framework language's subfolder.
 
-And check [here](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_python/interface.md) for a set of library interfaces description (in Python) (being updated)
+And check [here](https://github.com/remap/ndn-flow/blob/master/design/docs) for a set of library interfaces descriptions.
 
 ### Worflow
 (what to do after building your application using the framework)
