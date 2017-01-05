@@ -21,7 +21,7 @@ AppConsumerTimestamp Constructors
 AppConsumerTimestamp Constructor (Face, KeyChain, DoVerify, CurrentTimestamp)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a AppConsumerTimestamp instance using the given Face, KeyChain, DoVerify, and CurrentTimestamp. While it's not necessary to use this class with a KeyChain set up by a Bootstrap instance, it's recommended to do so, so that data verification is handled by that KeyChain automatically.
+Create a AppConsumerTimestamp instance using the given Face, KeyChain, DoVerify, and CurrentTimestamp.
 
 :[C++]:
 
@@ -73,7 +73,7 @@ Create a AppConsumerTimestamp instance using the given Face, KeyChain, DoVerify,
         The face that AppConsumerSequenceNumber instance uses to issue interest.
 
     - `keyChain`
-        The KeyChain that AppConsumerSequenceNumber instance uses to verify received data. It is recommended to use the KeyChain set up by Bootstrap, which is tracking updates in the trust schema.
+        The KeyChain that AppConsumerSequenceNumber instance uses to verify received data. While it's not necessary to use this class with a KeyChain set up by a Bootstrap instance, it is recommended to do so since it's tracking updates in the trust schema.
 
     - `doVerify`
         Flag that controls whether receives data should be verified. It is recommended to use true but this can be disabled for testing purposes by setting to false.
@@ -87,7 +87,7 @@ AppConsumerTimestamp.consume Methods
 AppConsumerTimestamp.consume
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Starts consuming data in the given namespace.
+Starts consuming data in the given namespace, and calls corresponding callbacks when data is validated, validation fails, or interest times out.
 
 :[C++]:
 
