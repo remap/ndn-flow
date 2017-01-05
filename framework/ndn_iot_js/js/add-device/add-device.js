@@ -2,7 +2,7 @@ default_prefix = new Name("/home/configure");
 
 var IotNode = function IotNode(host, dbName)
 {
-    this.face = new Face({host: host});
+    this.face = new Face({"host": host});
     if (dbName === undefined) {
         dbName = "iot-db";
     }
@@ -84,14 +84,21 @@ IotNode.prototype.beforeLoopStart = function()
     // For now as a quick hack, we can enable localhop security on the NFD of the web host (or whatever other NFDs this code defaults to)
     var self = this;
     this.keyChain.getDefaultCertificateName(function (certificateName) {
+        document.getElementById("content").innerHTML += "<p>Registering prefix: " + self.prefix.toUri() + "</p>";
         self.face.setCommandSigningInfo(self.keyChain, certificateName);
         self.face.registerPrefix(self.prefix, self.onConfigurationReceived.bind(self), self.onRegisterFailed.bind(self));
     }, function (error) {
-        self.keyChain.createIdentityAndCertificate(new Name("/temp/device/initial"), function (certificateName) {
-            self.face.setCommandSigningInfo(self.keyChain, certificateName);
+        document.getElementById("content").innerHTML += "<p>" + error + "; Creating new identity</p>";
+        var initialTempName = new Name("/temp/device/initial");
+        self.keyChain.createIdentityAndCertificate(initialTempName, function (certificateName) {
+            document.getElementById("content").innerHTML += "<p>Registering prefix: " + self.prefix.toUri() + "</p>";
             self.face.setCommandSigningInfo(self.keyChain, certificateName);
             self.face.registerPrefix(self.prefix, self.onConfigurationReceived.bind(self), self.onRegisterFailed.bind(self));
+            // set the newly created identity as default
+            self.keyChain.identityManager.setDefaultIdentityPromise(initialTempName, false);
         }, function (error) {
+            document.getElementById("content").innerHTML += "<p>" + error + "</p>";
+            document.getElementById("content").innerHTML += "<p>" + "Please use latest version of Firefox for Android, Chrome / Android browser will not work!" + "</p>";
             console.log(error);
         });
     });

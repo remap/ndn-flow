@@ -19,5 +19,11 @@ cd ndn_iot_js
 
 * Consumer - sequence number consumer (coming soon)
 
+### Additional content
+
+add-device.html, an ndn_pi client for adding a mobile device to the home network, is also included [here](https://github.com/remap/ndn-flow/blob/master/framework/ndn_iot_js/js/add-device/add-device.html).
+
+To use the script on a mobile device, be sure to use latest Firefox for Android, as Chrome would complain about "only secure origins are allowed", and Android browser would complain about "promise not supported" for KeyChain.createIdentityAndCertificate function.
+
 ### Using in your code
 Include the combined js and ndn-js.js
