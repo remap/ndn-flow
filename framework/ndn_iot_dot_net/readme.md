@@ -1,6 +1,8 @@
 NDN-IoT in C\#
 =====================
 
+This page describes how to compile and install the C\# NDN-IoT framework, and examples to use it in your code.
+
 ### Compile
 ```
 cd ndn_iot_dot_net

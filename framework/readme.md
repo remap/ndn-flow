@@ -1,5 +1,8 @@
 NDN-IoT Framework
 =====================
+
+This page describes the overall functionalities, how to use, and the workflow of our NDN-IoT framework, which we used to build [the Flow application](https://github.com/remap/ndn-flow/tree/master/application).
+
 ### Functionalities
 The framework libraries in Python, C++, JS and C\# all implement three major functionalities (files in each library are named according to the certain functionality):
 * Bootstrap:
@@ -63,4 +66,4 @@ Each framework library is built on top of a corresponding library in NDN common 
 
 
 
-(Updated Dec 31, 2016)
+(Updated Jan 8, 2016)

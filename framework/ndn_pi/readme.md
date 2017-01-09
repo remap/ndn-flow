@@ -1,10 +1,19 @@
-NDN-Pi: NDN controller for Flow application
+NDN-Pi: NDN controller for NDN-IoT framework
 ==========================
 
-** Dependency **
-[PyNDN2](https://github.com/named-data/PyNDN2) installed
+This page describes how to install and use the NDN-pi controller.
 
-** How to use **
+### Dependency
+
+* [PyNDN2](https://github.com/named-data/PyNDN2) installed
+
+### Supported platforms
+
+* Ubuntu 14.04
+* OSX 10.10, 10.11
+* Raspbian Jessie (if you want to use this code on a Raspberry Pi, a copy is included in the Pi image here. Follow the instructions here for using that image.)
+
+### How to use
 
 * start nfd
 * run controller:

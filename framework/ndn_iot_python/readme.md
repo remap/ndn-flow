@@ -1,6 +1,8 @@
 NDN-IoT in Python
 ====================
 
+This page describes how to compile and install the Python NDN-IoT framework, and examples to use it in your code.
+
 ### Compile and install
 ```
 cd ndn_iot_python

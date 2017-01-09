@@ -1,6 +1,8 @@
 Unity related / C\# component of Flow application
 =============================
 
+This folder holds Unity-related functionalities of Flow application.
+
 ### Content
 
 Flow Unity application:

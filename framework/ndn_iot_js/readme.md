@@ -1,6 +1,8 @@
 NDN-IoT in JavaScript
 ====================
 
+This page describes how to install the JavaScript NDN-IoT framework, and examples to use it in your code.
+
 ### Generate combined script
 ```
 cd ndn_iot_js

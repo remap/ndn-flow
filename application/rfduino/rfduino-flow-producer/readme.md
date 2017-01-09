@@ -1,6 +1,8 @@
 Gyroscope component for Flow application
 ========================
 
+This page describes the RFduino component's functionality, required devices, and installation in the Flow application
+
 ### Description
 
 In Flow, RFduino with a gyroscope connected does the following
@@ -17,7 +19,7 @@ In Flow, RFduino with a gyroscope connected does the following
 * 2 * 10KOhm resistors
 * Wires
 
-### Development setup
+### Installation
 * First follow [these instructions](https://github.com/RFduino/RFduino/blob/master/README.md) for RFduino development environment setup (tested with Arduino 1.6.9 with RFduino library 2.3.2)
 * Then follow [installation guide](https://github.com/remap/ndn-flow/blob/master/application/rfduino/rfduino-flow-producer/INSTALL.md) (Thanks Jeff T)
 * Follow instructions [here](http://www.rfduino.com/product/rfduino-6-axis-mpu-6050-accgyro-demo/) for connecting a MPU6050 gyroscope
