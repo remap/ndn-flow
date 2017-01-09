@@ -63,25 +63,25 @@ Material:
       second: 0.5
     - first:
         name: _LastLevel
-      second: 60
+      second: 325
     - first:
         name: _LastLevelTextureSize
       second: 50
     - first:
         name: _Level1
-      second: 30
+      second: 50
     - first:
         name: _Level1TextureSize
       second: 20
     - first:
         name: _Level2
-      second: 40
+      second: 150
     - first:
         name: _Level2TextureSize
       second: 10
     - first:
         name: _Level3
-      second: 50
+      second: 314.14474
     - first:
         name: _Level3TextureSize
       second: 10
@@ -93,7 +93,7 @@ Material:
       second: 6
     - first:
         name: _WaterLevel
-      second: 0
+      second: 2
     m_Colors:
     - first:
         name: _BeachColor

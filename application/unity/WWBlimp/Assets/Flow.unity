@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44692504, g: 0.4967869, b: 0.57508504, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -426,7 +426,7 @@ MonoBehaviour:
     - _name: UnderWater
       texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
       color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
-      height: 0
+      height: 2
       textureTiling: 6
       readOnlyName: 1
     - _name: Beach
@@ -438,31 +438,31 @@ MonoBehaviour:
     - _name: Level1
       texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
       color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
-      height: 30
+      height: 50
       textureTiling: 20
       readOnlyName: 1
     - _name: Level2
       texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
       color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
-      height: 40
+      height: 150
       textureTiling: 10
       readOnlyName: 1
     - _name: Level3
       texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
       color: {r: 0.75, g: 0.53, b: 0, a: 1}
-      height: 50
+      height: 314.14474
       textureTiling: 10
       readOnlyName: 1
     - _name: LastLevel
       texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
       color: {r: 0.8, g: 0.9, b: 0.9, a: 1}
-      height: 60
+      height: 325
       textureTiling: 50
       readOnlyName: 1
-    waterLevel: 0
+    waterLevel: 2
     slopeFader: 1
     brightness: 0.5
-    relationType: 1
+    relationType: 0
   isInitialized: 1
   test: Here you will see your custom fields
 --- !u!114 &1118242463
@@ -481,6 +481,7 @@ MonoBehaviour:
   trackEffectRadius: 1
   errosionRate: 10
   terrainErrosionDepth: 0.001
+  initalHeight: 0.14
   trackWorldDimentions:
     x:
       min: 0
@@ -687,8 +688,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4d3ffe5c8c3d4ff2b83f22f6a7a12dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHeight: 500
-  minHeight: 10
+  maxHeight: 400
+  minHeight: 350
   maxRepultionForce: 1
   repultionLeverage: 1
   noGoZoneWidth: 20

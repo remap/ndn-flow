@@ -20,6 +20,8 @@ public class TrackToTerrain : MonoBehaviour {
 	[Range(0.0f, 100.0f)]
 	public float errosionRate = 10;
 	public float terrainErrosionDepth = .001f;
+	[Tooltip("Inital terrain height.  Downtown is 200f which is ~ 50 units ~ .14")]
+	public float initalHeight = .14f;
 	Gaussian gauss;
 	/*
 	[Serializable]
@@ -90,7 +92,7 @@ public class TrackToTerrain : MonoBehaviour {
 
 		for (int i = 0; i < terrainMapWidth; i++) {
 			for (int j = 0; j < terrainMapHeight; j++) {
-				heights [i, j] = .25f;
+				heights [i, j] = initalHeight;
 			}
 		}
 		terr.terrainData.SetHeights(0,0,heights);
