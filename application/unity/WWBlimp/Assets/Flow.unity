@@ -576,6 +576,7 @@ MonoBehaviour:
   matchLocationX: 0
   matchLocationZ: 0
   matchRadius: 0.5
+  dropOffset: 1
 --- !u!114 &1118242468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -602,7 +603,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dropClothPrefab: {fileID: 160226, guid: 20fc82367f0004491a8d9b941835faed, type: 2}
-  dropHeight: 100
 --- !u!1 &1260582047
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,7 +634,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc49f8153b5804387b7de572e88c9b89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxVelocity: 1
+  maxVelocity: 0.65
   maxAngularVelocity: {x: 0.25, y: 0.25, z: 0.25}
   maxThrust: 2
   maxTorque: {x: 0.1, y: 0.1, z: 0.1}
@@ -669,7 +669,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1260582047}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 500, y: 200, z: 200}
+  m_LocalPosition: {x: 2500, y: 375, z: 2500}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:

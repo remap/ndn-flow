@@ -21,7 +21,8 @@ public class TrackDeviceManager : MonoBehaviour {
 	public float matchLocationZ = 0;
 	[Tooltip("radius (openptrack units - meters?) from center of match to be considered a match")]
 	public float matchRadius = .5f;
-
+	[Tooltip("distance below blimp cloth should be dropped")]
+	public float dropOffset = 1f;
 
 	// not sure why these are showing up in inspector (as read only)
 	OpenPTrackProvider openPTrack ;
@@ -30,11 +31,16 @@ public class TrackDeviceManager : MonoBehaviour {
 
 	Dictionary<string , string > devTrackDict = new Dictionary<string , string >();
 
+
+	Rigidbody theBlimpRigidbody;
+
 	// Use this for initialization
 	void Start () {
 		openPTrack = GetComponent<OpenPTrackProvider> ();
 		imageDropScript = GetComponent<ImageDrop> ();
 
+		GameObject theBlimp = GameObject.Find ("Blimp");
+		theBlimpRigidbody = theBlimp.GetComponent<Rigidbody> ();
 
 		WebComm.addRFC ("match", match);
 		WebComm.addRFC ("drop", drop);
@@ -51,12 +57,19 @@ public class TrackDeviceManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		if (Input.GetKeyDown ("space"))
+			drop ("-1", new string[]{"drop", "RS112_1957_CathedralHigh_TypingClass.jpg"});
 	
 	}
 
-	// matches to closests to center of match area (if one exists)
-	// TODO: EGM would it be better to give an error and not match if two are in the radius? 
+
+	//changed to drop from blimp
 	public void drop(string devID, string[] fNameAndArgs) {	
+		Vector3 vel = theBlimpRigidbody.velocity;
+		Vector3 pos = theBlimpRigidbody.transform.position;
+
+		imageDropScript.Drop(new Vector3(pos.x, pos.y - dropOffset, pos.z), vel, mediaDirectory+fNameAndArgs[1]);
+		/*
 		try {
 			string trackID = devTrackDict[devID];
 			try {
@@ -69,10 +82,13 @@ public class TrackDeviceManager : MonoBehaviour {
 		} catch {
 			Debug.LogError ("TrackDeviceManager.drop unable to get track id for device " + devID);
 		}
+		*/
 
 
 	}
 	
+	// matches to closests to center of match area (if one exists)
+	// TODO: EGM would it be better to give an error and not match if two are in the radius? 
 	public void match(string devID, string[] fNameAndArgs) {		
 		print ("matching");
 		Dictionary<string, Track> tracks = openPTrack.getTracks ();
