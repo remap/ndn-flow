@@ -576,7 +576,7 @@ MonoBehaviour:
   matchLocationX: 0
   matchLocationZ: 0
   matchRadius: 0.5
-  dropOffset: 1
+  dropOffset: 5
 --- !u!114 &1118242468
 MonoBehaviour:
   m_ObjectHideFlags: 0
