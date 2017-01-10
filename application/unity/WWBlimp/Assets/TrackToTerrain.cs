@@ -10,6 +10,7 @@ public class TrackToTerrain : MonoBehaviour {
 	/* PUBLIC UNITY PROPERTIES */
 	public TrackProvider provider;
 
+
 	public bool ShowDebugTracks = true;
 
 	public float terrainModStepSize = .01f; // track influce is the total amount of hieght all tracks will add to theterrain.
@@ -20,8 +21,14 @@ public class TrackToTerrain : MonoBehaviour {
 	[Range(0.0f, 100.0f)]
 	public float errosionRate = 10;
 	public float terrainErrosionDepth = .001f;
-	[Tooltip("Inital terrain height.  Downtown is 200f which is ~ 50 units ~ .14")]
-	public float initalHeight = .14f;
+
+	[Tooltip("Grayscale elevation map.  Must be 513x513")] // yes that is a 3
+	public Texture2D initialTerrainMap;
+//	public float heightMultiplyer;
+
+
+//	[Tooltip("Inital terrain height.  Downtown is 200f which is ~ 50 units ~ .14")]
+//	public float initalHeight = .14f;
 	Gaussian gauss;
 	/*
 	[Serializable]
@@ -90,9 +97,14 @@ public class TrackToTerrain : MonoBehaviour {
 		Debug.Log("Terrain Map: " + terrainMapWidth +" x "+terrainMapHeight);
 		heights = terr.terrainData.GetHeights(0,0,terrainMapWidth,terrainMapHeight);
 
+
+		Color[] pixels = initialTerrainMap.GetPixels ();
+
+		int curPixel = 0;
 		for (int i = 0; i < terrainMapWidth; i++) {
 			for (int j = 0; j < terrainMapHeight; j++) {
-				heights [i, j] = initalHeight;
+				heights [i, j] = pixels [curPixel].grayscale;
+				curPixel++;
 			}
 		}
 		terr.terrainData.SetHeights(0,0,heights);

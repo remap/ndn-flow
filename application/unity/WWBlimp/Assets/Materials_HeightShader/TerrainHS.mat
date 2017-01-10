@@ -18,37 +18,37 @@ Material:
     - first:
         name: _BeachTexture
       second:
-        m_Texture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _LastLevelTexture
       second:
-        m_Texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _Level1Texture
       second:
-        m_Texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _Level2Texture
       second:
-        m_Texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _Level3Texture
       second:
-        m_Texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
         name: _UnderWaterTexture
       second:
-        m_Texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
+        m_Texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
@@ -57,7 +57,7 @@ Material:
       second: 10
     - first:
         name: _BeachTextureSize
-      second: 100
+      second: 1
     - first:
         name: _Brightness
       second: 0.5
@@ -66,31 +66,31 @@ Material:
       second: 325
     - first:
         name: _LastLevelTextureSize
-      second: 50
+      second: 1
     - first:
         name: _Level1
       second: 50
     - first:
         name: _Level1TextureSize
-      second: 20
+      second: 1
     - first:
         name: _Level2
       second: 150
     - first:
         name: _Level2TextureSize
-      second: 10
+      second: 1
     - first:
         name: _Level3
       second: 314.14474
     - first:
         name: _Level3TextureSize
-      second: 10
+      second: 1
     - first:
         name: _Slope
       second: 1
     - first:
         name: _UnderWaterTextureSize
-      second: 6
+      second: 1
     - first:
         name: _WaterLevel
       second: 2
