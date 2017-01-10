@@ -152,7 +152,86 @@ Transform:
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
+--- !u!1 &219064862
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 219064866}
+  - 33: {fileID: 219064865}
+  - 64: {fileID: 219064864}
+  - 23: {fileID: 219064863}
+  m_Layer: 0
+  m_Name: Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!23 &219064863
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 219064862}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_SubsetIndices: 
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_SelectedWireframeHidden: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!64 &219064864
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 219064862}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Convex: 0
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!33 &219064865
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 219064862}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &219064866
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 219064862}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2500, y: 0, z: 2500}
+  m_LocalScale: {x: 500, y: 1, z: 500}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
 --- !u!1 &375049230
 GameObject:
   m_ObjectHideFlags: 0
@@ -239,7 +318,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
 --- !u!1 &581002490
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +484,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
 --- !u!114 &1118242462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,40 +503,40 @@ MonoBehaviour:
   properties:
     levels:
     - _name: UnderWater
-      texture: {fileID: 2800000, guid: 03185df4c0460654889624f23aca68a7, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
       height: 2
-      textureTiling: 6
+      textureTiling: 1
       readOnlyName: 1
     - _name: Beach
-      texture: {fileID: 2800000, guid: 5376a56f2323d374da16d3bfa3b7c67c, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.9, g: 0.86, b: 0, a: 1}
       height: 10
-      textureTiling: 100
+      textureTiling: 1
       readOnlyName: 1
     - _name: Level1
-      texture: {fileID: 2800000, guid: df2e81a644079da45a7c37058e81b367, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
       height: 50
-      textureTiling: 20
+      textureTiling: 1
       readOnlyName: 1
     - _name: Level2
-      texture: {fileID: 2800000, guid: 68dde9a7bad433c4586e2340e6daf985, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
       height: 150
-      textureTiling: 10
+      textureTiling: 1
       readOnlyName: 1
     - _name: Level3
-      texture: {fileID: 2800000, guid: e7f6b403f32dce74fa0c0ca59384c645, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.75, g: 0.53, b: 0, a: 1}
       height: 314.14474
-      textureTiling: 10
+      textureTiling: 1
       readOnlyName: 1
     - _name: LastLevel
-      texture: {fileID: 2800000, guid: f42a39ef91ed4de4a9e06cc53be7571a, type: 3}
+      texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.8, g: 0.9, b: 0.9, a: 1}
       height: 325
-      textureTiling: 50
+      textureTiling: 1
       readOnlyName: 1
     waterLevel: 2
     slopeFader: 1
@@ -481,7 +560,7 @@ MonoBehaviour:
   trackEffectRadius: 1
   errosionRate: 10
   terrainErrosionDepth: 0.001
-  initalHeight: 0.14
+  initialTerrainMap: {fileID: 2800000, guid: 7fbb5ad0f38b24263b2bee05a30bda62, type: 3}
   trackWorldDimentions:
     x:
       min: 0
@@ -572,7 +651,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 188ea8a615c5446bab6f75aa17cd92c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mediaFolderPath: ../../wwFlowMedia/
+  mediaFolderPath: ../wwFlowMedia/
   matchLocationX: 0
   matchLocationZ: 0
   matchRadius: 0.5
@@ -676,7 +755,7 @@ Transform:
   - {fileID: 1891660833}
   - {fileID: 581002491}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 4
 --- !u!114 &1260582051
 MonoBehaviour:
   m_ObjectHideFlags: 0
