@@ -206,9 +206,9 @@ class Bootstrap(object):
         newInterest.refreshNonce()
         if controllerCertRetries == 0:
             if onSetupFailed:
-                onSetupFailed("Set up failed: controller certificate interest times out")
+                onSetupFailed("Controller certificate interest times out")
             else:
-                print "Controller certificate interest times out"
+                print "Set up failed: controller certificate interest times out"
         else:
             self._face.expressInterest(newInterest, 
               lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
@@ -395,9 +395,11 @@ class Bootstrap(object):
         requestInterest.setInterestLifetimeMilliseconds(4000)
         self._face.makeCommandInterest(requestInterest)
         
+        appRequestTimeoutCnt = 3
+
         self._face.expressInterest(requestInterest, 
           lambda interest, data : self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed))
+          lambda interest : self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed, appRequestTimeoutCnt))
         print "Application publish request sent: " + requestInterest.getName().toUri()
         return
 
@@ -423,13 +425,20 @@ class Bootstrap(object):
         self._keyChain.verifyData(data, onVerified, onVerifyFailed)
         return
 
-    def onAppRequestTimeout(self, interest, onSetupComplete, onSetupFailed):
+    def onAppRequestTimeout(self, interest, onSetupComplete, onSetupFailed, appRequestTimeoutCnt):
         print "Application publishing request times out"
         newInterest = Interest(interest)
         newInterest.refreshNonce()
-        self._face.expressInterest(newInterest,
-          lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
-          lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed))
+
+        if appRequestTimeoutCnt == 0:
+            if onSetupFailed:
+                onSetupFailed("Application publishing request times out")
+            else:
+                print "Setup failed: application publishing request times out"
+        else:
+            self._face.expressInterest(newInterest,
+              lambda interest, data : self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed), 
+              lambda interest : self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed, appRequestTimeoutCnt - 1))
         return
 
 ###############################################

@@ -141,31 +141,40 @@ namespace ndn_iot.bootstrap {
             // don't use keyChain.sign(interest), since it's of a different format from commandInterest
             face_.makeCommandInterest(requestInterest);
 
-            AppRequestHandler appRequestHandler = new AppRequestHandler(keyChain_, onRequestSuccess, onRequestFailed);
+            AppRequestHandler appRequestHandler = new AppRequestHandler(this, onRequestSuccess, onRequestFailed);
             face_.expressInterest(requestInterest, appRequestHandler, appRequestHandler);
             
             return ;
         }
 
         public class AppRequestHandler : OnData, OnTimeout {
-            public AppRequestHandler(KeyChain keyChain, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
+            public AppRequestHandler(Bootstrap bootstrap, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed) {
                 onRequestSuccess_ = onRequestSuccess;
                 onRequestFailed_ = onRequestFailed;
-                keyChain_ = keyChain;
+                bootstrap_ = bootstrap;
+                appRequestTimeoutCnt_ = 3;
             }
 
             public void onData(Interest interest, Data data) {
                 AppRequestVerifyHandler verifyHandler = new AppRequestVerifyHandler(onRequestSuccess_, onRequestFailed_);
-                keyChain_.verifyData(data, verifyHandler, verifyHandler);
+                bootstrap_.keyChain_.verifyData(data, verifyHandler, verifyHandler);
             }
 
             public void onTimeout(Interest interest) {
-                Console.Out.WriteLine("Interest times out: " + interest.getName().toUri());
+                Console.Out.WriteLine("Application publishing request times out");
+                if (appRequestTimeoutCnt_ == 0) {
+                    onRequestFailed_("Application publishing request times out");
+                } else {
+                    Interest newInterest = new Interest(interest);
+                    bootstrap_.face_.expressInterest(newInterest, this, this);
+                    appRequestTimeoutCnt_ -= 1;
+                }
             }
 
             OnRequestSuccess onRequestSuccess_;
             OnRequestFailed onRequestFailed_;
-            KeyChain keyChain_;
+            Bootstrap bootstrap_;
+            int appRequestTimeoutCnt_;
         }
 
         public class AppRequestVerifyHandler: OnVerified, OnDataValidationFailed {
@@ -403,8 +412,8 @@ namespace ndn_iot.bootstrap {
 
         string keyPath_;
 
-        KeyChain keyChain_;
-        Face face_;
+        public KeyChain keyChain_;
+        public Face face_;
         MemoryContentCache certificateContentCache_;
         Dictionary<string, AppTrustSchema> trustSchemas_;
     }

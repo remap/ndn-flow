@@ -143,11 +143,13 @@ Bootstrap::sendAppRequest
   requestInterest.setInterestLifetimeMilliseconds(4000);
   // don't use keyChain.sign(interest), since it's of a different format from commandInterest
   face_.makeCommandInterest(requestInterest);
-
+  
+  int appRequestTimeoutCnt = 3;
+  
   face_.expressInterest
     (requestInterest, 
      bind(&Bootstrap::onAppRequestData, this, _1, _2, onRequestSuccess, onRequestFailed), 
-     bind(&Bootstrap::onAppRequestTimeout, this, _1, onRequestSuccess, onRequestFailed), 
+     bind(&Bootstrap::onAppRequestTimeout, this, _1, onRequestSuccess, onRequestFailed, appRequestTimeoutCnt), 
      bind(&Bootstrap::onNetworkNack, this, _1, _2, onRequestSuccess, onRequestFailed));
   cout << "Application publish request sent: " + requestInterest.getName().toUri() << endl;
   
@@ -197,17 +199,18 @@ Bootstrap::onAppRequestData
 
 void 
 Bootstrap::onAppRequestTimeout
-(const ptr_lib::shared_ptr<const Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed)
+(const ptr_lib::shared_ptr<const Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed, int appRequestTimeoutCnt)
 {
-  onRequestFailed("Application request failed because of interest time out");
-  /*
-  Interest newInterest(*interest);
-  newInterest.refreshNonce();
-  face_.expressInterest(newInterest, 
-    bind(&Bootstrap::onAppRequestData, this, _1, _2, onRequestSuccess, onRequestFailed), 
-    bind(&Bootstrap::onAppRequestTimeout, this, _1, onRequestSuccess, onRequestFailed), 
-    bind(&Bootstrap::onNetworkNack, this, _1, _2, onRequestSuccess, onRequestFailed));
-  */
+  if (appRequestTimeoutCnt == 0) {
+    onRequestFailed("Application request failed because of interest time out");
+  } else {
+    Interest newInterest(*interest);
+    newInterest.refreshNonce();
+    face_.expressInterest(newInterest, 
+      bind(&Bootstrap::onAppRequestData, this, _1, _2, onRequestSuccess, onRequestFailed), 
+      bind(&Bootstrap::onAppRequestTimeout, this, _1, onRequestSuccess, onRequestFailed, appRequestTimeoutCnt - 1), 
+      bind(&Bootstrap::onNetworkNack, this, _1, _2, onRequestSuccess, onRequestFailed));
+  }
   return;
 }
 
@@ -378,6 +381,9 @@ void
 Bootstrap::onNetworkNackSchema
 (const ptr_lib::shared_ptr<const Interest>& interest, const ptr_lib::shared_ptr<NetworkNack>& networkNack, OnUpdateSuccess onUpdateSuccess, OnUpdateFailed onUpdateFailed)
 {
+  if (onUpdateFailed) {
+    onUpdateFailed("Network Nack for trust schema update.");
+  }
   cout << "Network NACK not yet handled" << endl;
   return;
 }

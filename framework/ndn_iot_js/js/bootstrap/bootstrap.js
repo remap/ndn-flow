@@ -358,11 +358,12 @@ Bootstrap.prototype.sendAppRequest = function (certificateName, dataPrefix, appl
     requestInterest.setInterestLifetimeMilliseconds(4000);
     
     var self = this;
+    var appRequestTimeoutCnt = 3;
     this.face.nodeMakeCommandInterest(requestInterest, this.keyChain, this.defaultCertificateName, TlvWireFormat.get(), function () {
         self.face.expressInterest(requestInterest, function (interest, data) {
             self.onAppRequestData(interest, data, onRequestSuccess, onRequestFailed); 
         }, function (interest) {
-            self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed);
+            self.onAppRequestTimeout(interest, onRequestSuccess, onRequestFailed, appRequestTimeoutCnt);
         });
         console.log("Application publish request sent: " + requestInterest.getName().toUri())
     });
@@ -398,17 +399,24 @@ Bootstrap.prototype.onAppRequestData = function (interest, data, onRequestSucces
     return;
 }
     
-Bootstrap.prototype.onAppRequestTimeout = function(interest, onSetupComplete, onSetupFailed)
+Bootstrap.prototype.onAppRequestTimeout = function(interest, onSetupComplete, onSetupFailed, appRequestTimeoutCnt)
 {
     console.log("Application publishing request times out");
-    var newInterest = new Interest(interest);
-    newInterest.refreshNonce();
-    var self = this;
-    this.face.expressInterest(newInterest, function (interest, data) {
-        self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed); 
-    }, function (interest) {
-        self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed);
-    });
+    if (appRequestTimeoutCnt == 0) {
+        if (onSetupFailed) {
+            onSetupFailed("Application publishing request times out");
+        }
+    } else {
+        var newInterest = new Interest(interest);
+        newInterest.refreshNonce();
+        var self = this;
+        this.face.expressInterest(newInterest, function (interest, data) {
+            self.onAppRequestData(interest, data, onSetupComplete, onSetupFailed); 
+        }, function (interest) {
+            self.onAppRequestTimeout(interest, onSetupComplete, onSetupFailed, appRequestTimeoutCnt - 1);
+        });
+    }
+
     return;    
 }
 

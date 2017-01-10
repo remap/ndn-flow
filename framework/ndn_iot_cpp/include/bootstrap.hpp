@@ -127,7 +127,7 @@ private:
   onAppRequestData(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, const ndn::ptr_lib::shared_ptr<ndn::Data>& data, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
 
   void 
-  onAppRequestTimeout(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed);
+  onAppRequestTimeout(const ndn::ptr_lib::shared_ptr<const ndn::Interest>& interest, OnRequestSuccess onRequestSuccess, OnRequestFailed onRequestFailed, int appRequestTimeoutCnt);
 
   void 
   onRegisterFailed(const ndn::ptr_lib::shared_ptr<const ndn::Name>& prefix);
