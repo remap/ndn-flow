@@ -1,23 +1,30 @@
 Flow application components
 ============================
 
-### Application components and content
+This page describes the subsystems involved in the "Flow" application (later refered to as Flow), and the contents of this folder.
 
-1. Macbook running [Unity game engine](https://unity3d.com) / **unity** folder
-  * What it does: visualizes a virtual environment which the player navigates via moving around the physical space (while being tracked by OpenPTrack), sending command on their mobile phone, and turning a gyroscope to face different angles
-  * [Source code](https://github.com/remap/ndn-flow/tree/master/application/unity/WWBlimp)
-2. Ubuntu machine running [OpenPTrack](http://openptrack.org/)
-  * What it does: tracks the location of multiple persons in a physical environment, and publish the tracked coordinates as NDN data
-  * Source code
-    * [Flow Unity application](https://github.com/remap/ndn-flow/tree/master/application/unity/WWBlimp) for consumer
-    * [ndn-opt](https://github.com/openptrack/ndn-opt) for producer)
-3. RFduino/Gyroscope component / **rfduino** folder
-  * What it does: controls the visualization by publishing the pitch, yaw and roll of a gyroscope as NDN data
-  * [Source code](https://github.com/remap/ndn-flow/blob/master/rfduino/rfduino-flow-producer/INSTALL.md)
-4. Mobile website component / **website** folder
-  * What it does: controls the visualization by issueing NDN command interests to the Unity component
-  * [Source code](https://github.com/remap/ndn-flow/blob/master/application/website/wwblimp.html)
+### Subsystems
+
+The "Flow" application features the following subsystems running on different devices:
+  * **Person tracking**
+    * Hardware: Ubuntu box running OpenPTrack with NDN producer 
+    * Functionality: produces the coordinates (x, y, z) of each person tracked in the physical space
+    * For more details, see [openptrack](openptrack) folder
+  * **Virtual camera control**
+    * Hardware: gyroscopes attached to RFduinos, and a RaspberryPi to help serve NDN data to the rest of the system 
+    * Functionality: produces the facing (pitch, yaw, roll) of the gyroscopes
+    * For more details, see [rfduino](rfduino) folder
+  * **Web interface image dropping**
+    * Hardware: mobile phones running Firefox browser
+    * Functionality: sends command to the visualization in Unity
+    * For more details, see [website](website) folder
+  * **Visualization**
+    * Hardware: OS X machine running Unity
+    * Functionality: Renders the virtual space based on data from person tracking, virtual camera control, and command from the web interface.
+    * For more details, see [unity](unity) folder
+
+### Supplementary materials
 
 A diagram of the application installation is available [here](https://github.com/remap/ndn-flow/blob/master/design/flow-components.pdf).
 
-Refer to the readme of each component for more details.
+This folder also contains [sample code](sample-code) that may help coding or debugging each subsystem individually.

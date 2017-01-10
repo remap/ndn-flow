@@ -1,7 +1,7 @@
 Gyroscope component for Flow application
 ========================
 
-This page describes the RFduino component's functionality, required devices, and installation in the Flow application
+This page describes the RFduino/gyroscope component's functionality, required devices, and installation in the Flow application.
 
 ### Description
 

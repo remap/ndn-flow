@@ -1,7 +1,7 @@
 Raspberry Pi helper component for Flow application
 ========================
 
-This page describes the required devices, installation of the RaspberryPi helper for Flow application.
+This page describes the required devices and installation of the RaspberryPi helper for Flow application.
 
 ### Description
 
@@ -21,7 +21,3 @@ In Flow, Raspberry Pi helper works with RFduinos to request publishing authoriza
 cd ~/ndn/ndn-flow
 git pull
 ```
-
-### Note
-
-A helper is introduced since constrained devices like RFduino is not powerful enough to do data signing using asymmetric keys, yet the system wants to secure the data they generate. In our case, the less constrained Raspberry Pi keeps the key pair for the RFduino it connects to and does the signing.
