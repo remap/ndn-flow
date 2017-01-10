@@ -20,9 +20,7 @@ import sys
 import json
 import struct
 import math
-
 import logging
-
 import argparse
 
 try:
@@ -83,6 +81,32 @@ class AppProducer():
         interest.getName().append(self._keyChain.getCertificate(self._certificateName).getPublicKeyInfo().getKeyDer())
         return interest
 
+class Logger(object):
+    def prepareLogging(self):
+        self.log = logging.getLogger(str(self.__class__))
+        self.log.setLevel(logging.DEBUG)
+        logFormat = "%(asctime)-15s %(name)-20s %(funcName)-20s (%(levelname)-8s):\n\t%(message)s"
+        self._console = logging.StreamHandler()
+        self._console.setFormatter(logging.Formatter(logFormat))
+        self._console.setLevel(logging.INFO)
+        # without this, a lot of ThreadsafeFace errors get swallowed up
+        logging.getLogger("trollius").addHandler(self._console)
+        self.log.addHandler(self._console)
+
+    def setLogLevel(self, level):
+        """
+        Set the log level that will be output to standard error
+        :param level: A log level constant defined in the logging module (e.g. logging.INFO) 
+        """
+        self._console.setLevel(level)
+
+    def getLogger(self):
+        """
+        :return: The logger associated with this node
+        :rtype: logging.Logger
+        """
+        return self.log
+
 class BtlePeripheral():
     def __init__(self, addr, producer, loop, receive_uuid = 0x2221, send_uuid = 0x2222, security = False):
         self._addr = addr
@@ -103,7 +127,10 @@ class BtlePeripheral():
                 
             def handleNotification(self, cHandle, data):
                 # TODO: this should handle incorrect format caused by packet losses
-                em.onReceivedData(data[2:])
+                try:
+                    em.onReceivedData(data[2:])
+                except ValueError as e:
+                    print "Decoding value error: " + str(e)
                 # connect ble
         
         self._p = Peripheral(self._addr, "random")
@@ -131,6 +158,7 @@ class BtlePeripheral():
             self._p.writeCharacteristic(self._p.getCharacteristics(uuid = self._send_uuid)[0].valHandle, fragment)
 
             print " ".join(x.encode('hex') for x in fragment)
+
     @asyncio.coroutine
     def btleNotificationListen(self):
         while True:
@@ -145,6 +173,9 @@ if __name__ == '__main__':
     parser.add_argument('--namespace', help = 'namespaces (comma separated names corresponding with each peripheral)')
     parser.add_argument('--security', help = 'flag for if key exchange should happen initially and if data should be verified')
     parser.add_argument('--request', help = 'request namespace to ask controller to grant publishing permission to (mutual parent of publishing namespaces)')
+
+    logger = Logger()
+    logger.prepareLogging()
 
     args = parser.parse_args()
 
