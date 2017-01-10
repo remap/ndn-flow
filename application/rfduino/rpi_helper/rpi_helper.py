@@ -5,7 +5,7 @@ import time
 from pyndn.encoding.element_reader import ElementReader
 from btle_node import BtleNode
 
-from bluepy.btle import UUID, Peripheral, DefaultDelegate
+from bluepy.btle import UUID, Peripheral, DefaultDelegate, BTLEException
 
 # for publishing functionalities
 from pyndn import Name, Interest, Data
@@ -115,6 +115,7 @@ class BtlePeripheral():
         self._send_uuid = send_uuid
         self._loop = loop
         self._security = security
+        self._p = None
 
     def start(self):
         # init btle ElementReader
@@ -133,7 +134,13 @@ class BtlePeripheral():
                     print "Decoding value error: " + str(e)
                 # connect ble
         
-        self._p = Peripheral(self._addr, "random")
+        while not self._p:
+            try:
+                self._p = Peripheral(self._addr, "random")
+            except BTLEException as e:
+                print "Failed to connect: " + str(e) + "; trying again"
+                self._p = None
+
         # tell rfduino we are ready for notifications
         self._p.setDelegate(MyDelegate())
 
@@ -161,11 +168,17 @@ class BtlePeripheral():
 
     @asyncio.coroutine
     def btleNotificationListen(self):
-        while True:
-            if self._p.waitForNotifications(0.2):
-                pass
-            time.sleep(0.01)
-            yield None
+        try:
+            while True:
+                if self._p.waitForNotifications(0.2):
+                    pass
+                time.sleep(0.01)
+                yield None
+        except BTLEException as e:
+            print("Btle exception: " + str(e) + "; try to restart")
+            self._p = None
+            self.start()    
+                
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'RaspberryPi helper for RFduino in Flow')
@@ -240,7 +253,8 @@ if __name__ == '__main__':
         bootstrap.requestProducerAuthorization(Name(request_prefix), appName, onRequestSuccess, onRequestFailed)
         
     def onSetupFailed(msg):
-        print("Setup failed " + msg)
+        print(msg)
+        print("In this test, try start publishing with default configuration anyway")
 
     bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
 
