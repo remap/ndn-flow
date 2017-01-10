@@ -18,8 +18,10 @@
 
   <!-- Other webpage functionalities -->
   <script>
-    var deviceId = new Name("/home/browser1");
-    var prefix = new Name("/home/flow-csharp");
+    // device id of this device
+    var deviceId;
+    // publisher prefix
+    var prefix;
 
     var keyChain;
     var certificateName; 
@@ -28,8 +30,8 @@
     var bootstrap;
 
     function connectFace() {
-      deviceId = new Name("/home/browser1");
-      prefix = new Name("/home/flow-csharp");
+      deviceId = new Name(document.getElementById("identity").value);
+      prefix = new Name(document.getElementById("unity-prefix").value);
       face = new Face({"host": document.getElementById("host").value});
 
       bootstrap = new Bootstrap(face);
@@ -46,6 +48,7 @@
           fetchHtml();
         },
         function (msg) {
+          document.getElementById("console").innerHTML += msg + "<br>";
           console.log("Setup failed " + msg);
         });
     }
@@ -99,6 +102,8 @@ will express string in data attribute of link if it exists else the innerHTML
 <body>
   <div id="connect-section">
     <p><input type="text" id="host" value="128.97.152.38"></input></p>
+    <p><input type="text" id="identity" value="/home/honor5x"></input></p>
+    <p><input type="text" id="unity-prefix" value="/home/flow-csharp"></input></p>
     <p><button id="connect" onclick="connectFace()">Connect Face</button></p>
   </div>
 
@@ -111,6 +116,11 @@ will express string in data attribute of link if it exists else the innerHTML
         <a href="#" class="expression" data="match">Associate me with a track</a>
       </p>
     </div>
+  </div>
+
+  <div id="console-section">
+    <p>Console</p>
+    <div id="console"></div>
   </div>
 </body>
 </html>

@@ -5,7 +5,9 @@ This page describes how to install and use the Flow Unity application, and what 
 
 ### Using NDN in Unity
 
-The following installation was tested on Unity version 5.3.2.f1 Personal running on Mac OS X version 10.11.5.
+The following installation was tested on Unity version 5.3.2 and 5.4.1 Personal running on Mac OS X version 10.11.5.
+
+(Please do not use Unity 5.5.0 yet!)
 
 ### Dependencies
 
