@@ -145,9 +145,11 @@ class Bootstrap(object):
                 controllerCertInterest = Interest(Name(actualSignerName))
                 controllerCertInterest.setInterestLifetimeMilliseconds(4000)
                 
-                self._face.expressInterest(controllerCertInterest, 
-                  lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
-                  lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed))
+            controllerCertRetries = 3
+
+            self._face.expressInterest(controllerCertInterest, 
+              lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
+              lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed, controllerCertRetries))
             return
 
         if isinstance(defaultIdentityOrFileName, basestring):
@@ -198,13 +200,19 @@ class Bootstrap(object):
             onSetupComplete(Name(self._defaultCertificateName), self._keyChain)
         return
 
-    def onControllerCertTimeout(self, interest, onSetupComplete, onSetupFailed):
+    def onControllerCertTimeout(self, interest, onSetupComplete, onSetupFailed, controllerCertRetries):
         print "Controller certificate interest times out"
         newInterest = Interest(interest)
         newInterest.refreshNonce()
-        self._face.expressInterest(newInterest, 
-          lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
-          lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed))
+        if controllerCertRetries == 0:
+            if onSetupFailed:
+                onSetupFailed("Set up failed: controller certificate interest times out")
+            else:
+                print "Controller certificate interest times out"
+        else:
+            self._face.expressInterest(newInterest, 
+              lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
+              lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed, controllerCertRetries - 1))
         return
 
 #########################################################
