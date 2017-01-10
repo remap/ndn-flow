@@ -25,6 +25,6 @@ The "Flow" application features the following subsystems running on different de
 
 ### Supplementary materials
 
-A diagram of the application installation is available [here](https://github.com/remap/ndn-flow/blob/master/design/flow-components.pdf).
-
-This folder also contains [sample code](sample-code) that may help coding or debugging each subsystem individually.
+* A diagram of the application installation is available [here](https://github.com/remap/ndn-flow/blob/master/design/flow-components.pdf).
+* This folder also contains [sample code](sample-code) that may help coding or debugging each subsystem individually.
+* The framework we built this application on can be found [here](https://github.com/remap/ndn-flow/tree/master/framework), with its interfaces described [here](https://github.com/remap/ndn-flow/tree/master/design/docs).
