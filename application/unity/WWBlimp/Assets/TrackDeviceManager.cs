@@ -12,7 +12,7 @@ public class TrackDeviceManager : MonoBehaviour {
 
 
 	[Tooltip("relative paths start inside project folder")]
-	public string mediaFolderPath = "../../wwFlowMedia/";
+	public string mediaFolderPath = "../wwFlowMedia/";
 
 	[Header ("Track/Device Matching")]
 	[Tooltip("x location (in real world coords) that mobiles are associated with tracks")]

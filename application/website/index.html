@@ -5,7 +5,7 @@
 <html xmlns = "http://www.w3.org/1999/xhtml">
 
 <head>
-  <title>Flow webpage component</title>
+  <title>Flow WW Blimp</title>
   <script type="text/javascript" src="ndn.js"></script>
   <script type="text/javascript" src="ndn-iot.js"></script>
 
@@ -15,55 +15,112 @@
   <script type="text/javascript" src="js/html-consumer.js"></script>
   <script type="text/javascript" src="js/producer.js"></script>
 
-  <!-- Associating opt trackID with mobile ID in certain areas -->
-  <p> <button onclick="testMatch()">Match</button> </p>
-  <p> <button onclick="fetchHtml()">Fetch html</button> </p>
-  <p> <a href="javascript:testLink()" id="test-link">click this link</a> </p>
-
-  <div id="unity-content"></div>
 
   <!-- Other webpage functionalities -->
   <script>
-    face = new Face({"host": "127.0.0.1"});
-    bootstrap = new Bootstrap(face);
-    var deviceId = new Name("/home/browser1");
-    var prefix = new Name("/home/flow-csharp");
+    // device id of this device
+    var deviceId;
+    // publisher prefix
+    var prefix;
+
     var keyChain;
-    var certificateName;
+    var certificateName; 
+    var face;
 
-    bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined,
-      function (defaultCertificateName, keyChain) {
-        console.log("Default certificate name and keyChain set up complete.");
-      },
-      function (msg) {
-        console.log("Setup failed " + msg);
-      });
+    var bootstrap;
 
+    function connectFace() {
+      deviceId = new Name(document.getElementById("identity").value);
+      prefix = new Name(document.getElementById("unity-prefix").value);
+      face = new Face({"host": document.getElementById("host").value});
+
+      bootstrap = new Bootstrap(face);
+
+      bootstrap.setupDefaultIdentityAndRoot(deviceId, undefined,
+        function (defaultCertificateName, keyChain) {
+          console.log("Default certificate name and keyChain set up complete.");
+
+          // toggle on the next page
+          document.getElementById("match-section").style.display = "block";
+          document.getElementById("connect-section").style.display = "none";
+
+          addExpressionToLinks();
+          fetchHtml();
+        },
+        function (msg) {
+          document.getElementById("console").innerHTML += msg + "<br>";
+          console.log("Setup failed " + msg);
+        });
+    }
+    
     function testMatch() {
-    	var matcher = new TrackMatcher(prefix, deviceId, face);
+      var matcher = new TrackMatcher(prefix, deviceId, face);
       matcher.sendTrackMatchCommand();
+    }
+
+    function expressLink(event) {
+      if(this.hasAttribute('data')) {
+        content = this.getAttribute('data');
+      } else {
+        content = this.innerHTML;
+      }
+      var linkClick = new LinkClick(prefix, deviceId, face);
+      linkClick.sendLinkClick(content,
+        function (data) {
+          console.log("got data response: " + data.getContent().buf().toString('binary'));
+        },
+        function (msg) {
+          console.log("link click failed: " + msg);
+      })
+      event.preventDefault();
+
+    }
+
+/**
+Automatically adds onClick events to anything with the class 'expression'
+Makes the link express as an interest when clicked
+will express string in data attribute of link if it exists else the innerHTML
+
+*/
+    function addExpressionToLinks() {
+      links = document.getElementsByClassName('expression');
+      for (i = 0; i < links.length; i++) {
+        links[i].addEventListener('click', expressLink, false);
+      }
     }
 
     function fetchHtml() {
       var consumer = new HtmlConsumer(prefix, deviceId, face, keyChain);
       consumer.consume(function (content) {
         document.getElementById("unity-content").innerHTML = content;
+        addExpressionToLinks() // added to make new links with class expression exhibit expressions on clicks
       });
-    }
-
-    function testLink() {
-      var linkClick = new LinkClick(prefix, deviceId, face);
-      var content = document.getElementById("test-link").innerHTML;
-      linkClick.sendLinkClick(content, function (data) {
-        console.log("got data response: " + data.getContent().buf().toString('binary'));
-      }, function (msg) {
-        console.log("link click failed: " + msg);
-      })
     }
   </script>
 </head>
 
 <body>
+  <div id="connect-section">
+    <p><input type="text" id="host" value="128.97.152.38"></input></p>
+    <p><input type="text" id="identity" value="/home/honor5x"></input></p>
+    <p><input type="text" id="unity-prefix" value="/home/flow-csharp"></input></p>
+    <p><button id="connect" onclick="connectFace()">Connect Face</button></p>
+  </div>
 
+  <div id="match-section" style="display:none">
+    <h1>Flow</h1>
+    <div id="unity-content">
+      <p>
+        Please go to the special spot on the floor that needs some sort
+        of special designation and click this link:
+        <a href="#" class="expression" data="match">Associate me with a track</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="console-section">
+    <p>Console</p>
+    <div id="console"></div>
+  </div>
 </body>
 </html>
