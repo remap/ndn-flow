@@ -1,7 +1,7 @@
 NDN-Pi: NDN controller for NDN-IoT framework
 ==========================
 
-This page describes how to install and use the NDN-pi controller.
+This page describes how to install and use the NDN-pi controller and add-device script.
 
 ### Dependency
 

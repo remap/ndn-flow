@@ -4,24 +4,41 @@ NDN-IoT Framework
 This page describes the overall functionalities, how to use, and the workflow of our NDN-IoT framework, which we used to build [the Flow application](https://github.com/remap/ndn-flow/tree/master/application).
 
 ### Functionalities
+
 The framework libraries in Python, C++, JS and C\# all implement three major functionalities (files in each library are named according to the certain functionality):
-* Bootstrap:
+* **Bootstrap**:
   * Identity and KeyChain set up: given a device identity (and optionally a controller identity), build a KeyChain and set up the default (device) certificate name for this instance
   * Consumer bootstrap: keep retrieving [the trust schema](https://named-data.net/wp-content/uploads/2015/11/schematizing_trust_ndn.pdf) of this application from the controller, and use that trust schema for verifying application data
   * Producer bootstrap: request authorization from the controller to publish under a certain application prefix (as of now controller grants the requests automatically if the device is trusted, and if granted, a trust schema rule suggesting this device's certificate can sign that application data is added and distributed to consumers)
-* Discovery:
+* **Discovery**:
   * ([ChronoSync](http://irl.cs.ucla.edu/~zhenkai/papers/chronosync.pdf) with slight modifications) general name discovery based on multicast interest with name digests appended
-* Application-level pub/sub:
+* **Application-level pub/sub**:
   * Timestamp-based namespace (/prefix/[timestamp]) consumer: uses exclusion filter to repeatedly ask for content
   * Sequence-number-based namespace (/prefix/[consecutive sequence numbers]) consumer: pipelines interest for the next few sequence numbers
   * (Producer implementation should be straightforward using NDN CCL's memoryContentCache, or built-in examples that talk to repo-ng, thus not included in the framework implementation)
 
 For more details on the functionalities of the framework, check [here](https://github.com/remap/ndn-flow/blob/master/design/docs) for a set of library interface descriptions, and [here](https://github.com/remap/ndn-flow/blob/master/design/Flow-design-zhehao-rev4.pptx) for the design slides.
 
-**Naming**
-The framework generally supports arbitrary names given by the application, although the framework is developed with these levels of names (manufacture/bootstrap-level, device-level, and application-level) in mind, as suggested in these application [design slides](https://github.com/remap/ndn-flow/blob/master/design/Flow-design-zhehao-rev4.pptx) for Flow and the IoTDI '16 paper section VI.A.
+###### Naming
+
+While the framework could support arbitrary names given by the application, it is developed with three levels of names (manufacture/bootstrap-level, device-level, and application-level) in mind, the latter two as suggested in [NDN team's IoTDI '16 paper](https://named-data.net/wp-content/uploads/2015/01/ndn-IOTDI-2016.pdf) section VI.A.
+
+More specifically, we picture the different levels of names to have the following functionalities
+
+* **Application/thing level**: name the thing
+  * An application-specific “label” given by the user
+  * Used for the exchange of application data
+* **Device level**: name the device in a space
+  * Associated with some physical property of the device to identify the device in a space
+  * Used for device control and status feedback
+* **Manufacturer level**: name given by the manufacturer
+  * The name of device given by the manufacturer when produced
+  * Used for initial device verification, and manufacturer-based querying
+
+The framework also doesn't restrain the name prefix: one can use a globally unique network-related ID, e.g. "/ucla/melnitz-hall/room-1469", or a local one for local environment e.g. "/home/living-room". To bridge with global Internet using a local name, mechanisms such as forwarding hints or encapsulation would be required.
 
 ### How to use
+
 Typically, an application should set up the default identity and keyChain first, then pass these to application components (for example, discovery, or a timestamp-based consumer), and start application components when needed.
 
 **A quick look (sequence number consumer with bootstrap in JavaScript)**
@@ -41,6 +58,7 @@ More examples can be found in examples folder inside each framework language's s
 And check [here](https://github.com/remap/ndn-flow/blob/master/design/docs) for a set of library interfaces descriptions.
 
 ### Worflow
+
 (what to do after building your application using the framework)
 
 0. Set up [NFD](https://github.com/named-data/nfd) and forwarding on devices
@@ -52,6 +70,14 @@ The device generates a key pair and certificate, and have the certificate signed
 More details in the [ndn-pi technical report](https://named-data.net/wp-content/uploads/2015/11/ndn-0035-1-creating_secure_integrated.pdf).
 
 2. Run your application code
+
+### Folder structure
+  -  **commands** // _source protobuf files for command exchanges in the framework_
+  -  **ndn\_iot\_cpp** // _library in C++_
+  -  **ndn\_iot\_dot\_net** // _library in C\#_
+  -  **ndn\_iot\_js** // _library and device bootstrapping in JS_
+  -  **ndn\_iot\_python** // _library in Python_
+  -  **ndn\_pi** // _device bootstrapping and controller in Python (mostly inherited from [ndn-pi](https://github.com/remap/ndn-pi)
 
 ### Supported platforms
 Each framework library is built on top of a corresponding library in NDN common client libraries, should work with the latest versions of each, and should not introduce further dependencies.
@@ -66,4 +92,4 @@ Each framework library is built on top of a corresponding library in NDN common 
 
 
 
-(Updated Jan 8, 2016)
+(Updated Jan 10, 2016)
