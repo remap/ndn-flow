@@ -481,7 +481,7 @@ MonoBehaviour:
   trackEffectRadius: 1
   errosionRate: 10
   terrainErrosionDepth: 0.001
-  initialTerrainMap: {fileID: 2800000, guid: 7fbb5ad0f38b24263b2bee05a30bda62, type: 3}
+  initialTerrainMap: {fileID: 2800000, guid: 8af96e06fb6b241119d0d80876b9bbef, type: 3}
   trackWorldDimentions:
     x:
       min: 0
