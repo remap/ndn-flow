@@ -5,6 +5,7 @@ This page describes how to install and use the NDN-pi controller and add-device 
 
 ### Dependency
 
+* [Protobuf2](https://pypi.python.org/pypi/protobuf/2.5.0) installed
 * [PyNDN2](https://github.com/named-data/PyNDN2) installed
 
 ### Supported platforms
@@ -22,6 +23,15 @@ This page describes how to install and use the NDN-pi controller and add-device 
 git clone https://github.com/remap/ndn-flow
 cd ndn-flow/framework/
 export PYTHONPATH=$PYTHONPATH:$(pwd)
+</pre>
+
+If this is the first time you run controller on this device, do the following
+<pre>
+cp iot_controller.conf.sample ~/.ndn/iot_controller.conf
+</pre>
+
+otherwise, do
+<pre>
 cd ndn_pi
 python iot_controller
 </pre>
@@ -37,3 +47,7 @@ In controller terminal window, paste the serial and pin of the new device (which
 The controller should send pair command to the device (uses PIN as shared secret to validate), device reply with a self-signed certificate, and controller sign that certificate and give it back to device to finish the bootstrapping process.
 
 After device bootstrapping, you should be able to use device identities which you gave in controller terminal window (in our example, that's "/home/flow-csharp")
+
+(In Ubuntu / OSX, you may need to give 644 permission to python protobuf3 library in site-packages so that running the controller or add\_device does not require su)
+
+(In OSX El Capitan, the permission for users packages path ~/Library/Python/... may be wrong. If so, try 755 for that path)
