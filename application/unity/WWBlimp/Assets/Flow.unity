@@ -599,8 +599,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   config:
-    rootPrefix: /ndn/edu/ucla/remap/opt
-    spaceName: node0
+    rootPrefix: /home/flow1/opt
+    spaceName: opt1
     initialReexpressInterval: 1
     defaultInitialLifetime: 2000
     defaultTrackInterestLifetime: 250
@@ -639,7 +639,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hostName: localhost
-  space: /home/flow-csharp
+  space: /home/macbook1
 --- !u!114 &1118242467
 MonoBehaviour:
   m_ObjectHideFlags: 0
