@@ -118,8 +118,8 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 		Track.updatesTillActive = config.trackUpdatesTillActive;
 		Track.timeoutsTillDead = config.trackTimeoutsTillDead;
 
-		DUMMY_TRACK = new Track (DUMMY_TRACK_ID);
-		tracks.Add (DUMMY_TRACK.id, DUMMY_TRACK);
+		//DUMMY_TRACK = new Track (DUMMY_TRACK_ID);
+		//tracks.Add (DUMMY_TRACK.id, DUMMY_TRACK);
 
 	}
 
@@ -277,8 +277,8 @@ public class OpenPTrackProvider : MonoBehaviour, TrackProvider  {
 
 			}
 
-			DUMMY_TRACK.setPosition (0, 0, 0);
-			DUMMY_TRACK.touchByHint ();
+			//DUMMY_TRACK.setPosition (0, 0, 0);
+			//DUMMY_TRACK.touchByHint ();
 
 			List<Track> toCull = new List<Track>(providerOuterInstance.tracks.Count);
 			foreach (Track t in providerOuterInstance.tracks.Values) {
