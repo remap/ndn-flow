@@ -57,8 +57,9 @@ class AppProducer():
 
     def onBtleData(self, data):
         # expect data format like "0.2,0.1,0.3"
-        print "got data: " + data.getName().toUri()
         content = data.getContent().toRawStr()
+        print "got data: " + data.getName().toUri() + " : " + content
+
         
         if self._security:
             # Hmac verify the data we receive
@@ -254,7 +255,13 @@ if __name__ == '__main__':
         
     def onSetupFailed(msg):
         print(msg)
-        print("In this test, try start publishing with default configuration anyway")
+        print("In this test, try start publishing with default keychain certificate anyway")
+        keyChain = KeyChain()
+        try:
+            defaultCertificateName = keyChain.getDefaultCertificateName()
+            startProducers(defaultCertificateName, keyChain)
+        except SecurityException as e:
+            print str(e)
 
     bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
 
