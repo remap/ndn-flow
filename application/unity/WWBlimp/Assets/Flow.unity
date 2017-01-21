@@ -23,7 +23,7 @@ RenderSettings:
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientIntensity: 0.76
   m_AmbientMode: 0
   m_SkyboxMaterial: {fileID: 2100000, guid: ce89046f17abc46da814ccf9f5e65992, type: 2}
   m_HaloStrength: 0.5
@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.42623234, g: 0.48320544, b: 0.5374447, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -152,86 +152,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
---- !u!1 &219064862
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  serializedVersion: 4
-  m_Component:
-  - 4: {fileID: 219064866}
-  - 33: {fileID: 219064865}
-  - 64: {fileID: 219064864}
-  - 23: {fileID: 219064863}
-  m_Layer: 0
-  m_Name: Map
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!23 &219064863
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 219064862}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
-  m_SubsetIndices: 
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_SelectedWireframeHidden: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
---- !u!64 &219064864
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 219064862}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Convex: 0
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!33 &219064865
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 219064862}
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &219064866
-Transform:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 219064862}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2500, y: 0, z: 2500}
-  m_LocalScale: {x: 500, y: 1, z: 500}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
 --- !u!1 &375049230
 GameObject:
   m_ObjectHideFlags: 0
@@ -318,7 +239,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
 --- !u!1 &581002490
 GameObject:
   m_ObjectHideFlags: 0
@@ -457,7 +378,7 @@ Terrain:
   m_DetailObjectDistance: 250
   m_DetailObjectDensity: 1
   m_HeightmapPixelError: 5
-  m_SplatMapDistance: 1825
+  m_SplatMapDistance: 7081
   m_HeightmapMaximumLOD: 0
   m_CastShadows: 0
   m_DrawHeightmap: 1
@@ -484,7 +405,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
 --- !u!114 &1118242462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -505,30 +426,30 @@ MonoBehaviour:
     - _name: UnderWater
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
-      height: 2
+      height: 1.4354838
       textureTiling: 1
       readOnlyName: 1
     - _name: Beach
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
-      color: {r: 0.9, g: 0.86, b: 0, a: 1}
+      color: {r: 0.8897059, g: 0.8281664, b: 0.4841047, a: 1}
       height: 10
       textureTiling: 1
       readOnlyName: 1
     - _name: Level1
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
-      color: {r: 0.65, g: 0.86, b: 0.63, a: 1}
-      height: 50
-      textureTiling: 1
+      color: {r: 0.20422111, g: 0.32352942, b: 0.021410037, a: 1}
+      height: 37.664673
+      textureTiling: 3
       readOnlyName: 1
     - _name: Level2
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
-      color: {r: 0.69, g: 0.63, b: 0.31, a: 1}
+      color: {r: 0.31617647, g: 0.2820382, b: 0.09996756, a: 1}
       height: 150
       textureTiling: 1
       readOnlyName: 1
     - _name: Level3
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
-      color: {r: 0.75, g: 0.53, b: 0, a: 1}
+      color: {r: 0.375, g: 0.26742646, b: 0.116, a: 1}
       height: 314.14474
       textureTiling: 1
       readOnlyName: 1
@@ -538,9 +459,9 @@ MonoBehaviour:
       height: 325
       textureTiling: 1
       readOnlyName: 1
-    waterLevel: 2
-    slopeFader: 1
-    brightness: 0.5
+    waterLevel: 1.4354838
+    slopeFader: 0.83516484
+    brightness: 0.25
     relationType: 0
   isInitialized: 1
   test: Here you will see your custom fields
@@ -555,12 +476,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9681a08c5887349b0a6dbe5a20ce08f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowDebugTracks: 1
-  terrainModStepSize: 0.01
-  trackEffectRadius: 1
+  ShowDebugTracks: 0
+  terrainModStepSize: 0.05
+  trackEffectRadius: 0.1
   errosionRate: 10
   terrainErrosionDepth: 0.001
-  initialTerrainMap: {fileID: 2800000, guid: 7fbb5ad0f38b24263b2bee05a30bda62, type: 3}
+  initialTerrainMap: {fileID: 2800000, guid: 8af96e06fb6b241119d0d80876b9bbef, type: 3}
   trackWorldDimentions:
     x:
       min: 0
@@ -599,8 +520,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   config:
-    rootPrefix: /ndn/edu/ucla/remap/opt
-    spaceName: node0
+    rootPrefix: /home/flow1/opt/
+    spaceName: opt1
     initialReexpressInterval: 1
     defaultInitialLifetime: 2000
     defaultTrackInterestLifetime: 250
@@ -611,9 +532,9 @@ MonoBehaviour:
     tracks: tracks
     trackHint: track_hint
     trackIdOffset: -2
-  minTrackDims: {x: -0.7, y: 0, z: -1.5}
-  maxTrackDims: {x: 2.4, y: 2, z: 0.5}
-  flipZY: 1
+  minTrackDims: {x: -1, y: -1, z: 1}
+  maxTrackDims: {x: 1.5, y: 1, z: 2}
+  flipZY: 0
 --- !u!114 &1118242465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -714,9 +635,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxVelocity: 5
-  maxAngularVelocity: {x: 5, y: 5, z: 5}
-  maxThrust: 2
-  maxTorque: {x: 0.1, y: 0.1, z: 0.1}
+  maxAngularVelocity: {x: 0.3, y: 0.3, z: 0.3}
+  maxThrust: 100
+  maxTorque: {x: 1, y: 1, z: 1}
   maxPitch: 15
   maxRoll: 5
   rotationDecelerationRate: 0.25
@@ -755,7 +676,7 @@ Transform:
   - {fileID: 1891660833}
   - {fileID: 581002491}
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
 --- !u!114 &1260582051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -786,9 +707,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 0
-  gyroPrefix: /home/flow/gyros/gyro1/
-  minSensorValues: {x: -3, y: -3, z: -3}
-  maxSensorValues: {x: 3, y: 3, z: 3}
+  gyroPrefix: /home/flow1/gyros/gyro1/
+  minSensorValues: {x: -3.1, y: -3.1, z: -3.1}
+  maxSensorValues: {x: 3.1, y: 3.1, z: 3.1}
   minScaleValues: {x: -1, y: -1, z: -1}
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
@@ -805,9 +726,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 1
-  gyroPrefix: /home/flow/gyros/gyro2/
-  minSensorValues: {x: -3, y: -3, z: -3}
-  maxSensorValues: {x: 3, y: 3, z: 3}
+  gyroPrefix: /home/flow1/gyros/gyro2/
+  minSensorValues: {x: -3.1, y: -3.1, z: -3.1}
+  maxSensorValues: {x: 3.1, y: 3.1, z: 3.1}
   minScaleValues: {x: -1, y: -1, z: -1}
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
