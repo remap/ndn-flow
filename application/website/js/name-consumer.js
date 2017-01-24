@@ -1,3 +1,29 @@
+// UI functions
+function connectFace() {
+  treeView = new TreeView(tree, 'tree');
+  document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
+  document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
+  document.getElementById('pause').onclick = function () { 
+    if (paused) {
+      document.getElementById('pause').value = "Resume";
+      paused = false;
+      for (var i; i < queuedInterests.length; i++) {
+        face.expressInterest(queuedInterests[i], onData, onTimeout);
+      }
+      queuedInterests = [];
+    } else {
+      document.getElementById('pause').value = "Pause";
+      paused = true;
+    }
+  };
+
+  var host = document.getElementById("host").value;
+  face = new Face({"host": host});
+  prefix = document.getElementById("prefix").value;
+  expressInterestWithExclusion(prefix, undefined, true);
+}
+
+// Internal mechanisms
 function expressInterestWithExclusion(prefix, exclusion, leftmost) {
   var interest = new Interest(new Name(prefix));
   interest.setInterestLifetimeMilliseconds(4000);
@@ -16,7 +42,12 @@ function expressInterestWithExclusion(prefix, exclusion, leftmost) {
   if (exclusion !== undefined) {
     console.log("with exclude: " + interest.getExclude().toUri());
   }
-  face.expressInterest(interest, onData, onTimeout);
+  if (!paused) {
+    face.expressInterest(interest, onData, onTimeout);
+  } else {
+    queuedInterests.push(interest);
+  }
+  
 }
 
 function onData(interest, data) {
@@ -95,4 +126,12 @@ function onData(interest, data) {
 
 function onTimeout(interest) {
   console.log("interest times out: " + interest.getName().toUri());
+  // we keep sending out interests again in case new subsystems publishes data
+  var newInterest = new Interest(interest);
+  newInterest.refreshNonce();
+  if (!paused) {
+    face.expressInterest(newInterest, onData, onTimeout);
+  } else {
+    queuedInterests.push(newInterest);
+  }
 }

@@ -19,29 +19,22 @@
     var prefix;
     var treeView;
 
-    function connectFace() {
-      treeView = new TreeView(tree, 'tree');
-      document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
-      document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
-
-      var host = document.getElementById("host").value;
-      face = new Face({"host": host});
-      prefix = document.getElementById("prefix").value;
-      expressInterestWithExclusion(prefix, undefined, true);
-    }
+    var paused = false;
+    var queuedInterests = [];
   </script>
 </head>
 
 <body>
   <div id="connect-section">
-    <p><input type="text" id="host" value="localhost"></input></p>
-    <p><input type="text" id="prefix" value="/home"></input></p>
+    <p>Host face: <br><input type="text" id="host" value="localhost"></input></p>
+    <p>Track prefix: <br><input type="text" id="prefix" value="/home"></input></p>
     <p><button id="connect" onclick="connectFace()">Connect Face</button></p>
   </div>
 
   <div id="tree-container">
     <button id="expandAll">Expand All</button> <br>
     <button id="collapseAll">Collapse All</button> <br>
+    <button id="pause">Pause</button> <br>
     <div id="tree"></div>
   </div>
 </body>
