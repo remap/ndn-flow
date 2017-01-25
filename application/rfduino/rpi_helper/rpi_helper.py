@@ -198,8 +198,8 @@ if __name__ == '__main__':
     receive_uuid = 0x2221
 
     default_addr = "EE:C5:46:65:D3:C1"
-    default_prefix = "/home/flow/gyros/gyro-1"
-    default_request_prefix = "/home/flow/gyros"
+    default_prefix = "/home/flow1/gyros/gyro-1"
+    default_request_prefix = "/home/flow1/gyros"
     default_security_option = False
 
     if args.addr:
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     face = ThreadsafeFace(loop)
     
     bootstrap = Bootstrap(face)
-    appName = "flow"
+    appName = "flow1"
     
     def startProducers(defaultCertificateName, keyChain):
         if len(addrs) != len(namespaces):
