@@ -202,9 +202,15 @@ class IotNode(BaseNode):
                     # zhehao: the root cert is downloaded and installed without verifying; should the root cert be preconfigured?
                     # Insert root certificate so that we can verify newCert
                     self._policyManager._certificateCache.insertCertificate(data)
-                    self._identityManager.addCertificate(IdentityCertificate(data))
-                    self._rootCertificate = data
 
+                    # Set the root cert as default for root identity
+                    try:
+                        self._identityManager.addCertificateAsIdentityDefault(IdentityCertificate(data))
+                    except SecurityException as e:
+                        print("Error when addCertificateAsIdentityDefault for root: " + data.getName().toUri())
+                        print(str(e))
+
+                    self._rootCertificate = data
                     try:
                         # use the default configuration where possible
                         # TODO: use environment variable for this, fall back to default
