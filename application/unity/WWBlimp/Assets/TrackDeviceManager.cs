@@ -32,7 +32,7 @@ public class TrackDeviceManager : MonoBehaviour {
 	Dictionary<string , string > devTrackDict = new Dictionary<string , string >();
 
 
-	Rigidbody theBlimpRigidbody;
+//	Rigidbody theBlimpRigidbody;
 
 	// Use this for initialization
 	void Start () {
@@ -40,7 +40,7 @@ public class TrackDeviceManager : MonoBehaviour {
 		imageDropScript = GetComponent<ImageDrop> ();
 
 		GameObject theBlimp = GameObject.Find ("Blimp");
-		theBlimpRigidbody = theBlimp.GetComponent<Rigidbody> ();
+	//	theBlimpRigidbody = theBlimp.GetComponent<Rigidbody> ();
 
 		WebComm.addRFC ("match", match);
 		WebComm.addRFC ("drop", drop);
@@ -63,26 +63,23 @@ public class TrackDeviceManager : MonoBehaviour {
 	}
 
 
-	//changed to drop from blimp
 	public void drop(string devID, string[] fNameAndArgs) {	
-		Vector3 vel = theBlimpRigidbody.velocity;
-		Vector3 pos = theBlimpRigidbody.transform.position;
-
-		imageDropScript.Drop(new Vector3(pos.x, pos.y - dropOffset, pos.z), vel, mediaDirectory+fNameAndArgs[1]);
-		/*
+		
+//		Vector3 vel = theBlimpRigidbody.velocity;
+//		Vector3 pos = theBlimpRigidbody.transform.position;
+	//	imageDropScript.Drop(new Vector3(pos.x, pos.y - dropOffset, pos.z), vel, mediaDirectory+fNameAndArgs[1]);
 		try {
 			string trackID = devTrackDict[devID];
 			try {
 				Track track = openPTrack.getTracks()[trackID];
-				print(track.getPosition());
-				imageDropScript.Drop(track.unityPosition, mediaDirectory+fNameAndArgs[1]);
+			//	print(track.getPosition());
+				imageDropScript.Drop(track.unityPosition, new Vector3 (0, 0, 0), mediaDirectory+fNameAndArgs[1]);
 			} catch {
 				Debug.LogError ("TrackDeviceManager.drop unable to get track for id " + trackID + " (for device "  +devID+")");
 			}
 		} catch {
 			Debug.LogError ("TrackDeviceManager.drop unable to get track id for device " + devID);
 		}
-		*/
 
 
 	}

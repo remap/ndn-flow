@@ -1,0 +1,41 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "DTD/xhtml1-strict.dtd">
+
+<html xmlns = "http://www.w3.org/1999/xhtml">
+
+<head>
+  <title>Flow WW Blimp</title>
+  <link rel="stylesheet" href="css/treeview.min.css" />
+
+  <script type="text/javascript" src="js/treeview.min.js"></script>
+  <script type="text/javascript" src="ndn.js"></script>
+  <script type="text/javascript" src="js/tree.js"></script>
+  <script type="text/javascript" src="js/name-consumer.js"></script>
+
+  <!-- Tree-view functionalities -->
+  <script>
+    var face;
+    var prefix;
+    var treeView;
+
+    var paused = false;
+    var queuedInterests = [];
+  </script>
+</head>
+
+<body>
+  <div id="connect-section">
+    <p>Host face: <br><input type="text" id="host" value="localhost"></input></p>
+    <p>Track prefix: <br><input type="text" id="prefix" value="/home"></input></p>
+    <p><button id="connect" onclick="connectFace()">Connect Face</button></p>
+  </div>
+
+  <div id="tree-container">
+    <button id="expandAll">Expand All</button> <br>
+    <button id="collapseAll">Collapse All</button> <br>
+    <button id="pause">Pause</button> <br>
+    <div id="tree"></div>
+  </div>
+</body>
+</html>

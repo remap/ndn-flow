@@ -57,8 +57,9 @@ class AppProducer():
 
     def onBtleData(self, data):
         # expect data format like "0.2,0.1,0.3"
-        print "got data: " + data.getName().toUri()
         content = data.getContent().toRawStr()
+        print "got data: " + data.getName().toUri() + " : " + content
+
         
         if self._security:
             # Hmac verify the data we receive
@@ -197,8 +198,8 @@ if __name__ == '__main__':
     receive_uuid = 0x2221
 
     default_addr = "EE:C5:46:65:D3:C1"
-    default_prefix = "/home/flow/gyros/gyro-1"
-    default_request_prefix = "/home/flow/gyros"
+    default_prefix = "/home/flow1/gyros/gyro-1"
+    default_request_prefix = "/home/flow1/gyros"
     default_security_option = False
 
     if args.addr:
@@ -225,7 +226,7 @@ if __name__ == '__main__':
     face = ThreadsafeFace(loop)
     
     bootstrap = Bootstrap(face)
-    appName = "flow"
+    appName = "flow1"
     
     def startProducers(defaultCertificateName, keyChain):
         if len(addrs) != len(namespaces):
@@ -254,7 +255,13 @@ if __name__ == '__main__':
         
     def onSetupFailed(msg):
         print(msg)
-        print("In this test, try start publishing with default configuration anyway")
+        print("In this test, try start publishing with default keychain certificate anyway")
+        keyChain = KeyChain()
+        try:
+            defaultCertificateName = keyChain.getDefaultCertificateName()
+            startProducers(defaultCertificateName, keyChain)
+        except SecurityException as e:
+            print str(e)
 
     bootstrap.setupDefaultIdentityAndRoot("app.conf", onSetupComplete = onSetupComplete, onSetupFailed = onSetupFailed)
 
