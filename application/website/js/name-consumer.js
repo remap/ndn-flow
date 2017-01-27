@@ -5,14 +5,14 @@ function connectFace() {
   document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
   document.getElementById('pause').onclick = function () { 
     if (paused) {
-      document.getElementById('pause').value = "Resume";
+      document.getElementById('pause').innerText = "Pause";
       paused = false;
       for (var i; i < queuedInterests.length; i++) {
         face.expressInterest(queuedInterests[i], onData, onTimeout);
       }
       queuedInterests = [];
     } else {
-      document.getElementById('pause').value = "Pause";
+      document.getElementById('pause').innerText = "Resume";
       paused = true;
     }
   };
@@ -24,7 +24,17 @@ function connectFace() {
 }
 
 // Internal mechanisms
-function expressInterestWithExclusion(prefix, exclusion, leftmost) {
+function expressInterestWithExclusion(prefix, exclusion, leftmost, filterCertOrCommandOrPicInterest) {
+  if (filterCertOrCommandOrPicInterest === undefined || filterCertOrCommandOrPicInterest === true) {
+    if ((new Name(prefix)).toUri().indexOf("ID-CERT") > 0) {
+      console.log("stop probing this branch because it contains a certificate name, or is a signed interest");
+      return;
+    }
+    if ((new Name(prefix)).toUri().toLowerCase().indexOf(".jpg") > 0 || (new Name(prefix)).toUri().toLowerCase().indexOf(".png") > 0) {
+      console.log("stop probing this branch because it is probably sending an image");
+      return;
+    }
+  }
   var interest = new Interest(new Name(prefix));
   interest.setInterestLifetimeMilliseconds(4000);
   interest.setMustBeFresh(true);
