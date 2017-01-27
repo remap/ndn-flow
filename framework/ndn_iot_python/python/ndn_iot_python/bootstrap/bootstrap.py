@@ -145,11 +145,11 @@ class Bootstrap(object):
                 controllerCertInterest = Interest(Name(actualSignerName))
                 controllerCertInterest.setInterestLifetimeMilliseconds(4000)
                 
-            controllerCertRetries = 3
+                controllerCertRetries = 3
 
-            self._face.expressInterest(controllerCertInterest, 
-              lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
-              lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed, controllerCertRetries))
+                self._face.expressInterest(controllerCertInterest, 
+                  lambda interest, data: self.onControllerCertData(interest, data, onSetupComplete, onSetupFailed), 
+                  lambda interest: self.onControllerCertTimeout(interest, onSetupComplete, onSetupFailed, controllerCertRetries))
             return
 
         if isinstance(defaultIdentityOrFileName, basestring):
