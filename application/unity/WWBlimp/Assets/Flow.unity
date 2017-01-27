@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.42623234, g: 0.48320544, b: 0.5374447, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -532,9 +532,9 @@ MonoBehaviour:
     tracks: tracks
     trackHint: track_hint
     trackIdOffset: -2
-  minTrackDims: {x: -1, y: -1, z: 1}
-  maxTrackDims: {x: 1.5, y: 1, z: 2}
-  flipZY: 0
+  minTrackDims: {x: -1, y: -0.2, z: -1.35}
+  maxTrackDims: {x: 1.5, y: 1.5, z: 1.25}
+  flipZY: 1
 --- !u!114 &1118242465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -560,7 +560,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hostName: localhost
-  space: /home/macbook1
+  space: /home/devices/macbook1
 --- !u!114 &1118242467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -575,7 +575,7 @@ MonoBehaviour:
   mediaFolderPath: ../wwFlowMedia/
   matchLocationX: 0
   matchLocationZ: 0
-  matchRadius: 0.5
+  matchRadius: 10
   dropOffset: 5
 --- !u!114 &1118242468
 MonoBehaviour:
