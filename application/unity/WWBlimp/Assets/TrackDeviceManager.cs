@@ -39,7 +39,7 @@ public class TrackDeviceManager : MonoBehaviour {
 		openPTrack = GetComponent<OpenPTrackProvider> ();
 		imageDropScript = GetComponent<ImageDrop> ();
 
-		GameObject theBlimp = GameObject.Find ("Blimp");
+//		GameObject theBlimp = GameObject.Find ("Blimp");
 	//	theBlimpRigidbody = theBlimp.GetComponent<Rigidbody> ();
 
 		WebComm.addRFC ("match", match);
@@ -58,7 +58,7 @@ public class TrackDeviceManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetKeyDown ("space"))
-			drop ("-1", new string[]{"drop", "RS112_1957_CathedralHigh_TypingClass.jpg"});
+			imageDropScript.Drop(new Vector3(2500, 300, 2500), new Vector3 (0, 0, 0), mediaDirectory+"RS112_1957_CathedralHigh_TypingClass.jpg");
 	
 	}
 
