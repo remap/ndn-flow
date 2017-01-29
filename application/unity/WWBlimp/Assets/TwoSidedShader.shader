@@ -4,6 +4,7 @@
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
 		_Metallic ("Metallic", Range(0,1)) = 0.0
+		_AmbientBoost("Color", Color) = (.25, .2,1,1)
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
