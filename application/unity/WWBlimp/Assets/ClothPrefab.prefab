@@ -11,7 +11,7 @@ GameObject:
   - 33: {fileID: 3347968}
   - 135: {fileID: 13541690}
   - 23: {fileID: 2372492}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -30,7 +30,7 @@ GameObject:
   - 183: {fileID: 18301574}
   - 54: {fileID: 5473808}
   - 108: {fileID: 108000011025209700}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ClothPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
