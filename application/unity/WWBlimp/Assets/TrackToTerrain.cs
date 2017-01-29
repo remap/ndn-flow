@@ -183,7 +183,7 @@ public class TrackToTerrain : MonoBehaviour {
 
 		Dictionary<string, Track> tracks = trackProvider.getTracks ();
 
-		bumpUp (new Vector3(1.5f, 1.5f, 1.5f));
+//		bumpUp (new Vector3(1.5f, 1.5f, 1.5f));
 
 		foreach (Track t in tracks.Values) {
 			if (t.getState () == Track.State.ACTIVE) {
