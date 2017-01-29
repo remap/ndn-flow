@@ -540,8 +540,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowDebugTracks: 1
-  terrainModStepSize: 0.01
-  trackEffectRadius: 1
+  terrainModStepSize: 0.04
+  trackEffectRadius: 0.09
+  flatness: 1
   errosionRate: 10
   terrainErrosionDepth: 0.001
   initialTerrainMap: {fileID: 2800000, guid: 8af96e06fb6b241119d0d80876b9bbef, type: 3}

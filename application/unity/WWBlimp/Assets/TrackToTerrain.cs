@@ -18,6 +18,11 @@ public class TrackToTerrain : MonoBehaviour {
 //	public float minHeight = 0f;
 	[Tooltip("Track Effect Radius is in Unity Units.")]
 	public float trackEffectRadius = 1;
+
+	[Range(0, 5)]
+	[Tooltip("Larger numbers may negativly impact performance")]
+	public int flatness = 1;
+
 	[Range(0.0f, 100.0f)]
 	public float errosionRate = 10;
 	public float terrainErrosionDepth = .001f;
@@ -169,7 +174,7 @@ public class TrackToTerrain : MonoBehaviour {
 		//it seems that the terrain map does this
 		// do i have to exchange with and height?
 		// don't matter right now square landscape
-		incHeight (terrainMapHeight - (int)terrainLocY, terrainMapWidth - (int)terrainLocX, terrainModStepSize);
+		incHeightFlatten (terrainMapHeight - (int)terrainLocY, terrainMapWidth - (int)terrainLocX, 2, terrainModStepSize);
 	}
 
 	// Update is called once per frame
@@ -177,7 +182,9 @@ public class TrackToTerrain : MonoBehaviour {
 
 
 		Dictionary<string, Track> tracks = trackProvider.getTracks ();
-	
+
+		bumpUp (new Vector3(1.5f, 1.5f, 1.5f));
+
 		foreach (Track t in tracks.Values) {
 			if (t.getState () == Track.State.ACTIVE) {
 				bumpUp(t.getPosition ());
@@ -223,6 +230,41 @@ public class TrackToTerrain : MonoBehaviour {
 
 	}*/
 
+
+	void incHeightFlatten(int x, int y, int neigborhood, float amount) {
+		
+		int startX = x - neigborhood;
+		if (x < 0)
+			startX = 0;
+		int endX = x + neigborhood;
+		if (endX >= terrainMapWidth)
+			endX = terrainMapWidth - 1;
+		
+		int startY = y - neigborhood;
+		if (startY < 0)
+			startY  = 0;
+		int endY = y + neigborhood;
+		if (endY >= terrainMapHeight)
+			endY = terrainMapHeight - 1;
+
+		int minX = x;
+		int minY = y;
+		float minHeight = heights [x, y];
+
+		for (int i = startX; i < endX; i++) {
+			for (int j = startY; j < endY; j++) {
+				float curHieght = heights [i, j];
+				if (curHieght < minHeight) {
+					minX = i;
+					minY = j;
+					minHeight = curHieght;
+				}
+			}
+		}
+		incHeight (minX, minY, amount);
+		
+
+	}
 	void incHeight(int x, int y, float amount) {
 		if ((x >= terrainMapWidth) || (x < 0))
 			return;
