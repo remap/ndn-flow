@@ -148,36 +148,39 @@ public class TrackToTerrain : MonoBehaviour {
 		return unityWorldDimentions.convertFrom (pos, trackWorldDimentions);
 	}
 
+	void bumpUp(Vector3 pos) {
+
+		//picrandom angle then gaussian radias?
+		// isthat better?
+		float randomAngle = UnityEngine.Random.Range (0.0f, 2 * Mathf.PI);
+		float offsetAmount = (float)gauss.next ();
+		Vector3 perterpedPos = new Vector3 (pos.x + Mathf.Cos (randomAngle) * offsetAmount, 0, pos.z + Mathf.Sin (randomAngle) * offsetAmount);
+
+
+		float terrainLocX = trackWorldDimentions.x.getPercentage (perterpedPos.x) * terrainMapWidth;
+		float terrainLocY = trackWorldDimentions.z.getPercentage (perterpedPos.z) * terrainMapHeight;
+
+
+		//	Debug.Log("terrainLoc: " + (int) terrainLocX +","+ terrainLocY);
+
+
+
+		//y and x are intentially flipped here
+		//it seems that the terrain map does this
+		// do i have to exchange with and height?
+		// don't matter right now square landscape
+		incHeight (terrainMapHeight - (int)terrainLocY, terrainMapWidth - (int)terrainLocX, terrainModStepSize);
+	}
 
 	// Update is called once per frame
 	void Update () {
+
+
 		Dictionary<string, Track> tracks = trackProvider.getTracks ();
 	
 		foreach (Track t in tracks.Values) {
 			if (t.getState () == Track.State.ACTIVE) {
-				Vector3 pos = t.getPosition ();
-				//	Debug.Log("pos: " + pos);
-
-				//picrandom angle then gaussian radias?
-				// isthat better?
-				float randomAngle = UnityEngine.Random.Range (0.0f, 2 * Mathf.PI);
-				float offsetAmount = (float)gauss.next ();
-				Vector3 perterpedPos = new Vector3 (pos.x + Mathf.Cos (randomAngle) * offsetAmount, 0, pos.z + Mathf.Sin (randomAngle) * offsetAmount);
-
-
-				float terrainLocX = trackWorldDimentions.x.getPercentage (perterpedPos.x) * terrainMapWidth;
-				float terrainLocY = trackWorldDimentions.z.getPercentage (perterpedPos.z) * terrainMapHeight;
-
-
-				//	Debug.Log("terrainLoc: " + (int) terrainLocX +","+ terrainLocY);
-
-
-
-				//y and x are intentially flipped here
-				//it seems that the terrain map does this
-				// do i have to exchange with and height?
-				// don't matter right now square landscape
-				incHeight (terrainMapHeight - (int)terrainLocY, terrainMapWidth - (int)terrainLocX, terrainModStepSize);
+				bumpUp(t.getPosition ());
 			}
 
 		}
