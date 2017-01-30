@@ -28,3 +28,17 @@ The "Flow" application features the following subsystems running on different de
 * A diagram of the application installation is available [here](https://github.com/remap/ndn-flow/blob/master/design/flow-components.pdf).
 * This folder also contains [sample code](sample-code) that may help coding or debugging each subsystem individually.
 * The framework we built this application on can be found [here](https://github.com/remap/ndn-flow/tree/master/framework), with its interfaces described [here](https://github.com/remap/ndn-flow/tree/master/design/docs).
+
+### License
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program in the file COPYING.  If not, see <http://www.gnu.org/licenses/>.

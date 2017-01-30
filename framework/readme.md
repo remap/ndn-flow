@@ -64,7 +64,7 @@ More examples can be found in examples folder inside each framework language's s
 
 Check [here](https://github.com/remap/ndn-flow/blob/master/design/docs) for a set of library interface descriptions.
 
-### Worflow
+### Workflow
 
 (what to do after building your application using the framework)
 
@@ -97,6 +97,20 @@ Each framework library is built on top of a corresponding library in NDN common 
  * **ndn-iot-cpp** (C++ library): uses: [ndn-cpp](https://github.com/named-data/ndn-cpp)
  * **ndn-iot-python** (Python library): uses [PyNDN2](https://github.com/named-data/PyNDN2)
 
+### License
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+A copy of the GNU Lesser General Public License is in the file COPYING.
 
 
-(Updated Jan 10, 2016)
+(Updated Jan 30, 2016)
