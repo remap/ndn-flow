@@ -1,18 +1,17 @@
 // UI functions
 function connectFace() {
-  treeView = new TreeView(tree, 'tree');
-  document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
-  document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
+  // document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
+  // document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
   document.getElementById('pause').onclick = function () { 
     if (paused) {
-      document.getElementById('pause').value = "Resume";
+      document.getElementById('pause').innerText = "Pause";
       paused = false;
       for (var i; i < queuedInterests.length; i++) {
         face.expressInterest(queuedInterests[i], onData, onTimeout);
       }
       queuedInterests = [];
     } else {
-      document.getElementById('pause').value = "Pause";
+      document.getElementById('pause').innerText = "Resume";
       paused = true;
     }
   };
@@ -24,7 +23,26 @@ function connectFace() {
 }
 
 // Internal mechanisms
-function expressInterestWithExclusion(prefix, exclusion, leftmost) {
+function expressInterestWithExclusion(prefix, exclusion, leftmost, filterCertOrCommandOrPicInterest) {
+  if (filterCertOrCommandOrPicInterest === undefined || filterCertOrCommandOrPicInterest === true) {
+    var prefixName = (new Name(prefix)).toUri();
+    if (prefixName.indexOf("ID-CERT") > 0) {
+      console.log("stop probing this branch because it contains a certificate name, or is a signed interest");
+      return;
+    }
+    if (prefixName.toLowerCase().indexOf(".jpg") > 0 || (new Name(prefix)).toUri().toLowerCase().indexOf(".png") > 0) {
+      console.log("stop probing this branch because it is probably sending an image");
+      return;
+    }
+    if (prefixName.toLowerCase().indexOf("updatecapabilities") > 0) {
+      console.log("stop probing this branch because it is updating capabilities");
+      return;
+    }
+    if (prefixName.toLowerCase().indexOf("requests") > 0) {
+      console.log("stop probing this branch because it is sending request");
+      return;
+    }
+  }
   var interest = new Interest(new Name(prefix));
   interest.setInterestLifetimeMilliseconds(4000);
   interest.setMustBeFresh(true);
