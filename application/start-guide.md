@@ -105,7 +105,7 @@ cd ~/Desktop
 ### Android phone (on DHCP, 192.168.100.150 - 200)
 
 1. Launch Firefox browser on the phone
-2. Load http://192.168.100.101/application/website/index.html
+2. Load http://192.168.100.101/ndn-flow/application/website/index.html
 3. Point the Face URL to Unity laptop (192.168.100.130), phone's identity to "/home/devices/honor5x", Unity laptop's identity to "/home/devices/macbook1", and click "Connect Face"
 4. On the next page, click "Associate me with a track"
 5. On the last page, click any images you want to draw after Unity's running
@@ -118,8 +118,8 @@ Phone shows a list of image links that can be dropped onto Unity visualization.
 ### Tree visualization laptop
 
 1. Launch Chrome or Firefox browser on your laptop
-2. Load http://192.168.100.101/application/website/names.html
-3. Point the Face URL to Unity laptop (192.168.10.130), and click "Connect Face"
+2. Load http://192.168.100.101/ndn-flow/application/website/names.html
+3. Point the Face URL to Unity laptop (192.168.100.130), and click "Connect Face"
 
 ### Troubleshooting the system
 
