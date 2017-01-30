@@ -256,7 +256,7 @@ public class TrackToTerrain : MonoBehaviour {
 		minX = (minX >= terrainMapWidth) ? terrainMapWidth - 1 : minX;
 		minY = (minY >= terrainMapHeight) ? terrainMapHeight - 1 : minY;
 
-		float minHeight = heights [x, y];
+		float minHeight = heights [minX, minY];
 
 		for (int i = startX; i < endX; i++) {
 			for (int j = startY; j < endY; j++) {
