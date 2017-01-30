@@ -772,11 +772,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 0
-  gyroPrefix: /home/flow1/gyros/gyro1/
-  minSensorValues: {x: -3.1, y: -3.1, z: -3.1}
-  maxSensorValues: {x: 3.1, y: 3.1, z: 3.1}
-  minScaleValues: {x: -1, y: -1, z: -1}
-  maxScaleValues: {x: 1, y: 1, z: 1}
+  gyroPrefix: /home/flow1/gyros/gyro1
+  minSensorValues: {x: -2, y: -2, z: -2}
+  maxSensorValues: {x: 2, y: 2, z: 2}
+  minScaleValues: {x: -2, y: -2, z: -2}
+  maxScaleValues: {x: 2, y: 2, z: 2}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
 --- !u!114 &1260582053
@@ -791,9 +791,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gyroType: 1
-  gyroPrefix: /home/flow1/gyros/gyro2/
-  minSensorValues: {x: -3.1, y: -3.1, z: -3.1}
-  maxSensorValues: {x: 3.1, y: 3.1, z: 3.1}
+  gyroPrefix: /home/flow1/gyros/gyro2
+  minSensorValues: {x: -2, y: -2, z: -2}
+  maxSensorValues: {x: 2, y: 2, z: 2}
   minScaleValues: {x: -1, y: -1, z: -1}
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}

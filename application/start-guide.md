@@ -56,7 +56,7 @@ cd ~/ndn/ndn-flow/application/rfduino/rpi_helper/
 ```
 * Either run
 ```
-python rpi_helper.py --addr e1:16:f4:d2:f6:0f,cd:87:e7:83:90:85 --namespace /home/flow1/gyros/gyro-1,/home/flow1/gyros/gyro-2
+python rpi_helper.py --addr e1:16:f4:d2:f6:0f,cd:87:e7:83:90:85 --namespace /home/flow1/gyros/gyro1,/home/flow1/gyros/gyro2
 ```
 Or look at the last few executed commands using 
 ```

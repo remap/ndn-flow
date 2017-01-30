@@ -37,7 +37,7 @@ public class NDN_Gyro : MonoBehaviour {
 
 	//for some reason unity is caching the old property value
 	//changing the varaible name to force update! (now I'm worried about other parts of this project)
-	public string gyroPrefix = "/home/flow/gyros/gyro-1/";
+	public string gyroPrefix = "/home/flow/gyros/gyro1/";
 
 
 	[Header("Sensor Scaling")]
