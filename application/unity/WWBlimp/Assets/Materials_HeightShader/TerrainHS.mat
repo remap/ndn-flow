@@ -54,62 +54,62 @@ Material:
     m_Floats:
     - first:
         name: _Beach
-      second: 10
+      second: 10.311497
     - first:
         name: _BeachTextureSize
       second: 1
     - first:
         name: _Brightness
-      second: 0.5
+      second: 0.3820755
     - first:
         name: _LastLevel
-      second: 325
+      second: 276.44043
     - first:
         name: _LastLevelTextureSize
       second: 1
     - first:
         name: _Level1
-      second: 50
+      second: 31.945784
     - first:
         name: _Level1TextureSize
-      second: 1
+      second: 3
     - first:
         name: _Level2
-      second: 150
+      second: 119.44756
     - first:
         name: _Level2TextureSize
       second: 1
     - first:
         name: _Level3
-      second: 314.14474
+      second: 202.50168
     - first:
         name: _Level3TextureSize
       second: 1
     - first:
         name: _Slope
-      second: 1
+      second: 0.6380952
     - first:
         name: _UnderWaterTextureSize
       second: 1
     - first:
         name: _WaterLevel
-      second: 2
+      second: 2.4502566
     m_Colors:
     - first:
         name: _BeachColor
-      second: {r: 0.9, g: 0.86, b: 0, a: 1}
+      second: {r: 0.7058823, g: 0.6554826, b: 0.3737024, a: 1}
     - first:
         name: _LastLevelColor
       second: {r: 0.8, g: 0.9, b: 0.9, a: 1}
     - first:
         name: _Level1Color
-      second: {r: 0.65, g: 0.86, b: 0.63, a: 1}
+      second: {r: 0.297, g: 0.384, b: 0.378, a: 1}
     - first:
         name: _Level2Color
-      second: {r: 0.69, g: 0.63, b: 0.31, a: 1}
+      second: {r: 0.31617647, g: 0.2820382, b: 0.09996756, a: 1}
     - first:
         name: _Level3Color
-      second: {r: 0.75, g: 0.53, b: 0, a: 1}
+      second: {r: 0.375, g: 0.26742646, b: 0.116, a: 1}
     - first:
         name: _UnderWaterColor
       second: {r: 0.37, g: 0.78, b: 0.92, a: 1}
