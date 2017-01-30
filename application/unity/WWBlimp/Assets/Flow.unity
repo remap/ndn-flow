@@ -116,7 +116,7 @@ Light:
   serializedVersion: 7
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 1.8
+  m_Intensity: 1.28
   m_Range: 10
   m_SpotAngle: 30
   m_CookieSize: 10
@@ -265,10 +265,10 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 581002490}
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 1260582050}
   m_RootOrder: 1
@@ -311,7 +311,7 @@ Camera:
     height: 1
   near clip plane: 0.03
   far clip plane: 1000
-  field of view: 60
+  field of view: 103.5
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -353,7 +353,7 @@ Light:
   serializedVersion: 7
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 1.06
   m_Range: 10
   m_SpotAngle: 30
   m_CookieSize: 10
@@ -441,7 +441,7 @@ Terrain:
   m_DetailObjectDistance: 250
   m_DetailObjectDensity: 1
   m_HeightmapPixelError: 5
-  m_SplatMapDistance: 7081
+  m_SplatMapDistance: 11311
   m_HeightmapMaximumLOD: 0
   m_CastShadows: 0
   m_DrawHeightmap: 1
@@ -489,7 +489,7 @@ MonoBehaviour:
     - _name: UnderWater
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
       color: {r: 0.37, g: 0.78, b: 0.92, a: 1}
-      height: 1.9965398
+      height: 2.4502566
       textureTiling: 1
       readOnlyName: 1
     - _name: Beach
@@ -500,7 +500,7 @@ MonoBehaviour:
       readOnlyName: 1
     - _name: Level1
       texture: {fileID: 2800000, guid: 059f4275a40b743238ee1b7495f85d87, type: 3}
-      color: {r: 0.20422111, g: 0.32352942, b: 0.021410037, a: 1}
+      color: {r: 0.297, g: 0.384, b: 0.378, a: 1}
       height: 31.945784
       textureTiling: 3
       readOnlyName: 1
@@ -522,9 +522,9 @@ MonoBehaviour:
       height: 276.44043
       textureTiling: 1
       readOnlyName: 1
-    waterLevel: 1.9965398
+    waterLevel: 2.4502566
     slopeFader: 0.6380952
-    brightness: 0.25
+    brightness: 0.3820755
     relationType: 0
   isInitialized: 1
   test: Here you will see your custom fields
@@ -540,9 +540,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowDebugTracks: 1
-  terrainModStepSize: 0.1
+  terrainModStepSize: 0.3
   trackEffectRadius: 0.1
-  flatness: 1
+  flatness: 2
   errosionRate: 6
   terrainErrosionDepth: 0.001
   initialTerrainMap: {fileID: 2800000, guid: 8af96e06fb6b241119d0d80876b9bbef, type: 3}
@@ -694,14 +694,14 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1260582047}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc49f8153b5804387b7de572e88c9b89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxVelocity: 5
   maxAngularVelocity: {x: 0.3, y: 0.3, z: 0.3}
-  maxThrust: 100
+  maxThrust: 2500
   maxTorque: {x: 1, y: 1, z: 1}
   maxPitch: 15
   maxRoll: 5
@@ -734,7 +734,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1260582047}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2500, y: 375, z: 2500}
+  m_LocalPosition: {x: 2500, y: 375, z: -1500}
   m_LocalScale: {x: 300, y: 300, z: 300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
@@ -794,8 +794,8 @@ MonoBehaviour:
   gyroPrefix: /home/flow1/gyros/gyro2
   minSensorValues: {x: -2, y: -2, z: -2}
   maxSensorValues: {x: 2, y: 2, z: 2}
-  minScaleValues: {x: -1, y: -1, z: -1}
-  maxScaleValues: {x: 1, y: 1, z: 1}
+  minScaleValues: {x: 0, y: -1, z: -1}
+  maxScaleValues: {x: 2500, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
 --- !u!114 &1260582054
