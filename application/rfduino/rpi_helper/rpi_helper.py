@@ -198,7 +198,7 @@ if __name__ == '__main__':
     receive_uuid = 0x2221
 
     default_addr = "EE:C5:46:65:D3:C1"
-    default_prefix = "/home/flow1/gyros/gyro-1"
+    default_prefix = "/home/flow1/gyros/gyro1"
     default_request_prefix = "/home/flow1/gyros"
     default_security_option = False
 
