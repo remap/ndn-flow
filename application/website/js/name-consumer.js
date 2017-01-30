@@ -1,8 +1,7 @@
 // UI functions
 function connectFace() {
-  treeView = new TreeView(tree, 'tree');
-  document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
-  document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
+  // document.getElementById('expandAll').onclick = function () { treeView.expandAll(); };
+  // document.getElementById('collapseAll').onclick = function () { treeView.collapseAll(); };
   document.getElementById('pause').onclick = function () { 
     if (paused) {
       document.getElementById('pause').innerText = "Pause";
@@ -26,12 +25,21 @@ function connectFace() {
 // Internal mechanisms
 function expressInterestWithExclusion(prefix, exclusion, leftmost, filterCertOrCommandOrPicInterest) {
   if (filterCertOrCommandOrPicInterest === undefined || filterCertOrCommandOrPicInterest === true) {
-    if ((new Name(prefix)).toUri().indexOf("ID-CERT") > 0) {
+    var prefixName = (new Name(prefix)).toUri();
+    if (prefixName.indexOf("ID-CERT") > 0) {
       console.log("stop probing this branch because it contains a certificate name, or is a signed interest");
       return;
     }
-    if ((new Name(prefix)).toUri().toLowerCase().indexOf(".jpg") > 0 || (new Name(prefix)).toUri().toLowerCase().indexOf(".png") > 0) {
+    if (prefixName.toLowerCase().indexOf(".jpg") > 0 || (new Name(prefix)).toUri().toLowerCase().indexOf(".png") > 0) {
       console.log("stop probing this branch because it is probably sending an image");
+      return;
+    }
+    if (prefixName.toLowerCase().indexOf("updatecapabilities") > 0) {
+      console.log("stop probing this branch because it is updating capabilities");
+      return;
+    }
+    if (prefixName.toLowerCase().indexOf("requests") > 0) {
+      console.log("stop probing this branch because it is sending request");
       return;
     }
   }

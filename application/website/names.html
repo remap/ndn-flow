@@ -5,13 +5,12 @@
 <html xmlns = "http://www.w3.org/1999/xhtml">
 
 <head>
-  <title>Flow WW Blimp</title>
-  <link rel="stylesheet" href="css/treeview.min.css" />
+  <meta content="utf-8" http-equiv="encoding">
 
-  <script type="text/javascript" src="js/treeview.min.js"></script>
+  <title>Flow WW Blimp</title>
+  <link rel="stylesheet" href="css/tree.css" />
+  <script type="text/javascript" src="js/d3.min.js"></script>
   <script type="text/javascript" src="ndn.js"></script>
-  <script type="text/javascript" src="js/tree.js"></script>
-  <script type="text/javascript" src="js/name-consumer.js"></script>
 
   <!-- Tree-view functionalities -->
   <script>
@@ -25,17 +24,23 @@
 </head>
 
 <body>
+
   <div id="connect-section">
     <p>Host face: <br><input type="text" id="host" value="localhost"></input></p>
     <p>Track prefix: <br><input type="text" id="prefix" value="/home"></input></p>
     <p><button id="connect" onclick="connectFace()">Connect Face</button></p>
   </div>
-
+ 
   <div id="tree-container">
-    <button id="expandAll">Expand All</button> <br>
+    <!-- <button id="expandAll">Expand All</button> <br>
     <button id="collapseAll">Collapse All</button> <br>
-    <button id="pause">Pause</button> <br>
+     -->
+    <p><button id="pause">Pause</button> </p>
     <div id="tree"></div>
   </div>
+
+  <script type="text/javascript" src="js/tree.js"></script>
+  <script type="text/javascript" src="js/name-consumer.js"></script>
+
 </body>
 </html>
