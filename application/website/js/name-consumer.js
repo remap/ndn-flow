@@ -19,7 +19,13 @@ function connectFace() {
   var host = document.getElementById("host").value;
   face = new Face({"host": host});
   prefix = document.getElementById("prefix").value;
-  expressInterestWithExclusion(prefix, undefined, true);
+  
+  // For this demo, hardcode intended interest names
+  expressInterestWithExclusion(new Name(prefix).append("devices").append("gateway"), undefined, true);
+  expressInterestWithExclusion(new Name(prefix).append("devices").append("macbook1"), undefined, true);
+  expressInterestWithExclusion(new Name(prefix).append("flow1").append("gyros").append("gyro1"), undefined, true);
+  expressInterestWithExclusion(new Name(prefix).append("flow1").append("gyros").append("gyro2"), undefined, true);
+  expressInterestWithExclusion(new Name(prefix).append("flow1").append("opt").append("opt1"), undefined, true);
 }
 
 // Internal mechanisms

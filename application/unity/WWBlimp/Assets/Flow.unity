@@ -775,8 +775,8 @@ MonoBehaviour:
   gyroPrefix: /home/flow1/gyros/gyro1
   minSensorValues: {x: -2, y: -2, z: -2}
   maxSensorValues: {x: 2, y: 2, z: 2}
-  minScaleValues: {x: -2, y: -2, z: -2}
-  maxScaleValues: {x: 2, y: 2, z: 2}
+  minScaleValues: {x: -1, y: -1, z: -1}
+  maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
 --- !u!114 &1260582053
