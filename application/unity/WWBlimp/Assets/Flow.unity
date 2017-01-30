@@ -773,8 +773,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gyroType: 0
   gyroPrefix: /home/flow1/gyros/gyro-1/
-  minSensorValues: {x: -3, y: -3, z: -3}
-  maxSensorValues: {x: 3, y: 3, z: 3}
+  minSensorValues: {x: -2, y: -2, z: -2}
+  maxSensorValues: {x: 2, y: 2, z: 2}
   minScaleValues: {x: -1, y: -1, z: -1}
   maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
