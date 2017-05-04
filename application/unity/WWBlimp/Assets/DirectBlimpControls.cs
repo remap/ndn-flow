@@ -8,13 +8,19 @@ public class DirectBlimpControls : MonoBehaviour {
 	public float maxPitch = 30;
 	public float maxRoll = 15;
 
-	[Header ("Force/Acceleration Limits")]
-	public float maxThrust = 1.0f;
+	[Tooltip("Interpolation rate for velocity.")]
+	[Range(0f, 1f)]
+	public float acceleration = .01f;
+
 	[Header ("Speed Limits")]
 	public float maxVelocity = 1.0f;
-	[Header("Realtime Controls")]
-	[Range(0f, 1f)]
-	public float thrust = 0;
+
+
+
+
+	//[Header("Realtime Controls")]
+	//[Range(0f, 1f)]
+	//public float thrust = 0;
 
 
 
@@ -25,6 +31,8 @@ public class DirectBlimpControls : MonoBehaviour {
 	[ReadOnly] public NDN_Gyro throttleGyro;
 
 	[ReadOnly] public Vector3 goalRotation = new Vector3(0,0,0);
+	[Tooltip("Desired velocity as a percentage of maxVelocity")]
+	[ReadOnly] public float goalVelocityPercent = 0.0f;
 
 	Rigidbody rb;
 
@@ -61,18 +69,17 @@ public class DirectBlimpControls : MonoBehaviour {
 		transform.rotation = Quaternion.Slerp(curRoation, goal, rotationSpeed);
 
 		if (throttleGyro != null) {
-			thrust = throttleGyro.scaledGyroValues.x;
+			goalVelocityPercent = throttleGyro.scaledGyroValues.x;
 		}
-		thrust = (thrust >= 1.0f) ? 1.0f : thrust;
-		thrust = (thrust <= 0) ? 0 : thrust;
 
 
-		rb.AddForce(transform.forward * thrust * maxThrust);
+		goalVelocityPercent = (goalVelocityPercent >= 1.0f) ? 1.0f : goalVelocityPercent;
+		goalVelocityPercent = (goalVelocityPercent <= 0) ? 0 : goalVelocityPercent;
 
-		//limit velocity
-		if (rb.velocity.magnitude > maxVelocity) {
-			rb.velocity = rb.velocity.normalized * maxVelocity;
-		}
+		Vector3 goalVelVec = transform.forward * goalVelocityPercent * maxVelocity;
+
+
+		rb.velocity = Vector3.Lerp (rb.velocity, goalVelVec, acceleration);
 
 	}
 

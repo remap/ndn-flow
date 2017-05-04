@@ -676,7 +676,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 1260582050}
   - 54: {fileID: 1260582049}
-  - 114: {fileID: 1260582048}
   - 114: {fileID: 1260582051}
   - 114: {fileID: 1260582052}
   - 114: {fileID: 1260582053}
@@ -688,30 +687,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1260582048
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1260582047}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc49f8153b5804387b7de572e88c9b89, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxVelocity: 5
-  maxAngularVelocity: {x: 0.3, y: 0.3, z: 0.3}
-  maxThrust: 2500
-  maxTorque: {x: 1, y: 1, z: 1}
-  maxPitch: 15
-  maxRoll: 5
-  rotationDecelerationRate: 0.25
-  thrust: 0
-  pitchTorque: 1
-  yawTorque: 1
-  rollTorque: 1
-  orientationGyro: {fileID: 0}
-  throttleGyro: {fileID: 0}
 --- !u!54 &1260582049
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -812,12 +787,12 @@ MonoBehaviour:
   rotationSpeed: 0.1
   maxPitch: 30
   maxRoll: 15
-  maxThrust: 1
+  acceleration: 0.25
   maxVelocity: 1
-  thrust: 0
   orientationGyro: {fileID: 0}
   throttleGyro: {fileID: 0}
   goalRotation: {x: 0, y: 0, z: 0}
+  goalVelocity: 0
 --- !u!1 &1891660832
 GameObject:
   m_ObjectHideFlags: 0
