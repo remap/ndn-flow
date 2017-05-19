@@ -624,7 +624,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hostName: localhost
-  space: /home/devices/macbook1
+  space: /home/flow-csharp
 --- !u!114 &1118242467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -770,7 +770,7 @@ MonoBehaviour:
   minSensorValues: {x: -2, y: -2, z: -2}
   maxSensorValues: {x: 2, y: 2, z: 2}
   minScaleValues: {x: 0, y: -1, z: -1}
-  maxScaleValues: {x: 2500, y: 1, z: 1}
+  maxScaleValues: {x: 1, y: 1, z: 1}
   gyroValues: {x: 0, y: 0, z: 0}
   scaledGyroValues: {x: 0, y: 0, z: 0}
 --- !u!114 &1260582054
@@ -788,11 +788,11 @@ MonoBehaviour:
   maxPitch: 30
   maxRoll: 15
   acceleration: 0.25
-  maxVelocity: 1
+  maxVelocity: 10
   orientationGyro: {fileID: 0}
   throttleGyro: {fileID: 0}
   goalRotation: {x: 0, y: 0, z: 0}
-  goalVelocity: 0
+  goalVelocityPercent: 0
 --- !u!1 &1891660832
 GameObject:
   m_ObjectHideFlags: 0

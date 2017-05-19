@@ -13,7 +13,7 @@ public class DirectBlimpControls : MonoBehaviour {
 	public float acceleration = .01f;
 
 	[Header ("Speed Limits")]
-	public float maxVelocity = 1.0f;
+	public float maxVelocity = 10.0f;
 
 
 
@@ -70,8 +70,8 @@ public class DirectBlimpControls : MonoBehaviour {
 
 		if (throttleGyro != null) {
 			goalVelocityPercent = throttleGyro.scaledGyroValues.x;
+			goalVelocityPercent = 1f;
 		}
-
 
 		goalVelocityPercent = (goalVelocityPercent >= 1.0f) ? 1.0f : goalVelocityPercent;
 		goalVelocityPercent = (goalVelocityPercent <= 0) ? 0 : goalVelocityPercent;
