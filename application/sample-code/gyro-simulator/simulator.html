@@ -5,16 +5,12 @@
 <head>
 <title>Simulator of Gyroscope data</title>
 
-<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/long.min.js"></script>
-<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/bytebuffer-ab.min.js"></script>
-<script type="text/javascript" src="../../framework/ndn_iot_js/contrib/dcodeio/protobuf.min.js"></script>
-
-<script type="text/javascript" src="../../framework/ndn_iot_js/js/ndn.js"></script>
+<script type="text/javascript" src="../../../framework/ndn_iot_js/js/ndn.js"></script>
 
 <script type="text/javascript">
 
 // Configurable parameters
-var prefix = new Name("/home/flow1/gyros/gyro1");
+var prefix = new Name();
 
 // gyro data generation interval
 var dataInterval = 500;
@@ -45,7 +41,8 @@ var currentR = startingR;
 var currentSeqNo = startingSeqNo;
 
 function start()
-{    
+{
+    prefix = new Name(document.getElementById("gyro-name").value);
     face = new Face({"host": "127.0.0.1"});
     memoryContentCache = new MemoryContentCache(face);
     // commented so that we don't have to worry about no default keys exist in browser IndexedDbStorage 
@@ -124,6 +121,11 @@ document.onkeydown = function (e) {
 </head>
 
 <body>
+<p>Controls: w, s: change pitch<br>
+left, right: change yaw<br> 
+up, down: change roll</p>
+<p>Name prefix of the gyro to simulate:<br>
+<input id="gyro-name" value="/home/flow1/gyros/gyro2" size=40></input></p>
 <p><button onclick="start()">start simulating</button></p>
 <p>Current seq number: </p><span id="current-seq">-1</span>
 <p>Last published: </p><span id="last-pub">{}</span>
