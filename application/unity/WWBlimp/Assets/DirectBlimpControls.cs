@@ -70,7 +70,6 @@ public class DirectBlimpControls : MonoBehaviour {
 
 		if (throttleGyro != null) {
 			goalVelocityPercent = throttleGyro.scaledGyroValues.x;
-			goalVelocityPercent = 1f;
 		}
 
 		goalVelocityPercent = (goalVelocityPercent >= 1.0f) ? 1.0f : goalVelocityPercent;
